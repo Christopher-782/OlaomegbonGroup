@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Transaction = require("../models/transactions");
-const Expense = require("../models/Expense");
+const Expense = require("../models/expense");
 
 const adminController = require("../controllers/adminController");
 
