@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>October Libra Building Co. Ltd — Login</title>
+    <link
+      rel="icon"
+      type="image/png"
+      href="https://res.cloudinary.com/deoqw88yb/image/upload/v1780134973/October_Libra_Building_Co._Ltd_Logo__1__page-0001-removebg-preview_rpwcmp.png"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/index.css" />
+    <base target="_blank" />
+  </head>
+  <body>
+    <div class="split-container">
+      <!-- LEFT HERO SECTION -->
+      <div class="hero-section">
+        <div class="hero-mesh"></div>
+        <div class="particles" id="particles"></div>
+
+        <div class="hero-content">
+          <div class="hero-logo-wrapper">
+            <img
+              src="https://res.cloudinary.com/deoqw88yb/image/upload/v1780134973/October_Libra_Building_Co._Ltd_Logo__1__page-0001-removebg-preview_rpwcmp.png"
+              alt="October Libra Building Co. Ltd"
+              class="hero-logo"
+              onerror="this.style.display = 'none'"
+            />
+          </div>
+          <h1 class="hero-title">October Libra<br />Building Co. Ltd</h1>
+          <p class="hero-subtitle">
+            Premium construction management platform. Secure, intelligent, and
+            built for excellence.
+          </p>
+
+          <div class="hero-stats">
+            <div class="stat-item">
+              <div class="stat-number">150+</div>
+              <div class="stat-label">Projects</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number">12</div>
+              <div class="stat-label">Years</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-number">98%</div>
+              <div class="stat-label">Satisfaction</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT LOGIN SECTION -->
+      <div class="login-section">
+        <div class="glass-card">
+          <div class="card-header">
+            <h2>Welcome Back</h2>
+            <p>Sign in to your dashboard</p>
+          </div>
+
+          <!-- Alert Messages -->
+          <div class="alert alert-error" id="errorAlert">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <line x1="15" y1="9" x2="9" y2="15" />
+              <line x1="9" y1="9" x2="15" y2="15" />
+            </svg>
+            <span id="errorText">Invalid credentials</span>
+          </div>
+          <div class="alert alert-success" id="successAlert">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+            <span id="successText">Login successful! Redirecting...</span>
+          </div>
+          <!-- Info alert for help messages -->
+          <div class="alert alert-info" id="infoAlert">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            <span id="infoText">Information message</span>
+          </div>
+
+          <form id="loginForm" novalidate>
+            <!-- Email Field -->
+            <div class="form-group">
+              <div class="floating-label-group">
+                <input
+                  type="email"
+                  id="email"
+                  class="form-input"
+                  placeholder="Email address"
+                  autocomplete="email"
+                  required
+                />
+                <svg
+                  class="input-icon"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                  />
+                  <polyline points="22,6 12,13 2,6" />
+                </svg>
+                <svg
+                  class="input-status error-icon"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#ef4444"
+                  stroke-width="2"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="15" y1="9" x2="9" y2="15" />
+                  <line x1="9" y1="9" x2="15" y2="15" />
+                </svg>
+                <svg
+                  class="input-status success-icon"
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#10b981"
+                  stroke-width="2"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <div class="validation-msg error" id="emailError">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                Please enter a valid email address
+              </div>
+            </div>
+
+            <!-- Password Field -->
+            <div class="form-group">
+              <div class="floating-label-group">
+                <input
+                  type="password"
+                  id="password"
+                  class="form-input"
+                  placeholder="Password"
+                  autocomplete="current-password"
+                  required
+                />
+                <svg
+                  class="input-icon"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+                <button
+                  type="button"
+                  class="password-toggle"
+                  id="togglePassword"
+                  aria-label="Toggle password visibility"
+                >
+                  <svg
+                    id="eyeIcon"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  <svg
+                    id="eyeOffIcon"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    style="display: none"
+                  >
+                    <path
+                      d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"
+                    />
+                    <line x1="1" y1="1" x2="23" y2="23" />
+                  </svg>
+                </button>
+              </div>
+              <div class="validation-msg error" id="passwordError">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <line x1="12" y1="8" x2="12" y2="12" />
+                  <line x1="12" y1="16" x2="12.01" y2="16" />
+                </svg>
+                Password is required
+              </div>
+            </div>
+
+            <!-- Remember Me & Forgot Password -->
+            <div class="remember-row">
+              <label class="remember-label">
+                <input
+                  type="checkbox"
+                  class="remember-checkbox"
+                  id="rememberMe"
+                />
+                <span>Remember me</span>
+              </label>
+              <a href="#" class="forgot-link" id="forgotPassword"
+                >Forgot password?</a
+              >
+            </div>
+
+            <!-- Login Button -->
+            <button type="submit" class="btn btn-primary" id="loginBtn">
+              <span class="spinner"></span>
+              <span class="btn-text">Sign In</span>
+            </button>
+
+            <!-- Role Badge (shown after successful login) -->
+            <div style="text-align: center">
+              <span class="role-badge" id="roleBadge"></span>
+            </div>
+          </form>
+
+          <div class="divider">
+            <div class="divider-line"></div>
+            <span class="divider-text">Secure Access</span>
+            <div class="divider-line"></div>
+          </div>
+
+          <button type="button" class="btn btn-secondary" id="helpBtn">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              style="vertical-align: middle; margin-right: 6px"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+              <line x1="12" y1="17" x2="12.01" y2="17" />
+            </svg>
+            Need help signing in?
+          </button>
+
+          <div class="card-footer">
+            <p>
+              © 2026
+              <span class="company-name">October Libra Building Co. Ltd</span>
+            </p>
+            <p style="margin-top: 0.3rem; font-size: 0.75rem">
+              All rights reserved. Secure SSL encryption.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ===== API CONFIGURATION =====
+      // Use the same host as the frontend. Change this if your API is on a different domain.
+      const API_BASE_URL = window.location.origin; // e.g., "https://yourdomain.com"
+      // const API_BASE_URL = "http://localhost:3000"; // Uncomment for local development
+
+      // ===== PARTICLE ANIMATION =====
+      function createParticles() {
+        const container = document.getElementById("particles");
+        const particleCount = 25;
+
+        for (let i = 0; i < particleCount; i++) {
+          const particle = document.createElement("div");
+          particle.className = "particle";
+          particle.style.left = Math.random() * 100 + "%";
+          particle.style.animationDuration = Math.random() * 15 + 10 + "s";
+          particle.style.animationDelay = Math.random() * 10 + "s";
+          particle.style.width = Math.random() * 3 + 2 + "px";
+          particle.style.height = particle.style.width;
+          particle.style.opacity = Math.random() * 0.4 + 0.1;
+          container.appendChild(particle);
+        }
+      }
+      createParticles();
+
+      // ===== DOM ELEMENTS =====
+      const loginForm = document.getElementById("loginForm");
+      const emailInput = document.getElementById("email");
+      const passwordInput = document.getElementById("password");
+      const loginBtn = document.getElementById("loginBtn");
+      const togglePassword = document.getElementById("togglePassword");
+      const eyeIcon = document.getElementById("eyeIcon");
+      const eyeOffIcon = document.getElementById("eyeOffIcon");
+      const rememberMe = document.getElementById("rememberMe");
+      const errorAlert = document.getElementById("errorAlert");
+      const successAlert = document.getElementById("successAlert");
+      const infoAlert = document.getElementById("infoAlert");
+      const errorText = document.getElementById("errorText");
+      const successText = document.getElementById("successText");
+      const infoText = document.getElementById("infoText");
+      const roleBadge = document.getElementById("roleBadge");
+      const emailError = document.getElementById("emailError");
+      const passwordError = document.getElementById("passwordError");
+
+      // ===== PASSWORD TOGGLE =====
+      togglePassword.addEventListener("click", () => {
+        const type = passwordInput.type === "password" ? "text" : "password";
+        passwordInput.type = type;
+        eyeIcon.style.display = type === "password" ? "block" : "none";
+        eyeOffIcon.style.display = type === "password" ? "none" : "block";
+      });
+
+      // ===== VALIDATION =====
+      function validateEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      }
+
+      function showFieldError(input, msgEl, show) {
+        if (show) {
+          input.classList.add("error");
+          input.classList.remove("success");
+          msgEl.classList.add("show");
+        } else {
+          input.classList.remove("error");
+          input.classList.add("success");
+          msgEl.classList.remove("show");
+        }
+      }
+
+      function clearFieldError(input, msgEl) {
+        input.classList.remove("error", "success");
+        msgEl.classList.remove("show");
+      }
+
+      // Real-time validation
+      emailInput.addEventListener("blur", () => {
+        if (emailInput.value) {
+          showFieldError(
+            emailInput,
+            emailError,
+            !validateEmail(emailInput.value),
+          );
+        }
+      });
+
+      emailInput.addEventListener("input", () => {
+        if (emailInput.classList.contains("error")) {
+          showFieldError(
+            emailInput,
+            emailError,
+            !validateEmail(emailInput.value),
+          );
+        }
+        if (validateEmail(emailInput.value)) {
+          emailInput.classList.add("success");
+          emailError.classList.remove("show");
+        }
+      });
+
+      passwordInput.addEventListener("blur", () => {
+        if (passwordInput.value) {
+          showFieldError(
+            passwordInput,
+            passwordError,
+            passwordInput.value.length === 0,
+          );
+        }
+      });
+
+      passwordInput.addEventListener("input", () => {
+        if (passwordInput.classList.contains("error")) {
+          showFieldError(
+            passwordInput,
+            passwordError,
+            passwordInput.value.length === 0,
+          );
+        }
+        if (passwordInput.value.length > 0) {
+          passwordInput.classList.add("success");
+          passwordError.classList.remove("show");
+        }
+      });
+
+      // ===== ALERTS =====
+      function showError(message) {
+        errorText.textContent = message;
+        errorAlert.classList.add("show");
+        successAlert.classList.remove("show");
+        infoAlert.classList.remove("show");
+        setTimeout(() => errorAlert.classList.remove("show"), 5000);
+      }
+
+      function showSuccess(message) {
+        successText.textContent = message;
+        successAlert.classList.add("show");
+        errorAlert.classList.remove("show");
+        infoAlert.classList.remove("show");
+      }
+
+      function showInfo(message) {
+        infoText.textContent = message;
+        infoAlert.classList.add("show");
+        errorAlert.classList.remove("show");
+        successAlert.classList.remove("show");
+        setTimeout(() => infoAlert.classList.remove("show"), 5000);
+      }
+
+      // ===== ROLE-BASED REDIRECT =====
+      function getRoleDashboard(role) {
+        const dashboards = {
+          director: "adminDashboard.html",
+          admin: "adminDashboard.html",
+          manager: "adminDashboard.html",
+          accountant: "adminDashboard.html",
+          hr: "adminDashboard.html",
+          procurement: "admin.html",
+          staff: "admin.html",
+          user: "admin.html",
+        };
+        return dashboards[role?.toLowerCase()] || "adminDashboard.html";
+      }
+
+      function getRoleBadgeClass(role) {
+        const classes = {
+          director: "role-director",
+          admin: "role-admin",
+          manager: "role-staff",
+          accountant: "role-staff",
+          hr: "role-staff",
+          procurement: "role-staff",
+          staff: "role-staff",
+        };
+        return classes[role?.toLowerCase()] || "role-staff";
+      }
+
+      function getRoleDisplayName(role) {
+        const names = {
+          director: "Director Access",
+          admin: "Administrator",
+          manager: "Manager",
+          accountant: "Accountant",
+          hr: "HR Officer",
+          procurement: "Procurement",
+          staff: "Staff",
+        };
+        return names[role?.toLowerCase()] || role;
+      }
+
+      // ===== LOGIN HANDLER =====
+      loginForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        // Clear previous alerts
+        errorAlert.classList.remove("show");
+        successAlert.classList.remove("show");
+        infoAlert.classList.remove("show");
+
+        // Validate
+        let hasError = false;
+
+        if (!emailInput.value || !validateEmail(emailInput.value)) {
+          showFieldError(emailInput, emailError, true);
+          hasError = true;
+        }
+
+        if (!passwordInput.value) {
+          showFieldError(passwordInput, passwordError, true);
+          hasError = true;
+        }
+
+        if (hasError) {
+          showError("Please fix the errors above");
+          return;
+        }
+
+        // Loading state
+        loginBtn.classList.add("loading");
+        loginBtn.disabled = true;
+
+        const credentials = {
+          email: emailInput.value.trim(),
+          password: passwordInput.value,
+        };
+
+        try {
+          // ===== BACKEND API CALL =====
+          const response = await fetch(`${API_BASE_URL}/login`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(credentials),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.message || "Login failed");
+          }
+
+          // ===== ROLE-BASED AUTHENTICATION =====
+          const { token, user } = data;
+          const userRole = user?.role || "staff";
+          const displayName = user?.firstName || user?.name || "User";
+
+          // Store securely
+          if (rememberMe.checked) {
+            localStorage.setItem("token", token);
+            localStorage.setItem("user", JSON.stringify(user));
+            localStorage.setItem("role", userRole);
+          } else {
+            sessionStorage.setItem("token", token);
+            sessionStorage.setItem("user", JSON.stringify(user));
+            sessionStorage.setItem("role", userRole);
+          }
+
+          // Show success (safe textContent, no innerHTML with user data)
+          showSuccess(`Welcome back, ${displayName}!`);
+
+          // Show role badge (XSS-safe: build DOM nodes instead of innerHTML)
+          roleBadge.classList.add("show", getRoleBadgeClass(userRole));
+
+          // Clear any existing content
+          while (roleBadge.firstChild) {
+            roleBadge.removeChild(roleBadge.firstChild);
+          }
+
+          // Create shield icon
+          const shieldSvg = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "svg",
+          );
+          shieldSvg.setAttribute("width", "14");
+          shieldSvg.setAttribute("height", "14");
+          shieldSvg.setAttribute("viewBox", "0 0 24 24");
+          shieldSvg.setAttribute("fill", "none");
+          shieldSvg.setAttribute("stroke", "currentColor");
+          shieldSvg.setAttribute("stroke-width", "2");
+          const shieldPath = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "path",
+          );
+          shieldPath.setAttribute(
+            "d",
+            "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
+          );
+          shieldSvg.appendChild(shieldPath);
+          roleBadge.appendChild(shieldSvg);
+
+          // Add space
+          roleBadge.appendChild(document.createTextNode(" "));
+
+          // Add role name (safe textContent)
+          const roleNameSpan = document.createElement("span");
+          roleNameSpan.textContent = getRoleDisplayName(userRole);
+          roleBadge.appendChild(roleNameSpan);
+
+          // Redirect based on role
+          const dashboard = getRoleDashboard(userRole);
+
+          setTimeout(() => {
+            window.location.href = dashboard;
+          }, 1500);
+        } catch (error) {
+          console.error("Login error:", error);
+          showError(error.message || "Unable to connect. Please try again.");
+
+          // Clear sensitive fields
+          passwordInput.value = "";
+          passwordInput.classList.remove("success");
+          loginBtn.classList.remove("loading");
+          loginBtn.disabled = false;
+        }
+      });
+
+      // ===== FORGOT PASSWORD =====
+      document
+        .getElementById("forgotPassword")
+        .addEventListener("click", (e) => {
+          e.preventDefault();
+          showInfo(
+            "Please contact your system administrator to reset your password.",
+          );
+        });
+
+      // ===== HELP BUTTON =====
+      document.getElementById("helpBtn").addEventListener("click", () => {
+        showInfo("Contact IT Support: support@octoberlibra.com");
+      });
+
+      // ===== AUTO-FILL REMEMBERED USER =====
+      window.addEventListener("DOMContentLoaded", () => {
+        // Clear any stale session data on login page load
+        const token =
+          localStorage.getItem("token") || sessionStorage.getItem("token");
+        if (
+          !token ||
+          token === "null" ||
+          token === "undefined" ||
+          token.length < 50
+        ) {
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          localStorage.removeItem("role");
+          sessionStorage.removeItem("token");
+          sessionStorage.removeItem("user");
+          sessionStorage.removeItem("role");
+        }
+
+        const savedUser = localStorage.getItem("user");
+        if (savedUser) {
+          try {
+            const user = JSON.parse(savedUser);
+            if (user.email) {
+              emailInput.value = user.email;
+              rememberMe.checked = true;
+              emailInput.classList.add("success");
+            }
+          } catch (e) {
+            console.log("No saved user found");
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
