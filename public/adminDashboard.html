@@ -1865,6 +1865,7 @@
             "record-expenses",
             "generate-reports",
             "companies",
+            "maintenance",
           ],
           canCreateProject: false,
           canEditProject: false,
@@ -2100,7 +2101,7 @@
           apiGet("companies").catch(() => []),
           apiGet("employees").catch(() => []),
         ]);
-        DB.projects = projects || [];
+        DB.properties = projects || [];
         DB.procurement = procurement || [];
         DB.maintenance = maintenance || [];
         DB.invoices = invoices || [];
@@ -2110,7 +2111,7 @@
         DB.expenses = expenses || [];
         DB.companies = companies || [];
         DB.employees = employees || [];
-        DB.stats.projects = DB.projects.length;
+        DB.stats.projects = DB.properties.length;
         DB.stats.procurement = DB.procurement.filter(
           (p) => p.status === "pending",
         ).length;
@@ -2237,12 +2238,12 @@
                                       <div class="card-head"><h3>Project Budget Utilisation</h3><span>Active only</span></div>
                                       <div class="card-body">
                                         ${
-                                          DB.projects.filter(
+                                          DB.properties.filter(
                                             (p) =>
                                               p.status !== "Completed" &&
                                               p.status !== "Planning",
                                           ).length > 0
-                                            ? DB.projects
+                                            ? DB.properties
                                                 .filter(
                                                   (p) =>
                                                     p.status !== "Completed" &&
@@ -2292,7 +2293,7 @@
         async projects() {
           await loadAllData();
           return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><div style="display:flex;gap:8px">${["All", "Construction", "Design", "Planning", "Completed"].map((f, i) => `<button class="btn-sm btn-sm-outline" style="border-radius:20px;${i === 0 ? "border-color:var(--brand-mid);color:var(--brand-mid);" : ""}" onclick="filterProjects('${f}')">${f}</button>`).join("")}</div></div>
-                                  <div class="card"><div class="card-table-wrap"><table class="tbl"><thead><tr><th>Project</th><th>Client</th><th>Status</th><th>Phase</th><th>Budget Used</th><th>PM</th><th></th></tr></thead><tbody id="projects-tbody">${renderProjectRows(DB.projects)}</tbody></table></div></div>`;
+                                  <div class="card"><div class="card-table-wrap"><table class="tbl"><thead><tr><th>Project</th><th>Client</th><th>Status</th><th>Phase</th><th>Budget Used</th><th>PM</th><th></th></tr></thead><tbody id="projects-tbody">${renderProjectRows(DB.properties)}</tbody></table></div></div>`;
         },
 
         async procurement() {
@@ -2467,7 +2468,7 @@
                                       const projectName =
                                         inv.projectName ||
                                         (() => {
-                                          const p = DB.projects.find(
+                                          const p = DB.properties.find(
                                             (x) =>
                                               (x._id || x.id) ===
                                               (inv.project || inv.project_Id),
@@ -2640,7 +2641,7 @@
                                         <div class="form-group"><label>Category</label><select id="exp-cat"><option>Materials</option><option>Labour</option><option>Equipment</option><option>Transport</option><option>Utilities</option><option>Subcontractor</option><option>Deposit</option><option>Transfer</option><option>Withdrawal</option><option>Other</option></select></div>
                                         <div class="form-group"><label>Amount (₦) *</label><input id="exp-amount" type="number" placeholder="0" /></div>
                                         <div class="form-group"><label>Company *</label><select id="exp-company"><option value="">Select Company</option>${DB.companies.map((c) => '<option value="' + c._id + '">' + c.name + "</option>").join("")}</select></div>
-                                        <div class="form-group"><label>Project (optional)</label><select id="exp-project"><option value="">None</option>${DB.projects.map((p) => '<option value="' + (p._id || p.id) + '">' + p.name + "</option>").join("")}</select></div>
+                                        <div class="form-group"><label>Project (optional)</label><select id="exp-project"><option value="">None</option>${DB.properties.map((p) => '<option value="' + (p._id || p.id) + '">' + p.name + "</option>").join("")}</select></div>
                                         <div class="form-group"><label>Payment Method</label><select id="exp-method"><option>Bank Transfer</option><option>Cash</option><option>Cheque</option><option>POS</option></select></div>
                                         <div class="form-group"><label>Receipt / Reference</label><input id="exp-ref" placeholder="Receipt number" /></div>
                                         <div class="form-group"><label>Status</label><select id="exp-status"><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
@@ -2677,7 +2678,7 @@
                                                 })() +
                                                 "</td><td>" +
                                                 (() => {
-                                                  const p = DB.projects.find(
+                                                  const p = DB.properties.find(
                                                     (x) =>
                                                       (x._id || x.id) ===
                                                       e.projectId,
@@ -2757,9 +2758,9 @@
         async "printable-procurement"() {
           await loadAllData();
           const projectOptions =
-            DB.projects.length > 0
+            DB.properties.length > 0
               ? `<option value="">All Projects</option>` +
-                DB.projects
+                DB.properties
                   .map(
                     (p) =>
                       '<option value="' +
@@ -3535,7 +3536,7 @@
           )
           .join("");
 
-        const projectFinancials = (DB.projects || [])
+        const projectFinancials = (DB.properties || [])
           .filter((p) => p.status !== "Planning" && matchesCompany(p))
           .map((p) => {
             const spent = toNumber(p.spent);
@@ -3721,7 +3722,7 @@
           apiPut(`procurement/${id}/approve`, {}).then(async () => {
             if (r.projectId && r.amount > 0) {
               try {
-                const project = DB.projects.find(
+                const project = DB.properties.find(
                   (p) => p._id === r.projectId || p.id === r.projectId,
                 );
                 if (project)
@@ -3747,7 +3748,7 @@
             req.approvalDate = new Date().toISOString();
             if (req.projectId && req.amount > 0) {
               try {
-                const project = DB.projects.find(
+                const project = DB.properties.find(
                   (p) => p._id === req.projectId || p.id === req.projectId,
                 );
                 if (project)
@@ -3827,8 +3828,8 @@
                                   <div class="print-field"><label>Vendor / Supplier</label><value>${r.vendor || "-"}</value></div>
                                   <div class="print-field"><label>Category</label><value>${r.category || "Other"}</value></div>
                                   <div class="print-field"><label>Urgency Level</label><value>${r.urgency || "Normal"}</value></div>
-                                  <div class="print-field"><label>Project</label><value>${(() => {
-                                    const proj = DB.projects.find(
+                                  <div class="print-field"><label>PROPERTY</label><value>${(() => {
+                                    const proj = DB.properties.find(
                                       (p) => (p._id || p.id) === displayProject,
                                     );
                                     return proj ? proj.name : displayProject;
@@ -3865,7 +3866,9 @@
       // ==================== PROJECT HELPERS ====================
       window.filterProjects = (f) => {
         const list =
-          f === "All" ? DB.projects : DB.projects.filter((p) => p.status === f);
+          f === "All"
+            ? DB.properties
+            : DB.properties.filter((p) => p.status === f);
         document.getElementById("projects-tbody").innerHTML =
           renderProjectRows(list);
         lucide.createIcons();
@@ -4017,7 +4020,7 @@
             const status = p.status || "pending";
             const requestor = p.requestor || "-";
             const date = fmt.date(p.requested || p.createdAt || p.date);
-            const proj = DB.projects.find(
+            const proj = DB.properties.find(
               (x) => (x._id || x.id) === (p.projectId || p.project),
             );
             const projectName = proj ? proj.name : p.project || "-";
@@ -4044,7 +4047,7 @@
             )
           : DB.procurement;
         const projectName = projectId
-          ? DB.projects.find((p) => (p._id || p.id) === projectId)?.name ||
+          ? DB.properties.find((p) => (p._id || p.id) === projectId)?.name ||
             "Selected Project"
           : "All Projects";
         const totalAmount = filtered.reduce(
@@ -4062,7 +4065,7 @@
             const status = p.status || "pending";
             const requestor = p.requestor || "-";
             const date = fmt.date(p.requested || p.createdAt || p.date);
-            const proj = DB.projects.find(
+            const proj = DB.properties.find(
               (x) => (x._id || x.id) === (p.projectId || p.project),
             );
             const projName = proj ? proj.name : p.project || "-";
@@ -4338,7 +4341,7 @@
         filtered.forEach((p, idx) => {
           const item = (p.item || p.title || "Item").replace(/,/g, " ");
           const vendor = (p.vendor || "-").replace(/,/g, " ");
-          const proj = DB.projects.find(
+          const proj = DB.properties.find(
             (x) => (x._id || x.id) === (p.projectId || p.project),
           );
           const projectName = (proj ? proj.name : p.project || "-").replace(
@@ -4941,7 +4944,7 @@
               return c ? c.name.replace(/,/g, " ") : "-";
             })();
             const project = (() => {
-              const p = DB.projects.find(
+              const p = DB.properties.find(
                 (x) => (x._id || x.id) === e.projectId,
               );
               return p ? p.name.replace(/,/g, " ") : "-";
@@ -5025,7 +5028,7 @@
         const projectName =
           inv.projectName ||
           (() => {
-            const p = DB.projects.find(
+            const p = DB.properties.find(
               (x) => (x._id || x.id) === (inv.project || inv.project_Id),
             );
             return p ? p.name : inv.project || "-";
@@ -5103,7 +5106,7 @@
         const projectName =
           inv.projectName ||
           (() => {
-            const p = DB.projects.find(
+            const p = DB.properties.find(
               (x) => (x._id || x.id) === (inv.project || inv.project_Id),
             );
             return p ? p.name : inv.project || "-";
@@ -5182,7 +5185,7 @@
                           </div>
                           <div class="info-grid">
                             <div class="info-item"><label>Client</label><value>${inv.client || "-"}</value></div>
-                            <div class="info-item"><label>Project</label><value>${projectName}</value></div>
+                            <div class="info-item"><label>PROPERTY</label><value>${projectName}</value></div>
                           </div>
                           <table class="items-table">
                             <thead>
@@ -5432,7 +5435,7 @@
         "edit-project": {
           title: "Edit Project",
           body: (projectId) => {
-            const p = DB.projects.find(
+            const p = DB.properties.find(
               (x) => x._id === projectId || x.id === projectId,
             );
             return `<div class="form-grid">
@@ -5487,7 +5490,7 @@
         "edit-task": {
           title: "Edit Task",
           body: (projectId, taskId) => {
-            const p = DB.projects.find(
+            const p = DB.properties.find(
               (x) => x._id === projectId || x.id === projectId,
             );
             const t = p
@@ -5513,7 +5516,7 @@
             apiPut(`tasks/${taskId}`, data).then(() => {
               closeModal();
               loadAllData().then(() => {
-                const project = DB.projects.find(
+                const project = DB.properties.find(
                   (x) => x._id === projectId || x.id === projectId,
                 );
                 if (project && project.tasks && project.tasks.length > 0) {
@@ -5591,8 +5594,8 @@
           title: "New Procurement Request",
           body: () => {
             const projectOptions =
-              DB.projects.length > 0
-                ? DB.projects
+              DB.properties.length > 0
+                ? DB.properties
                     .map(
                       (p) =>
                         '<option value="' +
@@ -5603,7 +5606,7 @@
                     )
                     .join("")
                 : '<option value="">No projects available</option>';
-            return `<div class="form-grid"><div class="form-group form-full"><label>Item Description *</label><input id="proc-item" placeholder="Describe the item or service" /></div><div class="form-group"><label>Vendor *</label><input id="proc-vendor" placeholder="Supplier name" /></div><div class="form-group"><label>Category</label><select id="proc-cat"><option>Materials</option><option>Equipment</option><option>Electrical</option><option>Safety</option><option>Facade</option><option>Other</option></select></div><div class="form-group"><label>Amount (₦) *</label><input id="proc-amount" type="number" placeholder="0" /></div><div class="form-group"><label>Project</label><select id="proc-project">${projectOptions}</select></div><div class="form-group"><label>Urgency</label><select id="proc-urgency"><option>Normal</option><option>High</option><option>Urgent</option></select></div><div class="form-group form-full"><label>Justification</label><textarea id="proc-just" rows="3" placeholder="Why is this needed?"></textarea></div></div>`;
+            return `<div class="form-grid"><div class="form-group form-full"><label>Item Description *</label><input id="proc-item" placeholder="Describe the item or service" /></div><div class="form-group"><label>Vendor *</label><input id="proc-vendor" placeholder="Supplier name" /></div><div class="form-group"><label>Category</label><select id="proc-cat"><option>Materials</option><option>Equipment</option><option>Electrical</option><option>Safety</option><option>Facade</option><option>Other</option></select></div><div class="form-group"><label>Amount (₦) *</label><input id="proc-amount" type="number" placeholder="0" /></div><div class="form-group"><label>PROPERTY</label><select id="proc-project">${projectOptions}</select></div><div class="form-group"><label>Urgency</label><select id="proc-urgency"><option>Normal</option><option>High</option><option>Urgent</option></select></div><div class="form-group form-full"><label>Justification</label><textarea id="proc-just" rows="3" placeholder="Why is this needed?"></textarea></div></div>`;
           },
           save: "Submit Request",
           action: () => {
@@ -5686,8 +5689,8 @@
           title: "Create Invoice",
           body: () => {
             const projectOptions =
-              DB.projects.length > 0
-                ? DB.projects
+              DB.properties.length > 0
+                ? DB.properties
                     .map(
                       (p) =>
                         '<option value="' +
@@ -5713,7 +5716,7 @@
                     )
                     .join("")
                 : '<option value="">No bank accounts</option>';
-            return `<div class="form-grid"><div class="form-group"><label>Project</label><select id="inv-project">${projectOptions}</select></div><div class="form-group"><label>Client</label><input id="inv-client" placeholder="Client name" /></div><div class="form-group"><label>Due Date</label><input id="inv-due" type="date" /></div><div class="form-group"><label>Bank Account</label><select id="inv-bank">${bankOptions}</select></div><div class="form-group form-full"><label>Invoice Items</label><div id="invoice-items-container"><div class="invoice-item-row"><input placeholder="Description" /><input type="number" placeholder="Qty" value="1" /><input type="number" placeholder="Rate (₦)" /><input type="number" placeholder="Amount" readonly /><button class="btn-remove-item" onclick="removeInvoiceItem(this)" title="Remove">-</button></div></div><button class="btn-sm btn-sm-outline" onclick="addInvoiceItem()" style="margin-top:8px"><i data-lucide="plus" style="width:12px;height:12px"></i> Add Item</button></div><div class="form-group form-full"><label>Notes</label><textarea id="inv-notes" rows="2" placeholder="Payment terms, references..."></textarea></div></div><div class="invoice-item-total"><span>Total:</span> <span id="invoice-total-display">₦0.00</span></div>`;
+            return `<div class="form-grid"><div class="form-group"><label>PROPERTY</label><select id="inv-project">${projectOptions}</select></div><div class="form-group"><label>Client</label><input id="inv-client" placeholder="Client name" /></div><div class="form-group"><label>Due Date</label><input id="inv-due" type="date" /></div><div class="form-group"><label>Bank Account</label><select id="inv-bank">${bankOptions}</select></div><div class="form-group form-full"><label>Invoice Items</label><div id="invoice-items-container"><div class="invoice-item-row"><input placeholder="Description" /><input type="number" placeholder="Qty" value="1" /><input type="number" placeholder="Rate (₦)" /><input type="number" placeholder="Amount" readonly /><button class="btn-remove-item" onclick="removeInvoiceItem(this)" title="Remove">-</button></div></div><button class="btn-sm btn-sm-outline" onclick="addInvoiceItem()" style="margin-top:8px"><i data-lucide="plus" style="width:12px;height:12px"></i> Add Item</button></div><div class="form-group form-full"><label>Notes</label><textarea id="inv-notes" rows="2" placeholder="Payment terms, references..."></textarea></div></div><div class="invoice-item-total"><span>Total:</span> <span id="invoice-total-display">₦0.00</span></div>`;
           },
           save: "Issue Invoice",
           action: () => {
@@ -5779,8 +5782,8 @@
             if (!inv) return "<p>Invoice not found</p>";
 
             const projectOptions =
-              DB.projects.length > 0
-                ? DB.projects
+              DB.properties.length > 0
+                ? DB.properties
                     .map(
                       (p) =>
                         '<option value="' +
@@ -5838,7 +5841,7 @@
                                 </select>
                               </div>
                               <div class="form-group"><label>Invoice #</label><input id="edit-inv-number" value="${(inv.invoiceNumber || inv._id || "").replace(/"/g, "&quot;")}" placeholder="Invoice number" /></div>
-                              <div class="form-group"><label>Project</label><select id="edit-inv-project">${projectOptions}</select></div>
+                              <div class="form-group"><label>PROPERTY</label><select id="edit-inv-project">${projectOptions}</select></div>
                               <div class="form-group"><label>Client *</label><input id="edit-inv-client" value="${(inv.client || "").replace(/"/g, "&quot;")}" placeholder="Client name" /></div>
                               <div class="form-group"><label>Due Date</label><input id="edit-inv-due" type="date" value="${inv.dueDate ? new Date(inv.dueDate).toISOString().split("T")[0] : ""}" /></div>
                               <div class="form-group"><label>Bank Account</label><select id="edit-inv-bank">${bankOptions}</select></div>
