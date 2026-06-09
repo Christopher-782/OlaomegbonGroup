@@ -1797,12 +1797,14 @@
           canCreateTask: true,
           canEditTask: true,
           canDeleteTask: true,
+          canCreateProcurement: true,
           canApproveProcurement: true,
           canCreateInvoice: true,
           canViewRevenue: true,
           canViewBudget: true,
           canViewOutstanding: true,
           canViewProcurementValue: true,
+          canViewProcurementReport: true,
           canViewInvoiceAmounts: true,
         },
         Admin: {
@@ -1825,12 +1827,14 @@
           canCreateTask: true,
           canEditTask: true,
           canDeleteTask: true,
+          canCreateProcurement: true,
           canApproveProcurement: true,
           canCreateInvoice: true,
           canViewRevenue: true,
           canViewBudget: true,
           canViewOutstanding: true,
           canViewProcurementValue: true,
+          canViewProcurementReport: true,
           canViewInvoiceAmounts: true,
         },
         Manager: {
@@ -1849,22 +1853,26 @@
           canCreateTask: true,
           canEditTask: true,
           canDeleteTask: false,
+          canCreateProcurement: false,
           canApproveProcurement: false,
           canCreateInvoice: false,
           canViewRevenue: false,
           canViewBudget: true,
           canViewOutstanding: false,
           canViewProcurementValue: false,
+          canViewProcurementReport: false,
           canViewInvoiceAmounts: false,
         },
         Accountant: {
           pages: [
             "procurement",
+            "printable-procurement",
             "invoices",
             "log-transactions",
             "record-expenses",
             "generate-reports",
             "companies",
+            "monthly-report",
             "maintenance",
           ],
           canCreateProject: false,
@@ -1872,12 +1880,14 @@
           canCreateTask: false,
           canEditTask: false,
           canDeleteTask: false,
-          canApproveProcurement: false,
+          canCreateProcurement: true,
+          canApproveProcurement: true,
           canCreateInvoice: true,
           canViewRevenue: true,
-          canViewBudget: false,
+          canViewBudget: true,
           canViewOutstanding: true,
           canViewProcurementValue: true,
+          canViewProcurementReport: true,
           canViewInvoiceAmounts: true,
         },
         "HR Officer": {
@@ -1887,12 +1897,14 @@
           canCreateTask: false,
           canEditTask: false,
           canDeleteTask: false,
+          canCreateProcurement: false,
           canApproveProcurement: false,
           canCreateInvoice: false,
           canViewRevenue: false,
           canViewBudget: false,
           canViewOutstanding: false,
           canViewProcurementValue: false,
+          canViewProcurementReport: false,
           canViewInvoiceAmounts: false,
         },
         Procurement: {
@@ -1902,12 +1914,14 @@
           canCreateTask: false,
           canEditTask: false,
           canDeleteTask: false,
+          canCreateProcurement: true,
           canApproveProcurement: false,
           canCreateInvoice: false,
           canViewRevenue: false,
           canViewBudget: false,
           canViewOutstanding: false,
           canViewProcurementValue: true,
+          canViewProcurementReport: false,
           canViewInvoiceAmounts: false,
         },
         Staff: {
@@ -1917,12 +1931,14 @@
           canCreateTask: false,
           canEditTask: false,
           canDeleteTask: false,
+          canCreateProcurement: false,
           canApproveProcurement: false,
           canCreateInvoice: false,
           canViewRevenue: false,
           canViewBudget: false,
           canViewOutstanding: false,
           canViewProcurementValue: false,
+          canViewProcurementReport: false,
           canViewInvoiceAmounts: false,
         },
       };
@@ -1941,7 +1957,14 @@
         return ROLE_CONFIG[roleKey];
       }
       function canAccessPage(page) {
-        return getPermissions().pages.includes(page);
+        const permissions = getPermissions();
+        if (page === "printable-procurement") {
+          return (
+            permissions.pages.includes(page) &&
+            permissions.canViewProcurementReport === true
+          );
+        }
+        return permissions.pages.includes(page);
       }
       function hasPermission(perm) {
         return getPermissions()[perm] === true;
@@ -2756,6 +2779,9 @@
         },
 
         async "printable-procurement"() {
+          if (!hasPermission("canViewProcurementReport")) {
+            return `<div class="card"><div class="card-body"><div class="empty-state"><i data-lucide="lock"></i><span>You do not have permission to access the Procurement Report.</span></div></div></div>`;
+          }
           await loadAllData();
           const projectOptions =
             DB.properties.length > 0
@@ -3136,7 +3162,7 @@
             showBtn = true;
           if (
             m.modal === "new-procurement" &&
-            hasPermission("canApproveProcurement")
+            hasPermission("canCreateProcurement")
           )
             showBtn = true;
           if (m.modal === "new-invoice" && hasPermission("canCreateInvoice"))
@@ -3258,7 +3284,7 @@
           return;
         if (
           modal === "new-procurement" &&
-          !hasPermission("canApproveProcurement")
+          !hasPermission("canCreateProcurement")
         )
           return;
         if (modal === "new-invoice" && !hasPermission("canCreateInvoice"))
@@ -3712,6 +3738,10 @@
 
       // ==================== PROCUREMENT ACTIONS ====================
       window.quickApprove = (id) => {
+        if (!hasPermission("canApproveProcurement")) {
+          alert("You do not have permission to approve procurement requests.");
+          return;
+        }
         const r = DB.procurement.find((p) => p._id === id || p.id === id);
         if (
           r &&
@@ -3739,6 +3769,10 @@
       };
 
       window.approveProcurement = (id) => {
+        if (!hasPermission("canApproveProcurement")) {
+          alert("You do not have permission to approve procurement requests.");
+          return;
+        }
         const req = DB.procurement.find((p) => p._id === id || p.id === id);
         if (!req) return;
         apiPut(`procurement/${id}/approve`, {})
@@ -3769,6 +3803,10 @@
       };
 
       window.rejectProcurement = (id) => {
+        if (!hasPermission("canApproveProcurement")) {
+          alert("You do not have permission to reject procurement requests.");
+          return;
+        }
         if (confirm("Reject this request?"))
           alert(
             "Reject endpoint not available on backend. Add a PUT /api/procurement/:id/reject route.",
@@ -3984,6 +4022,7 @@
 
       // ==================== PRINTABLE PROCUREMENT REPORT ====================
       window.updatePrintableProcurement = () => {
+        if (!hasPermission("canViewProcurementReport")) return;
         const projectId = document.getElementById("proc-report-project")?.value;
         if (projectId === undefined) return;
         const filtered = projectId
@@ -4040,6 +4079,10 @@
       };
 
       window.printProcurementReport = () => {
+        if (!hasPermission("canViewProcurementReport")) {
+          alert("You do not have permission to print the Procurement Report.");
+          return;
+        }
         const projectId = document.getElementById("proc-report-project").value;
         const filtered = projectId
           ? DB.procurement.filter(
@@ -4330,6 +4373,10 @@
       };
 
       window.exportProcurementCSV = () => {
+        if (!hasPermission("canViewProcurementReport")) {
+          alert("You do not have permission to export the Procurement Report.");
+          return;
+        }
         const projectId = document.getElementById("proc-report-project").value;
         const filtered = projectId
           ? DB.procurement.filter(
@@ -5610,6 +5657,12 @@
           },
           save: "Submit Request",
           action: () => {
+            if (!hasPermission("canCreateProcurement")) {
+              alert(
+                "You do not have permission to create procurement requests.",
+              );
+              return;
+            }
             const item = document.getElementById("proc-item").value.trim();
             const vendor = document.getElementById("proc-vendor").value.trim();
             const amount =
