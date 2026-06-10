@@ -1,5 +1,4 @@
 const mongoose = require("mongoose");
-
 const invoiceSchema = new mongoose.Schema(
   {
     property_Id: {
@@ -11,28 +10,28 @@ const invoiceSchema = new mongoose.Schema(
       type: String,
       unique: true,
     },
-
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
-
     project: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "ConstructionProject",
     },
-
     projectName: {
       type: String,
       trim: true,
     },
-
     client: {
       type: String,
       required: true,
       trim: true,
     },
-
+    subject: {
+      type: String,
+      enum: ["Maintenance", "On-going Construction"],
+      default: "Maintenance",
+    },
     items: [
       {
         description: String,
@@ -47,31 +46,27 @@ const invoiceSchema = new mongoose.Schema(
         amount: Number,
       },
     ],
-
     totalAmount: {
       type: Number,
       required: true,
     },
-
     status: {
       type: String,
       enum: ["paid", "unpaid", "pending"],
       default: "pending",
     },
-
     dueDate: Date,
-
     issueDate: {
       type: Date,
       default: Date.now,
     },
-
     notes: String,
-
-    bankAccount: {
+    bankInformation: {
       bankName: String,
       accountName: String,
       accountNumber: String,
+      branch: String,
+      swiftCode: String,
     },
   },
   {

@@ -2479,7 +2479,7 @@
                           </div>
                           <div class="card">
                             <div class="card-head"><h3>Invoice Register</h3>${hasPermission("canCreateInvoice") ? `<button class="btn-primary" onclick="openModal('new-invoice')" style="font-size:12px;padding:7px 14px"><i data-lucide="plus" style="width:13px;height:13px"></i> New Invoice</button>` : ""}</div>
-                            <div class="card-table-wrap"><table class="tbl"><thead><tr><th>Invoice #</th><th>Project</th><th>Client</th><th>Amount</th><th>Status</th><th>Issued</th><th>Due</th><th></th></tr></thead>
+                            <div class="card-table-wrap"><table class="tbl"><thead><tr><th>Invoice #</th><th>Subject</th><th>Project</th><th>Client</th><th>Amount</th><th>Status</th><th>Issued</th><th>Due</th><th></th></tr></thead>
                             <tbody>${
                               DB.invoices.length > 0
                                 ? DB.invoices
@@ -2500,10 +2500,10 @@
                                             ? p.name
                                             : inv.project || "-";
                                         })();
-                                      return `<tr><td><strong style="color:var(--brand-mid)">${invNumber}</strong></td><td>${projectName}</td><td>${inv.client || "-"}</td><td class="inv-amount">${hasPermission("canViewInvoiceAmounts") ? fmt.currency(inv.totalAmount) : "[Restricted]"}</td><td><span class="pill ${fmt.statusClass[inv.status] || "pill-gray"}">${inv.status}</span>${hasPermission("canCreateInvoice") && inv.status !== "paid" ? ` <button class="btn-sm btn-sm-success" onclick="quickMarkPaid('${inv._id || inv.id}')" style="padding:2px 8px;font-size:10px;margin-left:4px">Mark Paid</button>` : ""}</td><td>${fmt.date(inv.issueDate)}</td><td>${fmt.date(inv.dueDate)}</td><td><button class="btn-sm btn-sm-outline" onclick="viewInvoice('${inv._id || inv.id}')">View</button>${hasPermission("canCreateInvoice") ? `<button class="btn-sm btn-sm-success" onclick="openModal('edit-invoice','${inv._id || inv.id}')" style="margin-left:4px">Edit</button>` : ""}<button class="btn-sm btn-sm-print" onclick="printInvoice('${inv._id || inv.id}')" style="margin-left:4px"><i data-lucide="printer" style="width:12px;height:12px"></i></button></td></tr>`;
+                                      return `<tr><td><strong style="color:var(--brand-mid)">${invNumber}</strong></td><td>${inv.subject || "Maintenance"}</td><td>${projectName}</td><td>${inv.client || "-"}</td><td class="inv-amount">${hasPermission("canViewInvoiceAmounts") ? fmt.currency(inv.totalAmount) : "[Restricted]"}</td><td><span class="pill ${fmt.statusClass[inv.status] || "pill-gray"}">${inv.status}</span>${hasPermission("canCreateInvoice") && inv.status !== "paid" ? ` <button class="btn-sm btn-sm-success" onclick="quickMarkPaid('${inv._id || inv.id}')" style="padding:2px 8px;font-size:10px;margin-left:4px">Mark Paid</button>` : ""}</td><td>${fmt.date(inv.issueDate)}</td><td>${fmt.date(inv.dueDate)}</td><td><button class="btn-sm btn-sm-outline" onclick="viewInvoice('${inv._id || inv.id}')">View</button>${hasPermission("canCreateInvoice") ? `<button class="btn-sm btn-sm-success" onclick="openModal('edit-invoice','${inv._id || inv.id}')" style="margin-left:4px">Edit</button>` : ""}<button class="btn-sm btn-sm-print" onclick="printInvoice('${inv._id || inv.id}')" style="margin-left:4px"><i data-lucide="printer" style="width:12px;height:12px"></i></button></td></tr>`;
                                     })
                                     .join("")
-                                : '<tr><td colspan="8" style="text-align:center;color:var(--muted)">No invoices</td></tr>'
+                                : '<tr><td colspan="9" style="text-align:center;color:var(--muted)">No invoices</td></tr>'
                             }</tbody></table></div></div>`;
         },
 
@@ -5094,15 +5094,15 @@
           )
           .join("");
 
-        const bankInfo = inv.bankAccount || {};
+        const bankInfo = inv.bankInformation || inv.bankAccount || {};
         const bankHtml = bankInfo.bankName
           ? `
                             <div style="margin-top:14px;padding:12px;background:var(--surface2);border-radius:var(--rad);border:1px solid var(--border)">
                               <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-weight:600">Bank Account Details</div>
                               <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                                <div><div style="font-size:11px;color:var(--muted)">Bank Name</div><div style="font-size:13px;font-weight:500">${bankInfo.bankName || "-"}</div></div>
+                                <div><div style="font-size:11px;color:var(--muted)">Bank Name</div><div style="font-size:13px;font-weight:500">${bankInfo.bankName || bankInfo.name || "-"}</div></div>
                                 <div><div style="font-size:11px;color:var(--muted)">Account Name</div><div style="font-size:13px;font-weight:500">${bankInfo.accountName || "-"}</div></div>
-                                <div><div style="font-size:11px;color:var(--muted)">Account Number</div><div style="font-size:13px;font-weight:500">${bankInfo.accountNumber || "-"}</div></div>
+                                <div><div style="font-size:11px;color:var(--muted)">Account Number</div><div style="font-size:13px;font-weight:500">${bankInfo.accountNumber || bankInfo.account || "-"}</div></div><div><div style="font-size:11px;color:var(--muted)">Branch</div><div style="font-size:13px;font-weight:500">${bankInfo.branch || "-"}</div></div>
                               </div>
                             </div>
                           `
@@ -5116,6 +5116,7 @@
                               <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Project</div><div style="font-size:13px;font-weight:500">${projectName}</div></div>
                               <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Issue Date</div><div style="font-size:13px;font-weight:500">${fmt.date(inv.issueDate)}</div></div>
                               <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Due Date</div><div style="font-size:13px;font-weight:500">${fmt.date(inv.dueDate)}</div></div>
+                              <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Subject</div><div style="font-size:13px;font-weight:500">${inv.subject || "Maintenance"}</div></div>
                             </div>
                             <div style="margin-top:14px">
                               <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-weight:600">Invoice Items</div>
@@ -5171,15 +5172,15 @@
                   `,
           )
           .join("");
-        const bankInfo = inv.bankAccount || {};
+        const bankInfo = inv.bankInformation || inv.bankAccount || {};
         const bankHtml = bankInfo.bankName
           ? `
                             <div style="margin-top:16px;padding:10px;background:#f8f9fb;border:1px solid #e5e7eb;border-radius:6px">
                               <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600">Bank Account Details</div>
                               <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-                                <div><div style="font-size:9px;color:#6b7280">Bank Name</div><div style="font-size:11px;font-weight:500">${bankInfo.bankName || "-"}</div></div>
+                                <div><div style="font-size:9px;color:#6b7280">Bank Name</div><div style="font-size:11px;font-weight:500">${bankInfo.bankName || bankInfo.name || "-"}</div></div>
                                 <div><div style="font-size:9px;color:#6b7280">Account Name</div><div style="font-size:11px;font-weight:500">${bankInfo.accountName || "-"}</div></div>
-                                <div><div style="font-size:9px;color:#6b7280">Account Number</div><div style="font-size:11px;font-weight:500">${bankInfo.accountNumber || "-"}</div></div>
+                                <div><div style="font-size:9px;color:#6b7280">Account Number</div><div style="font-size:11px;font-weight:500">${bankInfo.accountNumber || bankInfo.account || "-"}</div></div><div><div style="font-size:9px;color:#6b7280">Branch</div><div style="font-size:11px;font-weight:500">${bankInfo.branch || "-"}</div></div>
                               </div>
                             </div>
                           `
@@ -5227,11 +5228,12 @@
                               <span class="status-badge status-${inv.status || "pending"}">${(inv.status || "PENDING").toUpperCase()}</span>
                               <p><strong>Ref:</strong> ${invNumber}</p>
                               <p><strong>Date:</strong> ${new Date(inv.issueDate || Date.now()).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p>
-                              <p><strong>Due:</strong> ${inv.dueDate ? new Date(inv.dueDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "-"}</p>
+                              <p><strong>Due:</strong> ${inv.dueDate ? new Date(inv.dueDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : "-"}</p><p><strong>Subject:</strong> ${inv.subject || "Maintenance"}</p>
                             </div>
                           </div>
                           <div class="info-grid">
                             <div class="info-item"><label>Client</label><value>${inv.client || "-"}</value></div>
+                            <div class="info-item"><label>Subject</label><value>${inv.subject || "Maintenance"}</value></div>
                             <div class="info-item"><label>PROPERTY</label><value>${projectName}</value></div>
                           </div>
                           <table class="items-table">
@@ -5769,7 +5771,19 @@
                     )
                     .join("")
                 : '<option value="">No bank accounts</option>';
-            return `<div class="form-grid"><div class="form-group"><label>PROPERTY</label><select id="inv-project">${projectOptions}</select></div><div class="form-group"><label>Client</label><input id="inv-client" placeholder="Client name" /></div><div class="form-group"><label>Due Date</label><input id="inv-due" type="date" /></div><div class="form-group"><label>Bank Account</label><select id="inv-bank">${bankOptions}</select></div><div class="form-group form-full"><label>Invoice Items</label><div id="invoice-items-container"><div class="invoice-item-row"><input placeholder="Description" /><input type="number" placeholder="Qty" value="1" /><input type="number" placeholder="Rate (₦)" /><input type="number" placeholder="Amount" readonly /><button class="btn-remove-item" onclick="removeInvoiceItem(this)" title="Remove">-</button></div></div><button class="btn-sm btn-sm-outline" onclick="addInvoiceItem()" style="margin-top:8px"><i data-lucide="plus" style="width:12px;height:12px"></i> Add Item</button></div><div class="form-group form-full"><label>Notes</label><textarea id="inv-notes" rows="2" placeholder="Payment terms, references..."></textarea></div></div><div class="invoice-item-total"><span>Total:</span> <span id="invoice-total-display">₦0.00</span></div>`;
+            return `<div class="form-grid">
+              <div class="form-group"><label>Subject *</label><select id="inv-subject"><option value="Maintenance">Maintenance</option><option value="On-going Construction">On-going Construction</option></select></div>
+              <div class="form-group"><label>PROPERTY</label><select id="inv-project">${projectOptions}</select></div>
+              <div class="form-group"><label>Client</label><input id="inv-client" placeholder="Client name" /></div>
+              <div class="form-group"><label>Due Date</label><input id="inv-due" type="date" /></div>
+              <div class="form-group form-full"><label>Saved Bank Account</label><select id="inv-bank">${bankOptions}</select></div>
+              <div class="form-group"><label>Bank Name</label><input id="inv-bank-name" placeholder="e.g. First Bank" /></div>
+              <div class="form-group"><label>Account Name</label><input id="inv-account-name" placeholder="Account name" /></div>
+              <div class="form-group"><label>Account Number</label><input id="inv-account-number" placeholder="Account number" /></div>
+              <div class="form-group"><label>Branch</label><input id="inv-bank-branch" placeholder="Optional" /></div>
+              <div class="form-group form-full"><label>Invoice Items</label><div id="invoice-items-container"><div class="invoice-item-row"><input placeholder="Description" /><input type="number" placeholder="Qty" value="1" /><input type="number" placeholder="Rate (₦)" /><input type="number" placeholder="Amount" readonly /><button class="btn-remove-item" onclick="removeInvoiceItem(this)" title="Remove">-</button></div></div><button class="btn-sm btn-sm-outline" onclick="addInvoiceItem()" style="margin-top:8px"><i data-lucide="plus" style="width:12px;height:12px"></i> Add Item</button></div>
+              <div class="form-group form-full"><label>Notes</label><textarea id="inv-notes" rows="2" placeholder="Payment terms, references..."></textarea></div>
+            </div><div class="invoice-item-total"><span>Total:</span> <span id="invoice-total-display">₦0.00</span></div>`;
           },
           save: "Issue Invoice",
           action: () => {
@@ -5801,22 +5815,47 @@
             const bankIdx =
               parseInt(document.getElementById("inv-bank").value) || 0;
 
+            const selectedProject = document.getElementById("inv-project");
+            const projectId = selectedProject.value;
+            const projectName =
+              selectedProject.options[selectedProject.selectedIndex]?.text ||
+              "";
+
+            const savedBank = DB.bankAccounts[bankIdx] || {};
+            const bankInformation = {
+              bankName:
+                document.getElementById("inv-bank-name").value ||
+                savedBank.bankName ||
+                savedBank.name ||
+                "",
+              accountName:
+                document.getElementById("inv-account-name").value ||
+                savedBank.accountName ||
+                "",
+              accountNumber:
+                document.getElementById("inv-account-number").value ||
+                savedBank.accountNumber ||
+                savedBank.account ||
+                "",
+              branch:
+                document.getElementById("inv-bank-branch").value ||
+                savedBank.branch ||
+                "",
+            };
+
             const data = {
-              project: document.getElementById("inv-project").value, // FIXED
+              subject: document.getElementById("inv-subject").value,
+              project: projectId,
+              projectName:
+                projectName !== "No projects available" ? projectName : "",
               client: document.getElementById("inv-client").value,
-
-              dueDate: document.getElementById("inv-due").value, // FIXED
-
+              dueDate: document.getElementById("inv-due").value,
               items,
-
-              totalAmount: total, // FIXED
-
-              bankAccount: DB.bankAccounts[bankIdx],
-
+              totalAmount: total,
+              bankInformation,
+              bankAccount: bankInformation,
               notes: document.getElementById("inv-notes").value,
-
-              status: "pending", // FIXED (was "sent")
-
+              status: "pending",
               issueDate: new Date().toISOString().split("T")[0],
             };
 
@@ -5894,10 +5933,15 @@
                                 </select>
                               </div>
                               <div class="form-group"><label>Invoice #</label><input id="edit-inv-number" value="${(inv.invoiceNumber || inv._id || "").replace(/"/g, "&quot;")}" placeholder="Invoice number" /></div>
+                              <div class="form-group"><label>Subject *</label><select id="edit-inv-subject"><option value="Maintenance" ${inv.subject === "Maintenance" || !inv.subject ? "selected" : ""}>Maintenance</option><option value="On-going Construction" ${inv.subject === "On-going Construction" ? "selected" : ""}>On-going Construction</option></select></div>
                               <div class="form-group"><label>PROPERTY</label><select id="edit-inv-project">${projectOptions}</select></div>
                               <div class="form-group"><label>Client *</label><input id="edit-inv-client" value="${(inv.client || "").replace(/"/g, "&quot;")}" placeholder="Client name" /></div>
                               <div class="form-group"><label>Due Date</label><input id="edit-inv-due" type="date" value="${inv.dueDate ? new Date(inv.dueDate).toISOString().split("T")[0] : ""}" /></div>
-                              <div class="form-group"><label>Bank Account</label><select id="edit-inv-bank">${bankOptions}</select></div>
+                              <div class="form-group"><label>Saved Bank Account</label><select id="edit-inv-bank">${bankOptions}</select></div>
+                              <div class="form-group"><label>Bank Name</label><input id="edit-inv-bank-name" value="${((inv.bankInformation || inv.bankAccount || {}).bankName || (inv.bankAccount || {}).name || "").replace(/"/g, "&quot;")}" placeholder="Bank name" /></div>
+                              <div class="form-group"><label>Account Name</label><input id="edit-inv-account-name" value="${((inv.bankInformation || inv.bankAccount || {}).accountName || "").replace(/"/g, "&quot;")}" placeholder="Account name" /></div>
+                              <div class="form-group"><label>Account Number</label><input id="edit-inv-account-number" value="${((inv.bankInformation || inv.bankAccount || {}).accountNumber || (inv.bankAccount || {}).account || "").replace(/"/g, "&quot;")}" placeholder="Account number" /></div>
+                              <div class="form-group"><label>Branch</label><input id="edit-inv-bank-branch" value="${((inv.bankInformation || inv.bankAccount || {}).branch || "").replace(/"/g, "&quot;")}" placeholder="Optional" /></div>
                               <div class="form-group form-full"><label>Invoice Items</label>
                                 <div id="edit-invoice-items-container">${itemsHtml}</div>
                                 <button class="btn-sm btn-sm-outline" onclick="addEditInvoiceItem()" style="margin-top:8px"><i data-lucide="plus" style="width:12px;height:12px"></i> Add Item</button>
@@ -5940,8 +5984,31 @@
               selectedProject.options[selectedProject.selectedIndex]?.text ||
               "";
 
+            const savedBank = DB.bankAccounts[bankIdx] || {};
+            const bankInformation = {
+              bankName:
+                document.getElementById("edit-inv-bank-name").value ||
+                savedBank.bankName ||
+                savedBank.name ||
+                "",
+              accountName:
+                document.getElementById("edit-inv-account-name").value ||
+                savedBank.accountName ||
+                "",
+              accountNumber:
+                document.getElementById("edit-inv-account-number").value ||
+                savedBank.accountNumber ||
+                savedBank.account ||
+                "",
+              branch:
+                document.getElementById("edit-inv-bank-branch").value ||
+                savedBank.branch ||
+                "",
+            };
+
             const data = {
               invoiceNumber: document.getElementById("edit-inv-number").value,
+              subject: document.getElementById("edit-inv-subject").value,
               status: document.getElementById("edit-inv-status").value,
               project: projectId,
               projectName:
@@ -5950,8 +6017,8 @@
               dueDate: document.getElementById("edit-inv-due").value,
               items,
               totalAmount: total,
-              bankAccount:
-                DB.bankAccounts[bankIdx] || (inv ? inv.bankAccount : null),
+              bankInformation,
+              bankAccount: bankInformation,
               notes: document.getElementById("edit-inv-notes").value,
             };
 
@@ -6129,7 +6196,8 @@
           if (typeof def.body === "function") {
             if (type === "new-task" || type === "edit-task")
               body = def.body(param1, param2);
-            else if (type === "edit-project") body = def.body(param1);
+            else if (type === "edit-project" || type === "edit-invoice")
+              body = def.body(param1);
             else body = def.body();
           } else {
             body = def.body;
@@ -6152,6 +6220,15 @@
             .forEach((input) =>
               input.addEventListener("input", calculateInvoiceTotal),
             );
+        if (type === "edit-invoice")
+          document
+            .querySelectorAll(
+              "#edit-invoice-items-container .invoice-item-row input",
+            )
+            .forEach((input, idx) => {
+              if (idx % 4 < 3)
+                input.addEventListener("input", calculateEditInvoiceTotal);
+            });
       }
 
       window.saveModalAction = (type, param1, param2, param3) => {
