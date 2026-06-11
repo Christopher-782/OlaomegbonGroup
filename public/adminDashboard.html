@@ -82,7 +82,7 @@
         background: var(--bg);
         color: var(--text);
         overflow: hidden;
-        font-size: 14px;
+        font-size: 15px;
       }
       button,
       input,
@@ -373,7 +373,7 @@
       }
       .topbar-left h1 {
         font-family: "Playfair Display", serif;
-        font-size: 19px;
+        font-size: 22px;
         color: var(--text);
       }
       .topbar-right {
@@ -413,11 +413,11 @@
         background: var(--brand-mid);
         color: #fff;
         border: none;
-        padding: 8px 18px;
+        padding: 9px 20px;
         border-radius: 8px;
         cursor: pointer;
-        font-weight: 500;
-        font-size: 13px;
+        font-weight: 600;
+        font-size: 14px;
         display: flex;
         align-items: center;
         gap: 6px;
@@ -477,7 +477,7 @@
         justify-content: space-between;
       }
       .kpi-label {
-        font-size: 11.5px;
+        font-size: 12.5px;
         color: var(--muted);
         font-weight: 500;
         text-transform: uppercase;
@@ -498,12 +498,12 @@
         height: 16px;
       }
       .kpi-val {
-        font-size: 26px;
-        font-weight: 600;
+        font-size: 30px;
+        font-weight: 700;
         color: var(--text);
       }
       .kpi-sub {
-        font-size: 12px;
+        font-size: 13px;
         color: var(--muted);
         display: flex;
         align-items: center;
@@ -542,7 +542,7 @@
         justify-content: space-between;
       }
       .card-head h3 {
-        font-size: 14px;
+        font-size: 16px;
         font-weight: 600;
         color: var(--text);
       }
@@ -561,19 +561,19 @@
         border-collapse: collapse;
       }
       .tbl th {
-        font-size: 11px;
+        font-size: 12px;
         color: var(--muted);
         text-transform: uppercase;
         letter-spacing: 0.6px;
-        font-weight: 600;
-        padding: 10px 14px;
+        font-weight: 700;
+        padding: 11px 15px;
         background: var(--surface2);
         text-align: left;
       }
       .tbl td {
-        padding: 13px 14px;
+        padding: 14px 15px;
         border-bottom: 1px solid var(--border);
-        font-size: 13px;
+        font-size: 14px;
         vertical-align: middle;
       }
       .tbl tr:last-child td {
@@ -615,15 +615,15 @@
         gap: 4px;
       }
       .project-detail-item label {
-        font-size: 10px;
+        font-size: 11px;
         color: var(--muted);
         text-transform: uppercase;
         letter-spacing: 0.5px;
         font-weight: 600;
       }
       .project-detail-item value {
-        font-size: 13px;
-        font-weight: 500;
+        font-size: 14.5px;
+        font-weight: 600;
         color: var(--text);
       }
       .project-detail-budget {
@@ -2052,6 +2052,212 @@
         },
       };
 
+      // ==================== PROJECT FINANCE HELPERS ====================
+      function safeText(value) {
+        return String(value ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;");
+      }
+
+      function safeAttr(value) {
+        return safeText(value).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+      }
+
+      function entityId(value) {
+        if (!value) return "";
+        if (typeof value === "object") {
+          return String(value._id || value.id || value.$oid || "");
+        }
+        return String(value);
+      }
+
+      function recordCompanyId(record) {
+        return entityId(
+          record?.companyId ||
+            record?.company ||
+            record?.company_id ||
+            record?.companyID ||
+            record?.companyName,
+        );
+      }
+
+      function matchesCompanyFilter(record, selectedCompanyId) {
+        if (!selectedCompanyId) return true;
+        return recordCompanyId(record) === String(selectedCompanyId);
+      }
+
+      function companyNameById(companyId) {
+        const id = entityId(companyId);
+        const company = (DB.companies || []).find(
+          (item) => entityId(item._id || item.id) === id,
+        );
+        return company ? company.name : "-";
+      }
+
+      function selectedCompanyLabel(selectId) {
+        const select = document.getElementById(selectId);
+        if (!select || !select.value) return "All Companies";
+        return select.options[select.selectedIndex]?.text || "Selected Company";
+      }
+
+      function dateInputValue(value) {
+        if (!value) return "";
+        const d = new Date(value);
+        if (Number.isNaN(d.getTime())) return String(value).split("T")[0];
+        return d.toISOString().split("T")[0];
+      }
+
+      function projectIdOf(project) {
+        return project ? project._id || project.id : "";
+      }
+
+      function findProjectById(projectId) {
+        return (DB.projects || []).find(
+          (p) => String(projectIdOf(p)) === String(projectId),
+        );
+      }
+
+      function procurementProjectId(item) {
+        if (!item) return "";
+        const rawProject =
+          item.projectId || item.project || item.project_id || "";
+        if (rawProject && typeof rawProject === "object") {
+          return rawProject._id || rawProject.id || "";
+        }
+        return rawProject;
+      }
+
+      function procurementAmount(item) {
+        return (
+          Number(item?.amount || item?.totalAmount || item?.cost || 0) || 0
+        );
+      }
+
+      function approvedProjectProcurements(projectId) {
+        return (DB.procurement || []).filter(
+          (item) =>
+            String(procurementProjectId(item)) === String(projectId) &&
+            String(item.status || "").toLowerCase() === "approved",
+        );
+      }
+
+      function projectProcurementTotal(projectId) {
+        return approvedProjectProcurements(projectId).reduce(
+          (sum, item) => sum + procurementAmount(item),
+          0,
+        );
+      }
+
+      function projectCalculatedIncome(project) {
+        const budget = Number(project?.budget) || 0;
+        return budget - projectProcurementTotal(projectIdOf(project));
+      }
+
+      function projectOptionsHtml(selectedId = "") {
+        return (DB.projects || []).length > 0
+          ? DB.projects
+              .map((p) => {
+                const id = projectIdOf(p);
+                const procurementTotal = projectProcurementTotal(id);
+                const available = (Number(p.budget) || 0) - procurementTotal;
+                return `<option value="${safeAttr(id)}" ${String(selectedId) === String(id) ? "selected" : ""}>${safeText(p.name || "Unnamed Project")} — ${fmt.currency(available)} available</option>`;
+              })
+              .join("")
+          : '<option value="">No projects available</option>';
+      }
+
+      function propertyIdOf(property) {
+        return property ? property._id || property.id : "";
+      }
+
+      function findPropertyById(propertyId) {
+        return (DB.properties || []).find(
+          (p) => String(propertyIdOf(p)) === String(propertyId),
+        );
+      }
+
+      function propertyOptionsHtml(selectedId = "", includeAll = false) {
+        const source =
+          (DB.properties || []).length > 0 ? DB.properties : DB.projects || [];
+        const options = source
+          .map((p) => {
+            const id = propertyIdOf(p) || projectIdOf(p);
+            const label = p.name || p.title || "Unnamed Property";
+            return `<option value="${safeAttr(id)}" ${String(selectedId) === String(id) ? "selected" : ""}>${safeText(label)}</option>`;
+          })
+          .join("");
+        const first = includeAll
+          ? '<option value="all">All Properties</option>'
+          : '<option value="">Select Property</option>';
+        return options
+          ? first + options
+          : includeAll
+            ? '<option value="all">All Properties</option>'
+            : '<option value="">No properties available</option>';
+      }
+
+      function invoicePropertyId(invoice) {
+        if (!invoice) return "";
+        const raw =
+          invoice.propertyId ||
+          invoice.property ||
+          invoice.projectId ||
+          invoice.project ||
+          "";
+        if (raw && typeof raw === "object") return raw._id || raw.id || "";
+        return raw;
+      }
+
+      function invoicePropertyName(invoice) {
+        if (!invoice) return "-";
+        const direct = invoice.propertyName || invoice.projectName || "";
+        if (direct) return direct;
+        const id = invoicePropertyId(invoice);
+        const prop = findPropertyById(id);
+        if (prop) return prop.name || prop.title || "-";
+        const project = findProjectById(id);
+        return project
+          ? project.name
+          : invoice.property || invoice.project || "-";
+      }
+
+      function invoiceMatchesProperty(invoice, propertyId) {
+        if (!propertyId || propertyId === "all") return true;
+        const id = String(invoicePropertyId(invoice));
+        const propName = String(invoicePropertyName(invoice)).toLowerCase();
+        const selectedProp = findPropertyById(propertyId);
+        const selectedProject = findProjectById(propertyId);
+        const selectedName = String(
+          (selectedProp || selectedProject || {}).name || "",
+        ).toLowerCase();
+        return (
+          id === String(propertyId) ||
+          (selectedName && propName === selectedName)
+        );
+      }
+
+      function linkedProjectPropertyName(record) {
+        const projectId = record?.projectId || record?.project || "";
+        const propertyId = record?.propertyId || record?.property || "";
+        const project = findProjectById(projectId);
+        const property = findPropertyById(propertyId);
+        if (project && property) return `${project.name} / ${property.name}`;
+        if (project) return project.name;
+        if (property) return property.name;
+        return record?.projectName || record?.propertyName || "-";
+      }
+
+      function projectAvailableBudget(projectId) {
+        const project = findProjectById(projectId);
+        if (!project) return 0;
+        return (
+          (Number(project.budget) || 0) - projectProcurementTotal(projectId)
+        );
+      }
+
+      let invoicePropertyFilter = "all";
+
       // ==================== API HELPERS ====================
       async function apiGet(endpoint) {
         try {
@@ -2124,7 +2330,7 @@
           apiGet("companies").catch(() => []),
           apiGet("employees").catch(() => []),
         ]);
-        DB.properties = projects || [];
+        DB.projects = projects || [];
         DB.procurement = procurement || [];
         DB.maintenance = maintenance || [];
         DB.invoices = invoices || [];
@@ -2134,7 +2340,20 @@
         DB.expenses = expenses || [];
         DB.companies = companies || [];
         DB.employees = employees || [];
-        DB.stats.projects = DB.properties.length;
+        DB.stats.projects = DB.projects.length;
+        DB.stats.projectBudget = DB.projects.reduce(
+          (a, p) => a + (Number(p.budget) || 0),
+          0,
+        );
+        DB.stats.projectProcurement = DB.projects.reduce(
+          (a, p) => a + projectProcurementTotal(projectIdOf(p)),
+          0,
+        );
+        DB.stats.projectSpent = DB.stats.projectProcurement;
+        DB.stats.projectIncome = DB.projects.reduce(
+          (a, p) => a + projectCalculatedIncome(p),
+          0,
+        );
         DB.stats.procurement = DB.procurement.filter(
           (p) => p.status === "pending",
         ).length;
@@ -2225,6 +2444,11 @@
                                     ${reimbursementKpi || ""}
                                     ${kpi("Open Maintenance", s.maintenance, "Active tickets", "wrench", "#fef3c7", "#d97706")}
                                   </div>
+                                  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)">
+                                    ${hasPermission("canViewBudget") ? kpi("Project Budget", fmt.currency(s.projectBudget || 0), "Total approved project budgets", "wallet", "#dbeafe", "#2563eb") : kpi("Project Budget", "[Restricted]", "Director only", "lock", "#f3f4f6", "#9ca3af")}
+                                    ${hasPermission("canViewProcurementValue") ? kpi("Approved Procurement", fmt.currency(s.projectProcurement || 0), "Deducted from project budgets", "shopping-cart", "#fee2e2", "#dc2626") : kpi("Approved Procurement", "[Restricted]", "Director only", "lock", "#f3f4f6", "#9ca3af")}
+                                    ${hasPermission("canViewRevenue") ? kpi("Calculated Income", fmt.currency(s.projectIncome || 0), "Budget minus approved procurement", "calculator", "#d1fae5", "#059669") : kpi("Calculated Income", "[Restricted]", "Director only", "lock", "#f3f4f6", "#9ca3af")}
+                                  </div>
                                   <div class="grid-3-1">
                                     <div class="card">
                                       <div class="card-head"><h3>Revenue vs Budget - 2025</h3><span>Jan - Dec</span></div>
@@ -2261,23 +2485,31 @@
                                       <div class="card-head"><h3>Project Budget Utilisation</h3><span>Active only</span></div>
                                       <div class="card-body">
                                         ${
-                                          DB.properties.filter(
+                                          DB.projects.filter(
                                             (p) =>
                                               p.status !== "Completed" &&
                                               p.status !== "Planning",
                                           ).length > 0
-                                            ? DB.properties
+                                            ? DB.projects
                                                 .filter(
                                                   (p) =>
                                                     p.status !== "Completed" &&
                                                     p.status !== "Planning",
                                                 )
                                                 .map((p) => {
+                                                  const approvedProcurement =
+                                                    projectProcurementTotal(
+                                                      projectIdOf(p),
+                                                    );
                                                   const pct = fmt.pct(
-                                                    p.spent,
-                                                    p.budget,
+                                                    approvedProcurement,
+                                                    Number(p.budget) || 0,
                                                   );
-                                                  return `<div style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:13px;font-weight:500">${p.name}</span><span style="font-size:12px;color:var(--muted)">${hasPermission("canViewBudget") ? fmt.currency(p.spent) + " / " + fmt.currency(p.budget) : "[Restricted]"}</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${pct > 85 ? "var(--danger)" : pct > 60 ? "var(--warning)" : "var(--brand-mid)"}"></div></div><div style="text-align:right;font-size:11px;color:var(--muted);margin-top:4px">${pct}% used</div></div>`;
+                                                  const pctWidth = Math.min(
+                                                    Math.max(pct, 0),
+                                                    100,
+                                                  );
+                                                  return `<div style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="font-size:14px;font-weight:600">${safeText(p.name || "Unnamed Project")}</span><span style="font-size:13px;color:var(--muted)">${hasPermission("canViewBudget") ? fmt.currency(approvedProcurement) + " / " + fmt.currency(p.budget) : "[Restricted]"}</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pctWidth}%;background:${pct > 85 ? "var(--danger)" : pct > 60 ? "var(--warning)" : "var(--brand-mid)"}"></div></div><div style="text-align:right;font-size:12px;color:var(--muted);margin-top:4px">${pct}% procurement used</div></div>`;
                                                 })
                                                 .join("")
                                             : '<div class="empty-state"><i data-lucide="folder-open"></i><span>No active projects</span></div>'
@@ -2316,7 +2548,7 @@
         async projects() {
           await loadAllData();
           return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><div style="display:flex;gap:8px">${["All", "Construction", "Design", "Planning", "Completed"].map((f, i) => `<button class="btn-sm btn-sm-outline" style="border-radius:20px;${i === 0 ? "border-color:var(--brand-mid);color:var(--brand-mid);" : ""}" onclick="filterProjects('${f}')">${f}</button>`).join("")}</div></div>
-                                  <div class="card"><div class="card-table-wrap"><table class="tbl"><thead><tr><th>Project</th><th>Client</th><th>Status</th><th>Phase</th><th>Budget Used</th><th>PM</th><th></th></tr></thead><tbody id="projects-tbody">${renderProjectRows(DB.properties)}</tbody></table></div></div>`;
+                                  <div class="card"><div class="card-table-wrap"><table class="tbl"><thead><tr><th>Project</th><th>Client</th><th>Status</th><th>Phase</th><th>Budget Used</th><th>PM</th><th></th></tr></thead><tbody id="projects-tbody">${renderProjectRows(DB.projects)}</tbody></table></div></div>`;
         },
 
         async procurement() {
@@ -2462,48 +2694,62 @@
         },
         async invoices() {
           await loadAllData();
-          const total = DB.invoices.reduce(
+          const allInvoices = DB.invoices || [];
+          const filteredInvoices = allInvoices.filter((inv) =>
+            invoiceMatchesProperty(inv, invoicePropertyFilter),
+          );
+          const total = filteredInvoices.reduce(
             (a, i) => a + (i.totalAmount || 0),
             0,
           );
-          const paid = DB.invoices
+          const paid = filteredInvoices
             .filter((i) => i.status === "paid")
             .reduce((a, i) => a + (i.totalAmount || 0), 0);
-          const outstanding = DB.invoices
+          const outstanding = filteredInvoices
             .filter((i) => i.status === "unpaid" || i.status === "pending")
             .reduce((a, i) => a + (i.totalAmount || 0), 0);
+          const filterLabel =
+            invoicePropertyFilter === "all"
+              ? "All properties"
+              : invoicePropertyName({ propertyId: invoicePropertyFilter });
           return `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px">
-                            ${kpi("Total Invoiced", hasPermission("canViewInvoiceAmounts") ? fmt.currency(total) : "[Restricted]", "All invoices", "file-text", "#ede9fe", "#7c3aed")}
+                            ${kpi("Total Invoiced", hasPermission("canViewInvoiceAmounts") ? fmt.currency(total) : "[Restricted]", filterLabel, "file-text", "#ede9fe", "#7c3aed")}
                             ${kpi("Collected", hasPermission("canViewInvoiceAmounts") ? fmt.currency(paid) : "[Restricted]", "Paid invoices", "check-circle", "#d1fae5", "#059669")}
                             ${kpi("Outstanding", hasPermission("canViewInvoiceAmounts") ? fmt.currency(outstanding) : "[Restricted]", "Requires follow-up", "alert-circle", "#fee2e2", "#dc2626")}
                           </div>
+                          <div class="card" style="margin-bottom:20px">
+                            <div class="card-head">
+                              <h3>Invoice Receipt Filter</h3>
+                              <span>${filteredInvoices.length} of ${allInvoices.length} invoice(s)</span>
+                            </div>
+                            <div class="card-body">
+                              <div class="form-grid" style="align-items:end">
+                                <div class="form-group">
+                                  <label>Filter by Property</label>
+                                  <select id="invoice-property-filter" onchange="filterInvoicesByProperty(this.value)">${propertyOptionsHtml(invoicePropertyFilter, true)}</select>
+                                </div>
+                                <div class="form-group">
+                                  <label>Generate Receipt</label>
+                                  <button class="btn-primary" onclick="printFilteredInvoiceReceipts()" style="justify-content:center"><i data-lucide="printer" style="width:14px;height:14px"></i> Print Filtered Receipt</button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
                           <div class="card">
                             <div class="card-head"><h3>Invoice Register</h3>${hasPermission("canCreateInvoice") ? `<button class="btn-primary" onclick="openModal('new-invoice')" style="font-size:12px;padding:7px 14px"><i data-lucide="plus" style="width:13px;height:13px"></i> New Invoice</button>` : ""}</div>
-                            <div class="card-table-wrap"><table class="tbl"><thead><tr><th>Invoice #</th><th>Subject</th><th>Project</th><th>Client</th><th>Amount</th><th>Status</th><th>Issued</th><th>Due</th><th></th></tr></thead>
+                            <div class="card-table-wrap"><table class="tbl"><thead><tr><th>Invoice #</th><th>Subject</th><th>Property</th><th>Client</th><th>Amount</th><th>Status</th><th>Issued</th><th>Due</th><th></th></tr></thead>
                             <tbody>${
-                              DB.invoices.length > 0
-                                ? DB.invoices
+                              filteredInvoices.length > 0
+                                ? filteredInvoices
                                     .map((inv) => {
-                                      // Use invoiceNumber if available, otherwise fallback to _id
                                       const invNumber =
                                         inv.invoiceNumber || inv._id || "N/A";
-                                      // Use projectName string or look up project
-                                      const projectName =
-                                        inv.projectName ||
-                                        (() => {
-                                          const p = DB.properties.find(
-                                            (x) =>
-                                              (x._id || x.id) ===
-                                              (inv.project || inv.project_Id),
-                                          );
-                                          return p
-                                            ? p.name
-                                            : inv.project || "-";
-                                        })();
-                                      return `<tr><td><strong style="color:var(--brand-mid)">${invNumber}</strong></td><td>${inv.subject || "Maintenance"}</td><td>${projectName}</td><td>${inv.client || "-"}</td><td class="inv-amount">${hasPermission("canViewInvoiceAmounts") ? fmt.currency(inv.totalAmount) : "[Restricted]"}</td><td><span class="pill ${fmt.statusClass[inv.status] || "pill-gray"}">${inv.status}</span>${hasPermission("canCreateInvoice") && inv.status !== "paid" ? ` <button class="btn-sm btn-sm-success" onclick="quickMarkPaid('${inv._id || inv.id}')" style="padding:2px 8px;font-size:10px;margin-left:4px">Mark Paid</button>` : ""}</td><td>${fmt.date(inv.issueDate)}</td><td>${fmt.date(inv.dueDate)}</td><td><button class="btn-sm btn-sm-outline" onclick="viewInvoice('${inv._id || inv.id}')">View</button>${hasPermission("canCreateInvoice") ? `<button class="btn-sm btn-sm-success" onclick="openModal('edit-invoice','${inv._id || inv.id}')" style="margin-left:4px">Edit</button>` : ""}<button class="btn-sm btn-sm-print" onclick="printInvoice('${inv._id || inv.id}')" style="margin-left:4px"><i data-lucide="printer" style="width:12px;height:12px"></i></button></td></tr>`;
+                                      const propertyName =
+                                        invoicePropertyName(inv);
+                                      return `<tr><td><strong style="color:var(--brand-mid)">${safeText(invNumber)}</strong></td><td>${safeText(inv.subject || "Maintenance")}</td><td>${safeText(propertyName)}</td><td>${safeText(inv.client || "-")}</td><td class="inv-amount">${hasPermission("canViewInvoiceAmounts") ? fmt.currency(inv.totalAmount) : "[Restricted]"}</td><td><span class="pill ${fmt.statusClass[inv.status] || "pill-gray"}">${safeText(inv.status || "pending")}</span>${hasPermission("canCreateInvoice") && inv.status !== "paid" ? ` <button class="btn-sm btn-sm-success" onclick="quickMarkPaid('${inv._id || inv.id}')" style="padding:2px 8px;font-size:10px;margin-left:4px">Mark Paid</button>` : ""}</td><td>${fmt.date(inv.issueDate)}</td><td>${fmt.date(inv.dueDate)}</td><td><button class="btn-sm btn-sm-outline" onclick="viewInvoice('${inv._id || inv.id}')">View</button>${hasPermission("canCreateInvoice") ? `<button class="btn-sm btn-sm-success" onclick="openModal('edit-invoice','${inv._id || inv.id}')" style="margin-left:4px">Edit</button>` : ""}<button class="btn-sm btn-sm-print" onclick="printInvoice('${inv._id || inv.id}')" style="margin-left:4px"><i data-lucide="printer" style="width:12px;height:12px"></i></button><button class="btn-sm btn-sm-success" onclick="printInvoiceReceipt('${inv._id || inv.id}')" style="margin-left:4px"><i data-lucide="receipt" style="width:12px;height:12px"></i></button></td></tr>`;
                                     })
                                     .join("")
-                                : '<tr><td colspan="9" style="text-align:center;color:var(--muted)">No invoices</td></tr>'
+                                : '<tr><td colspan="9" style="text-align:center;color:var(--muted)">No invoices for this property</td></tr>'
                             }</tbody></table></div></div>`;
         },
 
@@ -2512,47 +2758,45 @@
           const txns = DB.transactions || [];
           const totalIncome = txns
             .filter((t) => t.type === "income")
-            .reduce((a, t) => a + (t.amount || 0), 0);
+            .reduce((a, t) => a + (t.netAmount || t.amount || 0), 0);
           const totalReimbursements = txns
             .filter((t) => t.type === "reimbursement")
             .reduce((a, t) => a + (t.amount || 0), 0);
-          const totalExpense = txns
-            .filter((t) => t.type === "expense")
+          const reimbursementTransactions = txns
+            .filter((t) => t.type === "reimbursement-withdrawal")
             .reduce((a, t) => a + (t.amount || 0), 0);
           const totalCharges = txns
             .filter((t) => t.category === "Charges")
             .reduce((a, t) => a + (t.charges || 0), 0);
-          const reimbursementWithdrawals = txns
-            .filter((t) => t.type === "reimbursement-withdrawal")
-            .reduce((a, t) => a + (t.amount || 0), 0);
-          const netReimbursementPool =
-            totalReimbursements - reimbursementWithdrawals;
-          const net = totalIncome - totalExpense;
+          const reimbursementBalance =
+            totalReimbursements - reimbursementTransactions;
+
           return `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:20px">
-                                    ${kpi("Total Income", fmt.currency(totalIncome), "All credits", "arrow-down-circle", "#d1fae5", "#059669")}
-                                    ${kpi("Total Expenses", fmt.currency(totalExpense), "All debits", "arrow-up-circle", "#fee2e2", "#dc2626")}
-                                    ${kpi("Net Position", fmt.currency(net), net >= 0 ? "Positive" : "Negative", "activity", net >= 0 ? "#dbeafe" : "#fee2e2", net >= 0 ? "#2563eb" : "#dc2626")}
-                                    ${kpi("Charges Collected", fmt.currency(totalCharges), "Revenue from charges", "percent", "#fef3c7", "#d97706")}
-                                    ${kpi("Reimbursement Pool", fmt.currency(netReimbursementPool), `${fmt.currency(reimbursementWithdrawals)} withdrawn`, "refresh-cw", "#dbeafe", "#2563eb")}
+                                    ${kpi("Total Income", fmt.currency(totalIncome), "Client payments and revenue", "arrow-down-circle", "#d1fae5", "#059669")}
+                                    ${kpi("Reimbursement Received", fmt.currency(totalReimbursements), "Added to company pool", "refresh-cw", "#dbeafe", "#2563eb")}
+                                    ${kpi("Transactions Paid", fmt.currency(reimbursementTransactions), "Deducted from reimbursement", "arrow-up-circle", "#fee2e2", "#dc2626")}
+                                    ${kpi("Reimbursement Balance", fmt.currency(reimbursementBalance), reimbursementBalance >= 0 ? "Available company balance" : "Overdrawn", "wallet", reimbursementBalance >= 0 ? "#fef3c7" : "#fee2e2", reimbursementBalance >= 0 ? "#d97706" : "#dc2626")}
+                                    ${kpi("Charges Collected", fmt.currency(totalCharges), "Bank/transfer charges", "percent", "#f3f4f6", "#6b7280")}
                                   </div>
                                   <div class="card" style="margin-bottom:20px">
-                                    <div class="card-head"><h3>Log New Transaction</h3></div>
+                                    <div class="card-head"><h3>Log Income, Reimbursement and Transactions</h3><span>Income adds revenue, reimbursement adds to the company pool, and transactions deduct from that pool</span></div>
                                     <div class="card-body">
                                       <div class="form-grid">
                                         <div class="form-group"><label>Date *</label><input id="txn-date" type="date" value="${new Date().toISOString().split("T")[0]}" /></div>
-                                        <div class="form-group"><label>Type *</label><select id="txn-type" onchange="toggleChargesField()"><option value="income">Income (Revenue)</option><option value="expense">Expense (Debit)</option><option value="reimbursement">Reimbursement (Add to Pool)</option><option value="reimbursement-withdrawal">Reimbursement Withdrawal (From Pool)</option></select></div>
-                                        <div class="form-group form-full"><label>Description *</label><input id="txn-desc" placeholder="Transaction description" /></div>
+                                        <div class="form-group"><label>Entry Type *</label><select id="txn-type" onchange="toggleChargesField();loadReimbursementBalance()"><option value="income">Income</option><option value="reimbursement">Reimbursement Received</option><option value="reimbursement-withdrawal">Transaction - Deduct from Reimbursement</option></select></div>
+                                        <div class="form-group form-full"><label>Description *</label><input id="txn-desc" placeholder="e.g. Client payment, reimbursement received, or material payment from reimbursement" /></div>
                                         <div class="form-group"><label>Category</label><select id="txn-cat" onchange="handleCategoryChange()">
-                                          <option>Materials</option><option>Labour</option><option>Equipment</option><option>Consulting</option>
-                                          <option>Client Payment</option><option>Deposit</option><option>Transfer</option><option>Withdrawal</option>
-                                          <option>Utilities</option><option value="Charges">Charges (Revenue)</option>
-                                          <option value="Reimbursement">Reimbursement (Add to Pool)</option>
-                                          <option value="Reimbursement Withdrawal">Reimbursement Withdrawal (From Pool)</option><option>Other</option>
+                                          <option value="Client Payment">Client Payment</option><option value="Deposit">Deposit</option><option value="Progress Payment">Progress Payment</option><option value="Retention Release">Retention Release</option>
+                                          <option value="Reimbursement">Reimbursement Received</option>
+                                          <option value="Materials">Materials</option><option value="Labour">Labour</option><option value="Equipment">Equipment</option><option value="Consulting">Consulting</option>
+                                          <option value="Transfer">Transfer</option><option value="Withdrawal">Withdrawal</option><option value="Utilities">Utilities</option><option value="Charges">Charges (Income)</option><option value="Other">Other Transaction</option>
                                         </select></div>
                                         <div class="form-group"><label>Amount (₦) *</label><input id="txn-amount" type="number" placeholder="0" oninput="calculateNetAmount()" /></div>
                                         <div class="form-group" id="charges-group" style="display:none"><label>Charges (₦)</label><input id="txn-charges" type="number" placeholder="0" value="0" oninput="calculateNetAmount()" /></div>
-                                        <div class="form-group" id="net-amount-group" style="display:none"><label>Net Amount (₦)</label><input id="txn-net" type="number" placeholder="0" readonly style="background:var(--surface2);font-weight:600;color:var(--success)" /></div>
-                                        <div class="form-group"><label>Company *</label><select id="txn-company" onchange="loadReimbursementBalance()"><option value="">Select Company</option>${DB.companies.map((c) => '<option value="' + c._id + '">' + c.name + "</option>").join("")}</select></div>
+                                        <div class="form-group" id="net-amount-group" style="display:none"><label>Net Income (₦)</label><input id="txn-net" type="number" placeholder="0" readonly style="background:var(--surface2);font-weight:600;color:var(--success)" /></div>
+                                        <div class="form-group"><label>Company *</label><select id="txn-company" onchange="loadReimbursementBalance()"><option value="">Select Company</option>${DB.companies.map((c) => '<option value="' + (c._id || c.id) + '">' + safeText(c.name) + "</option>").join("")}</select></div>
+                                        <div class="form-group"><label>Project</label><select id="txn-project"><option value="">No project</option>${DB.projects.map((p) => '<option value="' + (p._id || p.id) + '">' + safeText(p.name) + "</option>").join("")}</select></div>
+                                        <div class="form-group"><label>Property</label><select id="txn-property">${propertyOptionsHtml("", false)}</select></div>
                                         <div class="form-group"><label>Payment Method</label><select id="txn-method"><option>Bank Transfer</option><option>Cash</option><option>Cheque</option><option>POS</option></select></div>
                                         <div class="form-group"><label>Reference #</label><input id="txn-ref" placeholder="Optional" /></div>
                                       </div>
@@ -2560,79 +2804,52 @@
                                         <i data-lucide="wallet" style="width:16px;height:16px;color:var(--info)"></i>
                                         <span id="reimbursement-balance-text" style="font-size:13px;font-weight:600;color:var(--info)">Loading...</span>
                                       </div>
-                                      <button class="btn-primary" onclick="logTransaction()" style="margin-top:16px"><i data-lucide="save" style="width:14px;height:14px"></i> Save Transaction</button>
+                                      <div id="transaction-mode-help" style="margin-top:10px;font-size:12px;color:var(--muted)">Select a company first. Reimbursement transactions will be checked against that company’s reimbursement balance before saving.</div>
+                                      <button class="btn-primary" onclick="logTransaction()" style="margin-top:16px"><i data-lucide="save" style="width:14px;height:14px"></i> Save Entry</button>
                                     </div>
                                   </div>
                                   <div class="card">
                                     <div class="card-head"><h3>Transaction History</h3><span>${txns.length} entries</span></div>
-                                    <div class="card-table-wrap"><table class="tbl"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th><th>Amount</th><th>Charges</th><th>Net</th><th>Company</th><th>Ref</th></tr></thead>
+                                    <div class="card-table-wrap"><table class="tbl"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Entry Type</th><th>Amount</th><th>Charges</th><th>Net</th><th>Company</th><th>Project / Property</th><th>Ref</th></tr></thead>
                                     <tbody>${
                                       txns.length > 0
                                         ? txns
-                                            .map(
-                                              (t) =>
-                                                "<tr><td>" +
-                                                fmt.date(t.date) +
-                                                "</td><td>" +
-                                                (t.description || "-") +
-                                                '</td><td><span class="pill pill-gray">' +
-                                                (t.category || "Other") +
-                                                '</span></td><td><span class="pill ' +
-                                                (t.type === "income"
-                                                  ? "pill-green"
-                                                  : t.type === "reimbursement"
-                                                    ? "pill-blue"
-                                                    : t.type ===
-                                                        "reimbursement-withdrawal"
-                                                      ? "pill-yellow"
-                                                      : "pill-red") +
-                                                '">' +
-                                                (t.type ===
-                                                "reimbursement-withdrawal"
-                                                  ? "withdrawal"
-                                                  : t.type || "-") +
-                                                '</span></td><td style="font-weight:600;color:' +
-                                                (t.type === "income"
-                                                  ? "var(--success)"
-                                                  : t.type === "reimbursement"
-                                                    ? "var(--info)"
-                                                    : t.type ===
-                                                        "reimbursement-withdrawal"
-                                                      ? "var(--warning)"
-                                                      : "var(--danger)") +
-                                                '">' +
-                                                (t.type === "income"
+                                            .map((t) => {
+                                              const company = DB.companies.find(
+                                                (x) =>
+                                                  String(x._id || x.id) ===
+                                                  String(t.companyId),
+                                              );
+                                              const isIncome =
+                                                t.type === "income";
+                                              const isReimbursement =
+                                                t.type === "reimbursement";
+                                              const isTransaction =
+                                                t.type ===
+                                                "reimbursement-withdrawal";
+                                              const sign =
+                                                isIncome || isReimbursement
                                                   ? "+"
-                                                  : t.type === "reimbursement"
-                                                    ? "↺"
-                                                    : t.type ===
-                                                        "reimbursement-withdrawal"
-                                                      ? "↓"
-                                                      : "-") +
-                                                fmt.currency(t.amount) +
-                                                "</td><td>" +
-                                                (t.charges > 0
-                                                  ? fmt.currency(t.charges)
-                                                  : "-") +
-                                                '</td><td style="font-weight:600">' +
-                                                fmt.currency(
-                                                  t.netAmount || t.amount,
-                                                ) +
-                                                "</td><td>" +
-                                                (() => {
-                                                  const c = DB.companies.find(
-                                                    (x) =>
-                                                      (x._id || x.id) ===
-                                                      t.companyId,
-                                                  );
-                                                  return c ? c.name : "-";
-                                                })() +
-                                                "</td><td>" +
-                                                (t.reference || "-") +
-                                                "</td></tr>",
-                                            )
+                                                  : "-";
+                                              const amountColor = isIncome
+                                                ? "var(--success)"
+                                                : isReimbursement
+                                                  ? "var(--info)"
+                                                  : "var(--danger)";
+                                              const pillClass = isIncome
+                                                ? "pill-green"
+                                                : isReimbursement
+                                                  ? "pill-blue"
+                                                  : "pill-red";
+                                              const entryLabel = isIncome
+                                                ? "Income"
+                                                : isReimbursement
+                                                  ? "Reimbursement"
+                                                  : "Transaction";
+                                              return `<tr><td>${fmt.date(t.date)}</td><td>${safeText(t.description || "-")}</td><td><span class="pill pill-gray">${safeText(t.category || "Other")}</span></td><td><span class="pill ${pillClass}">${entryLabel}</span></td><td style="font-weight:600;color:${amountColor}">${sign}${fmt.currency(t.amount)}</td><td>${t.charges > 0 ? fmt.currency(t.charges) : "-"}</td><td style="font-weight:600">${fmt.currency(t.netAmount || t.amount)}</td><td>${company ? safeText(company.name) : "-"}</td><td>${safeText(linkedProjectPropertyName(t))}</td><td>${safeText(t.reference || "-")}</td></tr>`;
+                                            })
                                             .join("")
-                                        : '<tr><td colspan="9" style="text-align:center;color:var(--muted)">No transactions recorded</td></tr>'
+                                        : '<tr><td colspan="10" style="text-align:center;color:var(--muted)">No transactions recorded</td></tr>'
                                     }</tbody></table></div></div>`;
         },
 
@@ -2664,7 +2881,7 @@
                                         <div class="form-group"><label>Category</label><select id="exp-cat"><option>Materials</option><option>Labour</option><option>Equipment</option><option>Transport</option><option>Utilities</option><option>Subcontractor</option><option>Deposit</option><option>Transfer</option><option>Withdrawal</option><option>Other</option></select></div>
                                         <div class="form-group"><label>Amount (₦) *</label><input id="exp-amount" type="number" placeholder="0" /></div>
                                         <div class="form-group"><label>Company *</label><select id="exp-company"><option value="">Select Company</option>${DB.companies.map((c) => '<option value="' + c._id + '">' + c.name + "</option>").join("")}</select></div>
-                                        <div class="form-group"><label>Project (optional)</label><select id="exp-project"><option value="">None</option>${DB.properties.map((p) => '<option value="' + (p._id || p.id) + '">' + p.name + "</option>").join("")}</select></div>
+                                        <div class="form-group"><label>Project (optional)</label><select id="exp-project"><option value="">None</option>${DB.projects.map((p) => '<option value="' + (p._id || p.id) + '">' + p.name + "</option>").join("")}</select></div>
                                         <div class="form-group"><label>Payment Method</label><select id="exp-method"><option>Bank Transfer</option><option>Cash</option><option>Cheque</option><option>POS</option></select></div>
                                         <div class="form-group"><label>Receipt / Reference</label><input id="exp-ref" placeholder="Receipt number" /></div>
                                         <div class="form-group"><label>Status</label><select id="exp-status"><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select></div>
@@ -2701,7 +2918,7 @@
                                                 })() +
                                                 "</td><td>" +
                                                 (() => {
-                                                  const p = DB.properties.find(
+                                                  const p = DB.projects.find(
                                                     (x) =>
                                                       (x._id || x.id) ===
                                                       e.projectId,
@@ -2755,8 +2972,15 @@
 
         async "generate-reports"() {
           await loadAllData();
-          const companyOptions = DB.companies
-            .map((c) => '<option value="' + c._id + '">' + c.name + "</option>")
+          const companyOptions = (DB.companies || [])
+            .map(
+              (c) =>
+                '<option value="' +
+                safeAttr(c._id || c.id) +
+                '">' +
+                safeText(c.name || "Unnamed Company") +
+                "</option>",
+            )
             .join("");
           return `
                                     <div style="margin-bottom:24px">
@@ -2784,9 +3008,9 @@
           }
           await loadAllData();
           const projectOptions =
-            DB.properties.length > 0
+            DB.projects.length > 0
               ? `<option value="">All Projects</option>` +
-                DB.properties
+                DB.projects
                   .map(
                     (p) =>
                       '<option value="' +
@@ -2832,11 +3056,23 @@
           const monthOptions = months
             .map((m) => '<option value="' + m.v + '">' + m.l + "</option>")
             .join("");
+          const companyOptions = (DB.companies || [])
+            .map(
+              (c) =>
+                '<option value="' +
+                safeAttr(c._id || c.id) +
+                '">' +
+                safeText(c.name || "Unnamed Company") +
+                "</option>",
+            )
+            .join("");
           return `<div style="margin-bottom:20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
                                     <label style="font-weight:600">Month:</label>
                                     <select id="report-month" onchange="updateMonthlyReport()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text)">${monthOptions}</select>
                                     <label style="font-weight:600">Year:</label>
                                     <select id="report-year" onchange="updateMonthlyReport()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text)">${yearOptions}</select>
+                                    <label style="font-weight:600">Company:</label>
+                                    <select id="monthly-report-company" onchange="updateMonthlyReport()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);min-width:190px"><option value="">All Companies</option>${companyOptions}</select>
                                     <button class="btn-sm btn-sm-print" onclick="printMonthlyReport()"><i data-lucide="printer" style="width:14px;height:14px"></i> Print Report</button>
                                     <button class="btn-sm btn-sm-outline" onclick="exportMonthlyCSV()"><i data-lucide="download" style="width:14px;height:14px"></i> Export CSV</button>
                                   </div>
@@ -2911,11 +3147,29 @@
       };
 
       function renderProjectRows(list) {
+        list = list || [];
         if (list.length === 0)
           return '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:40px">No projects found</td></tr>';
+
         return list
-          .map((p) => {
-            const pct = p.spent > 0 ? fmt.pct(p.spent, p.budget) : 0;
+          .map((p, index) => {
+            const pid = projectIdOf(p);
+            const budget = Number(p.budget) || 0;
+            const totalProcurement = projectProcurementTotal(pid);
+            const spent = totalProcurement;
+            const calculatedIncome = budget - totalProcurement;
+            const remainingBudget = calculatedIncome;
+            const profit = calculatedIncome;
+            const pct = budget > 0 ? fmt.pct(totalProcurement, budget) : 0;
+            const pctWidth = Math.min(Math.max(pct, 0), 100);
+            const originalBudget = Number(p.originalBudget) || budget;
+            const budgetEntries = p.budgetEntries || [];
+            const incomeEntries = p.incomeEntries || [];
+            const addedBudget = budgetEntries.reduce(
+              (sum, entry) => sum + (Number(entry.amount) || 0),
+              0,
+            );
+
             const initials = p.pm
               ? p.pm
                   .split(" ")
@@ -2923,6 +3177,7 @@
                   .join("")
                   .slice(0, 2)
               : "??";
+
             const colors = [
               "#dbeafe/#1e40af",
               "#d1fae5/#065f46",
@@ -2931,114 +3186,172 @@
               "#fee2e2/#991b1b",
               "#f0fdf4/#166534",
             ];
-            const [bg, tc] = colors[(p.id || 0) % colors.length].split("/");
-            const pid = p._id || p.id;
+            const [bg, tc] = colors[index % colors.length].split("/");
+
             const tasks = p.tasks || [];
             const completedCount = tasks.filter(
               (t) => t.status === "done",
             ).length;
+
             const taskListHtml =
               tasks.length > 0
                 ? tasks
                     .map((t) => {
                       const tid = t._id || t.id;
                       return `<div class="project-task-item ${t.status === "done" ? "done" : ""}">
-                                          <span class="task-title" style="font-size:12px;font-weight:500">${t.title}</span>
+                                          <span class="task-title" style="font-size:12px;font-weight:500">${safeText(t.title || "Untitled task")}</span>
                                           <div style="display:flex;align-items:center;gap:6px">
-                                            <span class="pill ${fmt.statusClass[t.status] || "pill-gray"}" style="font-size:10px">${t.status}</span>
-                                            ${hasPermission("canEditTask") ? `<button class="btn-sm btn-sm-outline" onclick="event.stopPropagation();openTaskModal('${pid}','edit','${tid}')" style="padding:2px 8px;font-size:10px">Edit</button>` : ""}
+                                            <span class="pill ${fmt.statusClass[t.status] || "pill-gray"}" style="font-size:10px">${safeText(t.status || "todo")}</span>
+                                            ${hasPermission("canEditTask") ? `<button class="btn-sm btn-sm-outline" onclick="event.stopPropagation();openTaskModal('${safeAttr(pid)}','edit','${safeAttr(tid)}')" style="padding:2px 8px;font-size:10px">Edit</button>` : ""}
                                           </div>
                                         </div>`;
                     })
                     .join("")
                 : '<div style="font-size:12px;color:var(--muted)">No tasks assigned</div>';
+
             let alertHtml = "";
             if (pct >= 85)
-              alertHtml = `<div style="margin-top:8px;padding:8px 12px;background:var(--danger-bg);border-radius:6px;display:flex;align-items:center;gap:6px"><i data-lucide="alert-triangle" style="width:14px;height:14px;color:var(--danger)"></i><span style="font-size:11px;color:var(--danger);font-weight:600">Budget Alert: ${pct}% used. Only ₦${((p.budget || 0) - (p.spent || 0)).toLocaleString()} remaining.</span></div>`;
+              alertHtml = `<div style="margin-top:8px;padding:8px 12px;background:var(--danger-bg);border-radius:6px;display:flex;align-items:center;gap:6px"><i data-lucide="alert-triangle" style="width:14px;height:14px;color:var(--danger)"></i><span style="font-size:11px;color:var(--danger);font-weight:600">Budget Alert: ${pct}% used. ${fmt.currency(Math.max(remainingBudget, 0))} remaining.</span></div>`;
             else if (pct >= 60)
-              alertHtml = `<div style="margin-top:8px;padding:8px 12px;background:var(--warning-bg);border-radius:6px;display:flex;align-items:center;gap:6px"><i data-lucide="alert-circle" style="width:14px;height:14px;color:var(--warning)"></i><span style="font-size:11px;color:var(--warning);font-weight:600">Budget Warning: ${pct}% utilized.</span></div>`;
-            const projectProcurements = DB.procurement.filter(
-              (pr) =>
-                (pr.projectId === pid || pr.project === pid) &&
-                pr.status === "approved",
-            );
-            const totalDeducted = projectProcurements.reduce(
-              (sum, pr) => sum + (pr.amount || 0),
-              0,
-            );
-            const budgetHistoryHtml =
+              alertHtml = `<div style="margin-top:8px;padding:8px 12px;background:var(--warning-bg);border-radius:6px;display:flex;align-items:center;gap:6px"><i data-lucide="alert-circle" style="width:14px;height:14px;color:var(--warning)"></i><span style="font-size:11px;color:var(--warning);font-weight:600">Budget Warning: ${pct}% utilised.</span></div>`;
+
+            const projectProcurements = approvedProjectProcurements(pid);
+            const totalDeducted = totalProcurement;
+
+            const procurementHistoryHtml =
               projectProcurements.length > 0
                 ? projectProcurements
                     .map(
                       (pr) =>
-                        '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--surface);border-radius:6px;margin-bottom:6px;border:1px solid var(--border)"><div><div style="font-size:12px;font-weight:500">' +
-                        (pr.item || "Item") +
-                        '</div><div style="font-size:10px;color:var(--muted)">' +
-                        (pr.vendor || "—") +
-                        " · " +
-                        fmt.date(pr.requested) +
-                        '</div></div><div style="text-align:right"><div style="font-size:12px;font-weight:600;color:var(--danger)">-₦' +
-                        (pr.amount || 0).toLocaleString() +
-                        "</div></div></div>",
+                        `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--surface);border-radius:6px;margin-bottom:6px;border:1px solid var(--border)">
+                          <div>
+                            <div style="font-size:12px;font-weight:500">${safeText(pr.item || pr.title || "Item")}</div>
+                            <div style="font-size:10px;color:var(--muted)">${safeText(pr.vendor || "—")} · ${fmt.date(pr.requested || pr.createdAt || pr.date)}</div>
+                          </div>
+                          <div style="text-align:right">
+                            <div style="font-size:12px;font-weight:600;color:var(--danger)">-${fmt.currency(procurementAmount(pr))}</div>
+                          </div>
+                        </div>`,
                     )
                     .join("")
-                : '<div style="font-size:12px;color:var(--muted)">No budget deductions yet</div>';
+                : '<div style="font-size:12px;color:var(--muted)">No approved procurement deductions yet</div>';
+
+            const budgetAdditionHtml =
+              budgetEntries.length > 0
+                ? budgetEntries
+                    .slice()
+                    .reverse()
+                    .map(
+                      (entry) =>
+                        `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:var(--surface);border-radius:6px;margin-bottom:6px;border:1px solid var(--border)">
+                          <div>
+                            <div style="font-size:12px;font-weight:500">${safeText(entry.note || "Budget addition")}</div>
+                            <div style="font-size:10px;color:var(--muted)">${fmt.date(entry.date)}${entry.recordedBy ? " · " + safeText(entry.recordedBy) : ""}</div>
+                          </div>
+                          <div style="font-size:12px;font-weight:600;color:var(--success)">+${fmt.currency(Number(entry.amount) || 0)}</div>
+                        </div>`,
+                    )
+                    .join("")
+                : '<div style="font-size:12px;color:var(--muted)">No additional budget recorded yet</div>';
+
+            const incomeHistoryHtml = `<div style="display:flex;flex-direction:column;gap:8px">
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface);border-radius:6px;border:1px solid var(--border)">
+                          <span style="font-size:13px;font-weight:600;color:var(--muted)">Project Budget</span>
+                          <span style="font-size:14px;font-weight:700">${fmt.currency(budget)}</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--surface);border-radius:6px;border:1px solid var(--border)">
+                          <span style="font-size:13px;font-weight:600;color:var(--muted)">Approved Procurement</span>
+                          <span style="font-size:14px;font-weight:700;color:var(--danger)">-${fmt.currency(totalProcurement)}</span>
+                        </div>
+                      </div>`;
+
             return `
-                                    <tr class="project-row" id="proj-row-${pid}">
-                                      <td onclick="toggleProjectDetails('${pid}')" style="cursor:pointer">
+                                    <tr class="project-row" id="proj-row-${safeAttr(pid)}">
+                                      <td onclick="toggleProjectDetails('${safeAttr(pid)}')" style="cursor:pointer">
                                         <div style="display:flex;align-items:center;gap:8px">
-                                          <i data-lucide="chevron-down" class="toggle-icon" id="toggle-${pid}" style="width:14px;height:14px"></i>
-                                          <div><strong>${p.name || "Unnamed"}</strong><div style="font-size:11.5px;color:var(--muted)">${p.start || "-"} - ${p.end || "-"}</div></div>
+                                          <i data-lucide="chevron-down" class="toggle-icon" id="toggle-${safeAttr(pid)}" style="width:14px;height:14px"></i>
+                                          <div><strong>${safeText(p.name || "Unnamed")}</strong><div style="font-size:11.5px;color:var(--muted)">${fmt.date(p.start)} - ${fmt.date(p.end)}</div></div>
                                         </div>
                                       </td>
-                                      <td onclick="toggleProjectDetails('${pid}')">${p.client || "-"}</td>
-                                      <td onclick="toggleProjectDetails('${pid}')"><span class="pill ${fmt.statusClass[p.status] || "pill-gray"}">${p.status || "Unknown"}</span></td>
-                                      <td onclick="toggleProjectDetails('${pid}')"><span class="pill pill-gray" style="font-weight:500">${p.phase || "-"}</span></td>
-                                      <td onclick="toggleProjectDetails('${pid}')" style="min-width:130px">
+                                      <td onclick="toggleProjectDetails('${safeAttr(pid)}')">${safeText(p.client || "-")}</td>
+                                      <td onclick="toggleProjectDetails('${safeAttr(pid)}')"><span class="pill ${fmt.statusClass[p.status] || "pill-gray"}">${safeText(p.status || "Unknown")}</span></td>
+                                      <td onclick="toggleProjectDetails('${safeAttr(pid)}')"><span class="pill pill-gray" style="font-weight:500">${safeText(p.phase || "-")}</span></td>
+                                      <td onclick="toggleProjectDetails('${safeAttr(pid)}')" style="min-width:130px">
                                         <div style="display:flex;align-items:center;gap:8px">
-                                          <div class="progress-bar" style="flex:1"><div class="progress-fill" style="width:${pct}%;background:${pct > 85 ? "var(--danger)" : pct > 60 ? "var(--warning)" : "var(--brand-mid)"}"></div></div>
+                                          <div class="progress-bar" style="flex:1"><div class="progress-fill" style="width:${pctWidth}%;background:${pct > 85 ? "var(--danger)" : pct > 60 ? "var(--warning)" : "var(--brand-mid)"}"></div></div>
                                           <span style="font-size:12px;color:var(--muted);white-space:nowrap">${pct}%</span>
                                         </div>
                                       </td>
-                                      <td onclick="toggleProjectDetails('${pid}')">
+                                      <td onclick="toggleProjectDetails('${safeAttr(pid)}')">
                                         <div class="tbl-avatar">
-                                          <div class="mini-avatar" style="background:${bg};color:${tc}">${initials}</div>
-                                          <span style="font-size:12.5px">${p.pm || "-"}</span>
+                                          <div class="mini-avatar" style="background:${bg};color:${tc}">${safeText(initials)}</div>
+                                          <span style="font-size:12.5px">${safeText(p.pm || "-")}</span>
                                         </div>
                                       </td>
-                                      <td>${hasPermission("canEditProject") ? `<button class="btn-sm btn-sm-outline" onclick="event.stopPropagation();openModal('edit-project','${pid}')">Edit</button>` : ""}</td>
+                                      <td style="white-space:nowrap">
+                                        ${hasPermission("canEditProject") ? `<button class="btn-sm btn-sm-outline" onclick="event.stopPropagation();openModal('edit-project','${safeAttr(pid)}')">Edit</button>` : ""}
+                                      </td>
                                     </tr>
-                                    <tr class="project-details-row" id="proj-details-${pid}">
+                                    <tr class="project-details-row" id="proj-details-${safeAttr(pid)}">
                                       <td colspan="7">
                                         <div class="project-details-inner">
                                           <div class="project-details-grid">
-                                            <div class="project-detail-item"><label>Client</label><value>${p.client || "-"}</value></div>
-                                            <div class="project-detail-item"><label>Status</label><value><span class="pill ${fmt.statusClass[p.status] || "pill-gray"}">${p.status || "-"}</span></value></div>
-                                            <div class="project-detail-item"><label>Timeline</label><value>${p.start || "-"} - ${p.end || "-"}</value></div>
-                                            <div class="project-detail-item"><label>Phase</label><value>${p.phase || "-"}</value></div>
-                                            <div class="project-detail-item"><label>Budget</label><value>${hasPermission("canViewBudget") ? fmt.currency(p.budget) : "[Restricted]"}</value></div>
-                                            <div class="project-detail-item"><label>Spent</label><value>${hasPermission("canViewBudget") ? fmt.currency(p.spent) : "[Restricted]"}</value></div>
+                                            <div class="project-detail-item"><label>Client</label><value>${safeText(p.client || "-")}</value></div>
+                                            <div class="project-detail-item"><label>Status</label><value><span class="pill ${fmt.statusClass[p.status] || "pill-gray"}">${safeText(p.status || "-")}</span></value></div>
+                                            <div class="project-detail-item"><label>Timeline</label><value>${fmt.date(p.start)} - ${fmt.date(p.end)}</value></div>
+                                            <div class="project-detail-item"><label>Phase</label><value>${safeText(p.phase || "-")}</value></div>
+                                            <div class="project-detail-item"><label>Budget</label><value>${hasPermission("canViewBudget") ? fmt.currency(budget) : "[Restricted]"}</value></div>
+                                            <div class="project-detail-item"><label>Approved Procurement</label><value>${hasPermission("canViewBudget") ? fmt.currency(totalProcurement) : "[Restricted]"}</value></div>
+                                            <div class="project-detail-item"><label>Calculated Income</label><value>${hasPermission("canViewRevenue") ? fmt.currency(calculatedIncome) : "[Restricted]"}</value></div>
+                                            <div class="project-detail-item"><label>Budget Balance</label><value>${hasPermission("canViewBudget") ? fmt.currency(remainingBudget) : "[Restricted]"}</value></div>
+                                            <div class="project-detail-item"><label>Net Project Balance</label><value>${hasPermission("canViewRevenue") ? fmt.currency(profit) : "[Restricted]"}</value></div>
+                                            <div class="project-detail-item">
+                                              <label>Finance Actions</label>
+                                              <value style="display:flex;gap:6px;flex-wrap:wrap">
+                                                ${hasPermission("canEditProject") ? `<button class="btn-sm btn-sm-success" onclick="event.stopPropagation();openModal('add-project-budget','${safeAttr(pid)}')">Add Budget</button>` : "-"}
+                                              </value>
+                                            </div>
                                           </div>
                                           <div class="project-detail-budget">
-                                            <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;font-weight:600;color:var(--muted)">BUDGET UTILISATION</span><span style="font-size:11px;font-weight:600">${pct}%</span></div>
-                                            <div class="project-detail-budget-bar"><div class="project-detail-budget-fill" style="width:${pct}%;background:${pct > 85 ? "var(--danger)" : pct > 60 ? "var(--warning)" : "var(--brand-mid)"}"></div></div>
+                                            <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;font-weight:600;color:var(--muted)">PROCUREMENT UTILISATION</span><span style="font-size:11px;font-weight:600">${pct}%</span></div>
+                                            <div class="project-detail-budget-bar"><div class="project-detail-budget-fill" style="width:${pctWidth}%;background:${pct > 85 ? "var(--danger)" : pct > 60 ? "var(--warning)" : "var(--brand-mid)"}"></div></div>
                                             ${alertHtml}
                                           </div>
                                           <div class="project-detail-tasks">
                                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
                                               <h4>Project Tasks (${completedCount}/${tasks.length})</h4>
-                                              ${hasPermission("canCreateTask") ? `<button class="btn-sm btn-sm-success" onclick="event.stopPropagation();openTaskModal('${pid}','add')">+ Add Task</button>` : ""}
+                                              ${hasPermission("canCreateTask") ? `<button class="btn-sm btn-sm-success" onclick="event.stopPropagation();openTaskModal('${safeAttr(pid)}','add')">+ Add Task</button>` : ""}
                                             </div>
                                             <div class="project-task-list">${taskListHtml}</div>
                                           </div>
                                           <div class="project-detail-tasks" style="margin-top:16px">
                                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-                                              <h4>Budget History</h4><span style="font-size:11px;color:var(--muted)">Auto-deducted from procurement</span>
+                                              <h4>Budget Additions</h4><span style="font-size:11px;color:var(--muted)">Original: ${hasPermission("canViewBudget") ? fmt.currency(originalBudget) : "[Restricted]"}</span>
                                             </div>
-                                            ${budgetHistoryHtml}
+                                            ${budgetAdditionHtml}
+                                            <div style="margin-top:8px;padding:10px 12px;background:var(--success-bg);border-radius:6px;display:flex;justify-content:space-between;align-items:center">
+                                              <span style="font-size:11px;font-weight:600;color:var(--success)">Total Added Budget</span>
+                                              <span style="font-size:13px;font-weight:700;color:var(--success)">${hasPermission("canViewBudget") ? fmt.currency(addedBudget) : "[Restricted]"}</span>
+                                            </div>
+                                          </div>
+                                          <div class="project-detail-tasks" style="margin-top:16px">
+                                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                                              <h4>Income Calculation</h4><span style="font-size:12px;color:var(--muted)">Budget minus approved procurement</span>
+                                            </div>
+                                            ${hasPermission("canViewRevenue") ? incomeHistoryHtml : '<div style="font-size:12px;color:var(--muted)">Restricted</div>'}
+                                            <div style="margin-top:8px;padding:10px 12px;background:var(--success-bg);border-radius:6px;display:flex;justify-content:space-between;align-items:center">
+                                              <span style="font-size:12px;font-weight:700;color:var(--success)">Calculated Income</span>
+                                              <span style="font-size:15px;font-weight:800;color:var(--success)">${hasPermission("canViewRevenue") ? fmt.currency(calculatedIncome) : "[Restricted]"}</span>
+                                            </div>
+                                          </div>
+                                          <div class="project-detail-tasks" style="margin-top:16px">
+                                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                                              <h4>Procurement Deductions</h4><span style="font-size:11px;color:var(--muted)">Approved procurement linked to this project</span>
+                                            </div>
+                                            ${procurementHistoryHtml}
                                             <div style="margin-top:8px;padding:10px 12px;background:var(--brand-light);border-radius:6px;display:flex;justify-content:space-between;align-items:center">
-                                              <span style="font-size:11px;font-weight:600;color:var(--brand-mid)">Total Deducted</span>
-                                              <span style="font-size:13px;font-weight:700;color:var(--brand)">₦${totalDeducted.toLocaleString()}</span>
+                                              <span style="font-size:12px;font-weight:700;color:var(--brand-mid)">Total Approved Procurement</span>
+                                              <span style="font-size:15px;font-weight:800;color:var(--brand)">${hasPermission("canViewBudget") ? fmt.currency(totalDeducted) : "[Restricted]"}</span>
                                             </div>
                                           </div>
                                         </div>
@@ -3293,29 +3606,47 @@
       };
 
       // ==================== TRANSACTION HELPERS ====================
+      window.currentReimbursementBalance = 0;
+
       window.loadReimbursementBalance = async () => {
-        const companyId = document.getElementById("txn-company").value;
+        const companyId = document.getElementById("txn-company")?.value;
+        const type = document.getElementById("txn-type")?.value;
         const displayEl = document.getElementById(
           "reimbursement-balance-display",
         );
         const textEl = document.getElementById("reimbursement-balance-text");
-        if (!companyId || !displayEl) {
+
+        if (!companyId || !displayEl || !textEl) {
           if (displayEl) displayEl.style.display = "none";
+          window.currentReimbursementBalance = 0;
           return;
         }
+
         try {
           const res = await fetch(
             `/reimbursement-balance?companyId=${companyId}`,
-            { headers: { Authorization: `Bearer ${CURRENT_USER.token}` } },
+            {
+              headers: { Authorization: `Bearer ${CURRENT_USER.token}` },
+            },
           );
           const data = await res.json();
+          const balance = Number(data.balance || 0);
+          window.currentReimbursementBalance = balance;
+
           if (data.success) {
-            textEl.textContent = `Reimbursement Pool Balance: ${fmt.currency(data.balance || 0)}`;
+            const suffix =
+              type === "reimbursement-withdrawal"
+                ? "Available for transaction deductions"
+                : "Current company reimbursement pool";
+            textEl.textContent = `Reimbursement Balance: ${fmt.currency(balance)} · ${suffix}`;
             displayEl.style.display = "flex";
             lucide.createIcons();
           }
-        } catch (e) {
-          console.error("Failed to load reimbursement balance:", e);
+        } catch (error) {
+          console.error("Failed to load reimbursement balance:", error);
+          window.currentReimbursementBalance = 0;
+          textEl.textContent = "Could not load reimbursement balance";
+          displayEl.style.display = "flex";
         }
       };
 
@@ -3328,20 +3659,26 @@
         const chargesInput = document.getElementById("txn-charges");
         const charges = chargesInput ? parseFloat(chargesInput.value) || 0 : 0;
         const type = document.getElementById("txn-type").value;
+
         if (!desc || amount <= 0 || !companyId) {
           alert(
             "Please fill in Description, a valid Amount, and select a Company.",
           );
           return;
         }
+
         if (type === "reimbursement-withdrawal") {
-          const balanceText =
-            document.getElementById("reimbursement-balance-text")
-              ?.textContent || "";
-          const balanceMatch = balanceText.match(/[₦]([\d,]+)/);
-          const availableBalance = balanceMatch
-            ? parseFloat(balanceMatch[1].replace(/,/g, ""))
-            : 0;
+          const availableBalance = Number(
+            window.currentReimbursementBalance || 0,
+          );
+
+          if (availableBalance <= 0) {
+            alert(
+              "This company does not have any reimbursement balance to deduct from.",
+            );
+            return;
+          }
+
           if (amount > availableBalance) {
             alert(
               `Insufficient reimbursement balance. Available: ${fmt.currency(availableBalance)}, Requested: ${fmt.currency(amount)}`,
@@ -3349,6 +3686,14 @@
             return;
           }
         }
+
+        const selectedProjectId =
+          document.getElementById("txn-project")?.value || "";
+        const selectedPropertyId =
+          document.getElementById("txn-property")?.value || "";
+        const selectedProject = findProjectById(selectedProjectId);
+        const selectedProperty = findPropertyById(selectedPropertyId);
+
         const data = {
           date: document.getElementById("txn-date").value,
           type,
@@ -3358,28 +3703,38 @@
           charges,
           netAmount: amount - charges,
           companyId,
+          projectId: selectedProjectId || null,
+          project: selectedProjectId || null,
+          projectName: selectedProject ? selectedProject.name : "",
+          propertyId: selectedPropertyId || null,
+          property: selectedPropertyId || null,
+          propertyName: selectedProperty ? selectedProperty.name : "",
           method: document.getElementById("txn-method").value,
           reference: document.getElementById("txn-ref").value,
           loggedBy: CURRENT_USER.name,
         };
+
         apiPost("transactions", data)
           .then(() => {
-            closeModal();
             loadAllData().then(() => navigate("log-transactions"));
           })
-          .catch(() => {
-            DB.transactions.push({ ...data, _id: "local-" + Date.now() });
-            closeModal();
-            navigate("log-transactions");
+          .catch((error) => {
+            console.error("Transaction save failed:", error);
+            alert(
+              "Transaction could not be saved. Please check the backend response and try again.",
+            );
           });
       };
 
       window.toggleChargesField = () => {
-        const type = document.getElementById("txn-type").value;
-        const cat = document.getElementById("txn-cat").value;
+        const type = document.getElementById("txn-type")?.value;
+        const cat = document.getElementById("txn-cat")?.value;
         const chargesGroup = document.getElementById("charges-group");
         const netGroup = document.getElementById("net-amount-group");
+        const help = document.getElementById("transaction-mode-help");
+
         if (!chargesGroup) return;
+
         if (type === "income" || cat === "Charges") {
           chargesGroup.style.display = "flex";
           chargesGroup.style.flexDirection = "column";
@@ -3387,28 +3742,53 @@
             netGroup.style.display = "flex";
             netGroup.style.flexDirection = "column";
           }
+          if (help)
+            help.textContent =
+              "Income entries add to revenue. If linked to a project, the project income history will also update.";
         } else {
           chargesGroup.style.display = "none";
           if (netGroup) netGroup.style.display = "none";
+
+          if (type === "reimbursement") {
+            if (help)
+              help.textContent =
+                "Reimbursement received will increase the selected company’s reimbursement balance.";
+          } else {
+            if (help)
+              help.textContent =
+                "Transactions will be deducted from the selected company’s reimbursement balance.";
+          }
         }
+
         calculateNetAmount();
       };
 
       window.handleCategoryChange = () => {
         const cat = document.getElementById("txn-cat").value;
         const typeSelect = document.getElementById("txn-type");
-        if (cat === "Charges") typeSelect.value = "income";
-        else if (cat === "Reimbursement") typeSelect.value = "reimbursement";
-        else if (cat === "Reimbursement Withdrawal")
+        const incomeCategories = [
+          "Client Payment",
+          "Deposit",
+          "Progress Payment",
+          "Retention Release",
+          "Charges",
+        ];
+
+        if (incomeCategories.includes(cat)) {
+          typeSelect.value = "income";
+        } else if (cat === "Reimbursement") {
+          typeSelect.value = "reimbursement";
+        } else {
           typeSelect.value = "reimbursement-withdrawal";
-        else typeSelect.value = "expense";
+        }
+
         toggleChargesField();
         loadReimbursementBalance();
       };
 
       window.calculateNetAmount = () => {
         const amount =
-          parseFloat(document.getElementById("txn-amount").value) || 0;
+          parseFloat(document.getElementById("txn-amount")?.value) || 0;
         const charges =
           parseFloat(document.getElementById("txn-charges")?.value) || 0;
         const netInput = document.getElementById("txn-net");
@@ -3482,9 +3862,8 @@
 
         const toNumber = (value) => Number(value) || 0;
 
-        const matchesCompany = (item) => {
-          return !companyId || item.companyId === companyId;
-        };
+        const companyName = selectedCompanyLabel("report-company");
+        const matchesCompany = (item) => matchesCompanyFilter(item, companyId);
 
         const txns = (DB.transactions || []).filter(matchesCompany);
         const recordedExpenses = (DB.expenses || []).filter(matchesCompany);
@@ -3562,7 +3941,7 @@
           )
           .join("");
 
-        const projectFinancials = (DB.properties || [])
+        const projectFinancials = (DB.projects || [])
           .filter((p) => p.status !== "Planning" && matchesCompany(p))
           .map((p) => {
             const spent = toNumber(p.spent);
@@ -3595,6 +3974,13 @@
         if (!reportContent) return;
 
         reportContent.innerHTML = `
+    <div style="margin-bottom:14px;padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:var(--surface);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700">Company Filter</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text)">${safeText(companyName)}</div>
+      </div>
+      <button class="btn-sm btn-sm-outline" onclick="document.getElementById('report-company').value='';updateReport();">Clear Filter</button>
+    </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px">
       ${kpi("Net Profit", fmt.currency(netProfit), "Income - Expenses", "trending-up", netProfit >= 0 ? "#d1fae5" : "#fee2e2", netProfit >= 0 ? "#059669" : "#dc2626")}
       ${kpi("Invoice Revenue", fmt.currency(invoiceRevenue), "Collected", "file-text", "#dbeafe", "#2563eb")}
@@ -3691,37 +4077,84 @@
       window.printReport = () => {
         const companyId =
           document.getElementById("report-company")?.value || "";
-        const txns = DB.transactions.filter(
-          (t) => !companyId || t.companyId === companyId,
-        );
+        const companyName = selectedCompanyLabel("report-company");
+        const toNumber = (value) => Number(value) || 0;
+        const matchesCompany = (item) => matchesCompanyFilter(item, companyId);
+
+        const txns = (DB.transactions || []).filter(matchesCompany);
+        const recordedExpenses = (DB.expenses || []).filter(matchesCompany);
+        const invoices = (DB.invoices || []).filter(matchesCompany);
+
         const totalIncome = txns
           .filter((t) => t.type === "income")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const totalReimbursements = txns
           .filter((t) => t.type === "reimbursement")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const reimbursementWithdrawals = txns
           .filter((t) => t.type === "reimbursement-withdrawal")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const netReimbursementPool =
           totalReimbursements - reimbursementWithdrawals;
         const totalTxExpense = txns
           .filter((t) => t.type === "expense")
-          .reduce((a, t) => a + (t.amount || 0), 0);
-        const allExpenses = totalTxExpense;
+          .reduce((a, t) => a + toNumber(t.amount), 0);
+        const totalRecordedExpenses = recordedExpenses.reduce(
+          (a, e) => a + toNumber(e.amount),
+          0,
+        );
+        const allExpenses = totalTxExpense + totalRecordedExpenses;
         const netProfit = totalIncome - allExpenses;
-        const printContent = `<!DOCTYPE html><html><head><title>Financial Report</title>
-                                <style>body{font-family:'DM Sans',sans-serif;padding:20px;color:#111827}.report-card{margin-bottom:20px;border:1px solid #e5e7eb;border-radius:8px;padding:16px}.report-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f3f4f6}.report-total-row{display:flex;justify-content:space-between;padding:8px 0;font-weight:700;border-top:2px solid #0a1a3a;margin-top:4px}</style></head><body>
-                                <h2>Financial Report - ${new Date().toLocaleDateString("en-GB")}</h2>
-                                <div class="report-card"><h4>Profit & Loss</h4>
-                                  <div class="report-row"><span>Total Income</span><span style="color:#059669">₦${totalIncome.toLocaleString()}</span></div>
-                                  <div class="report-row"><span>Reimbursements Received</span><span style="color:#2563eb">₦${totalReimbursements.toLocaleString()}</span></div>
-                                  <div class="report-row"><span>Reimbursement Withdrawals</span><span style="color:#d97706">₦${reimbursementWithdrawals.toLocaleString()}</span></div>
-                                  <div class="report-row"><span>Net Reimbursement Pool</span><span style="color:#2563eb">₦${netReimbursementPool.toLocaleString()}</span></div>
-                                  <div class="report-row"><span>Transaction Expenses</span><span style="color:#dc2626">₦${totalTxExpense.toLocaleString()}</span></div>
-                                  <div class="report-row"><span>Recorded Expenses</span><span style="color:#dc2626">₦${totalExpenses.toLocaleString()}</span></div>
-                                  <div class="report-total-row"><span>Net Profit</span><span style="color:${netProfit >= 0 ? "#059669" : "#dc2626"}">₦${netProfit.toLocaleString()}</span></div>
-                                </div></body></html>`;
+        const invoiceAmount = (invoice) =>
+          toNumber(invoice.totalAmount ?? invoice.amount);
+        const totalInvoiced = invoices.reduce(
+          (a, i) => a + invoiceAmount(i),
+          0,
+        );
+        const paidInvoices = invoices
+          .filter((i) => i.status === "paid")
+          .reduce((a, i) => a + invoiceAmount(i), 0);
+        const outstanding = invoices
+          .filter((i) =>
+            ["overdue", "sent", "unpaid", "pending"].includes(i.status),
+          )
+          .reduce((a, i) => a + invoiceAmount(i), 0);
+
+        const transactionRows =
+          txns
+            .sort(
+              (a, b) =>
+                new Date(b.date || b.createdAt) -
+                new Date(a.date || a.createdAt),
+            )
+            .slice(0, 60)
+            .map((t) => {
+              const type = t.type || "-";
+              const amount = toNumber(t.amount);
+              const sign =
+                type === "income"
+                  ? "+"
+                  : type === "reimbursement"
+                    ? "↺"
+                    : type === "reimbursement-withdrawal"
+                      ? "↓"
+                      : "-";
+              return `<tr><td>${fmt.date(t.date || t.createdAt)}</td><td>${safeText(t.description || "-")}</td><td>${safeText(t.category || "Other")}</td><td>${safeText(type)}</td><td style="text-align:right">${sign}₦${amount.toLocaleString()}</td></tr>`;
+            })
+            .join("") ||
+          '<tr><td colspan="5" style="text-align:center;color:#6b7280">No transactions for this company</td></tr>';
+
+        const printContent = `<!DOCTYPE html><html><head><title>Company Financial Report</title>
+          <style>*{box-sizing:border-box}body{font-family:'DM Sans',Arial,sans-serif;padding:24px;color:#111827;background:#fff}.header{display:flex;justify-content:space-between;gap:20px;border-bottom:3px solid #0a1a3a;padding-bottom:16px;margin-bottom:22px}.header h1{font-size:22px;margin:0;color:#0a1a3a}.header p{margin:3px 0;color:#6b7280;font-size:12px}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}.box{border:1px solid #e5e7eb;border-radius:10px;padding:14px}.box small{display:block;color:#6b7280;font-size:10px;text-transform:uppercase;letter-spacing:.5px}.box strong{display:block;margin-top:6px;font-size:18px}.card{border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:16px}.card h3{margin:0 0 12px;color:#0a1a3a;font-size:14px}.row{display:flex;justify-content:space-between;border-bottom:1px solid #f3f4f6;padding:7px 0;font-size:12px}.total{display:flex;justify-content:space-between;border-top:2px solid #0a1a3a;margin-top:6px;padding-top:10px;font-size:14px;font-weight:700}table{width:100%;border-collapse:collapse;font-size:11px}th{background:#0a1a3a;color:#fff;text-align:left;padding:8px}td{border-bottom:1px solid #e5e7eb;padding:8px}@media print{body{padding:10mm}@page{size:A4 portrait;margin:0}}</style>
+        </head><body>
+          <div class="header"><div><h1>Company Financial Report</h1><p><strong>Company:</strong> ${safeText(companyName)}</p><p><strong>Generated:</strong> ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p></div><div><p>October Libra Building Co. Ltd</p><p>Construction & Real Estate Development</p></div></div>
+          <div class="summary"><div class="box"><small>Total Income</small><strong style="color:#059669">₦${totalIncome.toLocaleString()}</strong></div><div class="box"><small>Total Expenses</small><strong style="color:#dc2626">₦${allExpenses.toLocaleString()}</strong></div><div class="box"><small>Net Profit / Loss</small><strong style="color:${netProfit >= 0 ? "#059669" : "#dc2626"}">₦${netProfit.toLocaleString()}</strong></div><div class="box"><small>Reimbursement Balance</small><strong style="color:#2563eb">₦${netReimbursementPool.toLocaleString()}</strong></div></div>
+          <div class="card"><h3>Profit & Loss Summary</h3><div class="row"><span>Income</span><span>₦${totalIncome.toLocaleString()}</span></div><div class="row"><span>Transaction Expenses</span><span>₦${totalTxExpense.toLocaleString()}</span></div><div class="row"><span>Recorded Expenses</span><span>₦${totalRecordedExpenses.toLocaleString()}</span></div><div class="total"><span>Net Profit / Loss</span><span>₦${netProfit.toLocaleString()}</span></div></div>
+          <div class="card"><h3>Reimbursement Summary</h3><div class="row"><span>Reimbursements Received</span><span>₦${totalReimbursements.toLocaleString()}</span></div><div class="row"><span>Transactions Deducted</span><span>₦${reimbursementWithdrawals.toLocaleString()}</span></div><div class="total"><span>Balance</span><span>₦${netReimbursementPool.toLocaleString()}</span></div></div>
+          <div class="card"><h3>Invoice Summary</h3><div class="row"><span>Total Invoiced</span><span>₦${totalInvoiced.toLocaleString()}</span></div><div class="row"><span>Paid</span><span>₦${paidInvoices.toLocaleString()}</span></div><div class="row"><span>Outstanding</span><span>₦${outstanding.toLocaleString()}</span></div></div>
+          <div class="card"><h3>Transaction Log</h3><table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th><th style="text-align:right">Amount</th></tr></thead><tbody>${transactionRows}</tbody></table></div>
+        </body></html>`;
+
         const printWindow = window.open("", "_blank");
         if (!printWindow)
           return alert(
@@ -3734,687 +4167,15 @@
           printWindow.print();
           setTimeout(() => printWindow.close(), 1000);
         }, 500);
-      };
-
-      // ==================== PROCUREMENT ACTIONS ====================
-      window.quickApprove = (id) => {
-        if (!hasPermission("canApproveProcurement")) {
-          alert("You do not have permission to approve procurement requests.");
-          return;
-        }
-        const r = DB.procurement.find((p) => p._id === id || p.id === id);
-        if (
-          r &&
-          confirm(
-            `Approve "${r.item || "Item"}"?\n\nAmount: ₦${(r.amount || 0).toLocaleString()}\nThis will deduct from the project budget.`,
-          )
-        ) {
-          apiPut(`procurement/${id}/approve`, {}).then(async () => {
-            if (r.projectId && r.amount > 0) {
-              try {
-                const project = DB.properties.find(
-                  (p) => p._id === r.projectId || p.id === r.projectId,
-                );
-                if (project)
-                  await apiPut(`projects/${project._id || project.id}`, {
-                    spent: (project.spent || 0) + (r.amount || 0),
-                  });
-              } catch (err) {
-                console.error("Failed to update project budget:", err);
-              }
-            }
-            navigate(currentPage);
-          });
-        }
-      };
-
-      window.approveProcurement = (id) => {
-        if (!hasPermission("canApproveProcurement")) {
-          alert("You do not have permission to approve procurement requests.");
-          return;
-        }
-        const req = DB.procurement.find((p) => p._id === id || p.id === id);
-        if (!req) return;
-        apiPut(`procurement/${id}/approve`, {})
-          .then(async () => {
-            req.status = "approved";
-            req.approvedByName = CURRENT_USER.name;
-            req.approvalDate = new Date().toISOString();
-            if (req.projectId && req.amount > 0) {
-              try {
-                const project = DB.properties.find(
-                  (p) => p._id === req.projectId || p.id === req.projectId,
-                );
-                if (project)
-                  await apiPut(`projects/${project._id || project.id}`, {
-                    spent: (project.spent || 0) + (req.amount || 0),
-                  });
-              } catch (err) {
-                console.error("Failed to update project budget:", err);
-              }
-            }
-            alert("Procurement request approved successfully");
-            navigate("procurement");
-          })
-          .catch((err) => {
-            console.error("Approval failed:", err);
-            alert("Approval failed. Please check backend schema.");
-          });
-      };
-
-      window.rejectProcurement = (id) => {
-        if (!hasPermission("canApproveProcurement")) {
-          alert("You do not have permission to reject procurement requests.");
-          return;
-        }
-        if (confirm("Reject this request?"))
-          alert(
-            "Reject endpoint not available on backend. Add a PUT /api/procurement/:id/reject route.",
-          );
-      };
-
-      window.printProcurement = (id) => {
-        const r = DB.procurement.find((p) => p._id === id || p.id === id);
-        if (!r) return alert("Procurement request not found");
-        const displayItem = r.item || r.title || "Item";
-        const displayAmount = r.amount || r.totalAmount || 0;
-        const displayProject = r.project || r.projectId || "-";
-        const displayDate =
-          r.requested || r.createdAt || r.date || new Date().toISOString();
-        const printContent = `<!DOCTYPE html><html><head><title>Procurement Request - ${displayItem}</title>
-                                <style>@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
-                                *{margin:0;padding:0;box-sizing:border-box}body{font-family:'DM Sans',sans-serif;margin:0;padding:0;color:#111827;background:#fff}
-                                .print-document{background:#fff;width:210mm;max-width:none;margin:0;padding:8mm 12mm;min-height:297mm;height:auto;display:flex;flex-direction:column;box-sizing:border-box}
-                                .print-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid #0a1a3a}
-                                .print-logo{display:flex;align-items:center;gap:10px}.print-logo img{width:48px;height:48px;object-fit:contain}
-                                .print-logo-text h2{font-family:'Playfair Display',serif;font-size:18px;color:#0a1a3a;margin:0;font-weight:700;line-height:1.2}
-                                .print-logo-text p{font-size:9px;color:#6b7280;margin:0;letter-spacing:.5px;text-transform:uppercase}
-                                .print-meta{text-align:right}.print-meta h3{font-size:16px;font-weight:700;color:#0a1a3a;margin:0 0 2px}
-                                .print-meta .status-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-                                .status-pending{background:#fef3c7;color:#92400e}.status-approved{background:#d1fae5;color:#065f46}.status-rejected{background:#fee2e2;color:#991b1b}
-                                .print-meta p{font-size:10px;color:#6b7280;margin:1px 0}
-                                .print-section{margin-bottom:7px}.print-section h4{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;font-weight:600}
-                                .print-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-                                .print-field{margin-bottom:4px}.print-field label{display:block;font-size:8px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;font-weight:600}
-                                .print-field value{display:block;font-size:11px;color:#111827;font-weight:500;min-height:14px}
-                                .print-amount-box{background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;text-align:center;margin:6px 0}
-                                .print-amount-box .label{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
-                                .print-amount-box .value{font-size:18px;font-weight:700;color:#0a1a3a}
-                                .print-table{width:100%;border-collapse:collapse;margin:6px 0;font-size:10px}
-                                .print-table th{background:#0a1a3a;color:#fff;font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;padding:4px 8px;text-align:left}
-                                .print-table td{padding:4px 8px;border-bottom:1px solid #e5e7eb;font-size:10px}
-                                .print-footer{text-align:center;margin-top:6px;padding-top:5px;border-top:1px solid #e5e7eb}
-                                .print-footer p{font-size:8px;color:#6b7280;margin:1px 0}
-                                .print-signature{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:28px}
-                                .print-signature-box{border-top:1px solid #111827;padding-top:4px}
-                                .print-signature-box p{font-size:9px;color:#6b7280;margin:0}.print-signature-box strong{font-size:10px;color:#111827}
-                                .payment-box{background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:8px 10px;margin:6px 0}
-                                .payment-box h4{margin:0 0 4px;font-size:9px;color:#166534;text-transform:uppercase;letter-spacing:.5px}
-                                .payment-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-                                .payment-field label{font-size:8px;color:#15803d;text-transform:uppercase;letter-spacing:.5px;margin-bottom:1px;display:block;font-weight:600}
-                                .payment-field value{font-size:10px;color:#111827;font-weight:500;min-height:12px}
-                                @media print{html,body{width:210mm;min-height:297mm;background:#fff;padding:0;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.print-document{width:210mm;min-height:297mm!important;box-shadow:none;padding:8mm 12mm;max-width:none;margin:0;height:auto!important;display:flex;flex-direction:column;box-sizing:border-box}.print-main{display:flex!important;flex-direction:column!important;flex:1!important}.print-footer{margin-top:auto}}
-                                @page{size:A4 portrait;margin:0}</style></head><body>
-                                <div class="print-document"><div class="print-main">
-                                <div class="print-header">
-                                  <div class="print-logo"><img src="https://res.cloudinary.com/deoqw88yb/image/upload/v1780134973/October_Libra_Building_Co._Ltd_Logo__1__page-0001-removebg-preview_rpwcmp.png" alt="Logo" /><div class="print-logo-text"><h2>October Libra Building Co. Ltd</h2><p>Construction & Real Estate Development</p></div></div>
-                                  <div class="print-meta"><h3>PROCUREMENT REQUEST</h3><span class="status-badge status-${r.status || "pending"}">${r.status ? r.status.toUpperCase() : "PENDING"}</span><p><strong>Ref:</strong> ${r._id || r.id || "N/A"}</p><p><strong>Date:</strong> ${new Date(displayDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p></div>
-                                </div>
-                                <div class="print-amount-box"><div class="label">Total Amount Requested</div><div class="value">₦${displayAmount.toLocaleString()}</div></div>
-                                <div class="print-section"><h4>Request Details</h4><div class="print-grid">
-                                  <div class="print-field"><label>Item / Description</label><value>${displayItem}</value></div>
-                                  <div class="print-field"><label>Vendor / Supplier</label><value>${r.vendor || "-"}</value></div>
-                                  <div class="print-field"><label>Category</label><value>${r.category || "Other"}</value></div>
-                                  <div class="print-field"><label>Urgency Level</label><value>${r.urgency || "Normal"}</value></div>
-                                  <div class="print-field"><label>PROPERTY</label><value>${(() => {
-                                    const proj = DB.properties.find(
-                                      (p) => (p._id || p.id) === displayProject,
-                                    );
-                                    return proj ? proj.name : displayProject;
-                                  })()}</value></div>
-                                  <div class="print-field"><label>Requestor</label><value>${r.requestor || "-"}</value></div>
-                                </div></div>
-                                <div class="print-section"><h4>Justification</h4><div class="print-field"><value style="line-height:1.4;font-size:10px">${r.justification || "No justification provided."}</value></div></div>
-                                <div class="payment-box"><h4>Payment Details</h4><div class="payment-grid">
-                                  <div class="payment-field"><label>Account Name</label><value></value></div>
-                                  <div class="payment-field"><label>Bank Name</label><value></value></div>
-                                  <div class="payment-field"><label>Account Number</label><value></value></div>
-                                  <div class="payment-field"><label>Sort Code / Swift</label><value></value></div>
-                                </div></div>
-                                <div class="print-section"><h4>Approval Status</h4><table class="print-table"><thead><tr><th>Status</th><th>Approved By</th><th>Approval Date</th><th>Amount</th></tr></thead><tbody><tr><td><span class="status-badge status-${r.status || "pending"}">${r.status ? r.status.toUpperCase() : "PENDING"}</span></td><td>${r.approvedByName || r.approvedBy || "-"}</td><td>${r.approvalDate ? new Date(r.approvalDate).toLocaleDateString("en-GB") : "-"}</td><td style="font-weight:700">₦${displayAmount.toLocaleString()}</td></tr></tbody></table></div>
-                                <div class="print-signature">
-                                  <div class="print-signature-box"><strong>Requested By</strong><p>${r.requestor || "_____________________"}</p><p style="margin-top:4px">${r.requestor ? "Signature: _____________________" : ""}</p></div>
-                                  <div class="print-signature-box"><strong>Approved By</strong><p>${r.approvedByName || r.approvedBy || "_____________________"}</p><p style="margin-top:4px">${r.approvedByName || r.approvedBy ? "Signature: _____________________" : "Date: _____________________"}</p></div>
-                                </div>
-                                </div></div></body></html>`;
-        const printWindow = window.open("", "_blank");
-        if (!printWindow)
-          return alert(
-            "Popup blocked! Please allow popups for this site to print.",
-          );
-        printWindow.document.write(printContent);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => {
-          printWindow.print();
-          setTimeout(() => printWindow.close(), 1000);
-        }, 500);
-      };
-
-      // ==================== PROJECT HELPERS ====================
-      window.filterProjects = (f) => {
-        const list =
-          f === "All"
-            ? DB.properties
-            : DB.properties.filter((p) => p.status === f);
-        document.getElementById("projects-tbody").innerHTML =
-          renderProjectRows(list);
-        lucide.createIcons();
-      };
-
-      window.toggleProjectDetails = (id) => {
-        const detailsRow = document.getElementById(`proj-details-${id}`);
-        const toggleIcon = document.getElementById(`toggle-${id}`);
-        if (!detailsRow) return;
-        const isActive = detailsRow.classList.contains("active");
-        document
-          .querySelectorAll(".project-details-row.active")
-          .forEach((row) => {
-            if (row.id !== `proj-details-${id}`) {
-              row.classList.remove("active");
-              const otherId = row.id.replace("proj-details-", "");
-              const otherIcon = document.getElementById(`toggle-${otherId}`);
-              if (otherIcon) otherIcon.classList.remove("rotated");
-            }
-          });
-        detailsRow.classList.toggle("active");
-        if (toggleIcon) toggleIcon.classList.toggle("rotated");
-        if (!isActive) lucide.createIcons();
-      };
-
-      window.openTaskModal = (projectId, mode, taskId = null) => {
-        if (mode === "add") openModal("new-task", projectId);
-        else openModal("edit-task", projectId, taskId);
-      };
-
-      window.deleteTask = (projectId, taskId) => {
-        if (confirm("Delete this task?")) {
-          apiDelete(`tasks/${taskId}`).then(() => {
-            closeModal();
-            loadAllData().then(() => openProjectModal(projectId));
-          });
-        }
-      };
-
-      window.viewMaintenance = (id) => {
-        const m = DB.maintenance.find((x) => x._id === id || x.id === id);
-        if (!m) return;
-        const propName =
-          m.propertyName ||
-          (m.property && typeof m.property === "object"
-            ? m.property.name
-            : m.property) ||
-          "Unknown property";
-        const propAddress =
-          m.property && typeof m.property === "object"
-            ? m.property.address || m.property.location || ""
-            : "";
-        openModal(
-          "maint-detail",
-          `<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">${detailRow("Property", propName + (propAddress ? " — " + propAddress : ""), true)}${detailRow("Priority", `<span class="pill ${m.priority === "urgent" ? "pill-red" : m.priority === "high" ? "pill-yellow" : "pill-blue"}">${m.priority || "normal"}</span>`)}${detailRow("Status", `<span class="pill ${fmt.statusClass[m.status] || "pill-gray"}">${m.status || "-"}</span>`)}${detailRow("Assigned To", m.assigned || "Unassigned")}${detailRow("Date Logged", fmt.date(m.logged))}${detailRow("Completed", fmt.date(m.completed))}</div><div style="margin-top:14px;padding:12px;background:var(--surface2);border-radius:var(--rad);border:1px solid var(--border)"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Issue Description</div><p style="font-size:13.5px">${m.title || m.issue || "-"}</p></div><div style="margin-top:14px;padding:12px;background:var(--surface2);border-radius:var(--rad);border:1px solid var(--border)"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Resolution Notes</div><p style="font-size:13.5px">${m.resolution || "No resolution notes yet."}</p></div>`,
-          m.issue || "Maintenance Details",
-        );
-      };
-
-      window.viewPropertyMaintenance = (propId) => {
-        const prop = DB.properties.find((p) => (p._id || p.id) === propId);
-        if (!prop) return;
-        const propMaint = DB.maintenance.filter((m) => {
-          const mPropId =
-            m.propertyId ||
-            (m.property && typeof m.property === "object"
-              ? m.property._id
-              : m.property);
-          const mPropName =
-            m.propertyName ||
-            (m.property && typeof m.property === "object"
-              ? m.property.name
-              : m.property);
-          return mPropId === propId || mPropName === prop.name;
-        });
-        const historyHtml = propMaint
-          .map(
-            (m, idx) =>
-              "<tr><td>" +
-              (idx + 1) +
-              "</td><td>" +
-              fmt.date(m.logged) +
-              "</td><td>" +
-              (m.title || m.issue || "-") +
-              "</td><td>" +
-              (m.priority || "normal") +
-              "</td><td>" +
-              (m.status || "open") +
-              "</td><td>" +
-              (m.assigned || "Unassigned") +
-              "</td><td>" +
-              fmt.date(m.completed) +
-              "</td></tr>",
-          )
-          .join("");
-        const printContent = `<!DOCTYPE html><html><head><title>Property Maintenance - ${prop.name}</title><style>body{font-family:'DM Sans',sans-serif;margin:0;padding:20px;color:#111827}.print-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #0a1a3a}.print-logo{display:flex;align-items:center;gap:12px}.print-logo img{width:60px;height:60px;object-fit:contain}.print-logo-text h2{font-family:'Playfair Display',serif;font-size:22px;color:#0a1a3a;margin:0 0 2px}.print-meta{text-align:right}.print-meta h3{font-size:20px;font-weight:700;color:#0a1a3a;margin:0 0 4px}.print-meta p{font-size:12px;color:#6b7280;margin:0 0 2px}.print-body h4{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin:20px 0 8px}.print-body p{font-size:13px;line-height:1.8;color:#111827;margin:0}.print-table{width:100%;border-collapse:collapse;margin:16px 0}.print-table th{background:#0a1a3a;color:#fff;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;padding:10px 12px;text-align:left}.print-table td{padding:10px 12px;border-bottom:1px solid #e5e7eb;font-size:12px}.print-footer{text-align:center;font-size:11px;color:#6b7280;padding-top:20px;border-top:1px solid #e5e7eb}</style></head><body>
-                                <div class="print-header"><div class="print-logo"><img src="https://res.cloudinary.com/deoqw88yb/image/upload/v1780134973/October_Libra_Building_Co._Ltd_Logo__1__page-0001-removebg-preview_rpwcmp.png" alt="Logo" /><div class="print-logo-text"><h2>October Libra Building Co. Ltd</h2><p>Construction & Real Estate Development</p></div></div><div class="print-meta"><h3>PROPERTY MAINTENANCE HISTORY</h3><p>Property: ${prop.name}</p><p>Generated: ${new Date().toLocaleDateString("en-GB")}</p></div></div>
-                                <div class="print-body"><h4>Property Information</h4><p><strong>Name:</strong> ${prop.name}</p><p><strong>Address:</strong> ${prop.address || prop.location || "No address on record"}</p><p><strong>Total Tickets:</strong> ${propMaint.length}</p><p><strong>Open Tickets:</strong> ${propMaint.filter((m) => m.status === "open").length}</p><h4>Maintenance History</h4><table class="print-table"><thead><tr><th>#</th><th>Date</th><th>Issue</th><th>Priority</th><th>Status</th><th>Assigned</th><th>Completed</th></tr></thead><tbody>${historyHtml}</tbody></table></div>
-                                <div class="print-footer"><p>October Libra Building Co. Ltd | RC: 1234567 | info@octoberlibra.com</p></div></body></html>`;
-        const printWindow = window.open("", "_blank");
-        printWindow.document.write(printContent);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => {
-          printWindow.print();
-          printWindow.close();
-        }, 500);
-      };
-
-      function detailRow(label, val, full) {
-        return `<div style="${full ? "grid-column:1/-1" : ""}"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${label}</div><div style="font-size:13.5px;font-weight:500">${val}</div></div>`;
-      }
-
-      // ==================== PRINTABLE PROCUREMENT REPORT ====================
-      window.updatePrintableProcurement = () => {
-        if (!hasPermission("canViewProcurementReport")) return;
-        const projectId = document.getElementById("proc-report-project")?.value;
-        if (projectId === undefined) return;
-        const filtered = projectId
-          ? DB.procurement.filter(
-              (p) => p.projectId === projectId || p.project === projectId,
-            )
-          : DB.procurement;
-        if (filtered.length === 0) {
-          document.getElementById("proc-report-content").innerHTML =
-            `<div class="card"><div class="card-body"><div class="empty-state"><i data-lucide="clipboard-x" style="width:40px;height:40px"></i><span>No procurement data found for the selected filter.</span></div></div></div>`;
-          lucide.createIcons();
-          return;
-        }
-        const totalAmount = filtered.reduce(
-          (a, p) => a + (p.amount || p.totalAmount || 0),
-          0,
-        );
-        const approved = filtered.filter((p) => p.status === "approved");
-        const pending = filtered.filter((p) => p.status === "pending");
-        const approvedAmt = approved.reduce(
-          (a, p) => a + (p.amount || p.totalAmount || 0),
-          0,
-        );
-        const pendingAmt = pending.reduce(
-          (a, p) => a + (p.amount || p.totalAmount || 0),
-          0,
-        );
-        const rows = filtered
-          .map((p, idx) => {
-            const item = p.item || p.title || "Item";
-            const vendor = p.vendor || "-";
-            const category = p.category || "Other";
-            const amount = p.amount || p.totalAmount || 0;
-            const status = p.status || "pending";
-            const requestor = p.requestor || "-";
-            const date = fmt.date(p.requested || p.createdAt || p.date);
-            const proj = DB.properties.find(
-              (x) => (x._id || x.id) === (p.projectId || p.project),
-            );
-            const projectName = proj ? proj.name : p.project || "-";
-            return `<tr><td>${idx + 1}</td><td><strong>${item}</strong></td><td>${vendor}</td><td>${projectName}</td><td><span class="pill pill-gray">${category}</span></td><td style="font-weight:600">${hasPermission("canViewProcurementValue") ? fmt.currency(amount) : "[Restricted]"}</td><td><span class="pill ${fmt.statusClass[status] || "pill-gray"}">${status}</span></td><td>${requestor}</td><td>${date}</td></tr>`;
-          })
-          .join("");
-        document.getElementById("proc-report-content").innerHTML = `
-                                  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px">
-                                    ${kpi("Total Requests", filtered.length, "All statuses", "shopping-cart", "#dbeafe", "#2563eb")}
-                                    ${kpi("Total Value", hasPermission("canViewProcurementValue") ? fmt.currency(totalAmount) : "[Restricted]", "Combined amount", "banknote", "#ede9fe", "#7c3aed")}
-                                    ${kpi("Approved", hasPermission("canViewProcurementValue") ? fmt.currency(approvedAmt) : "[Restricted]", `${approved.length} requests`, "check-circle", "#d1fae5", "#059669")}
-                                    ${kpi("Pending", hasPermission("canViewProcurementValue") ? fmt.currency(pendingAmt) : "[Restricted]", `${pending.length} requests`, "clock", "#fef3c7", "#d97706")}
-                                  </div>
-                                  <div class="card"><div class="card-head"><h3>Procurement Details</h3><span>${filtered.length} entries</span></div>
-                                  <div class="card-table-wrap"><table class="tbl"><thead><tr><th>#</th><th>Item</th><th>Vendor</th><th>Project</th><th>Category</th><th>Amount</th><th>Status</th><th>Requestor</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
-        lucide.createIcons();
-      };
-
-      window.printProcurementReport = () => {
-        if (!hasPermission("canViewProcurementReport")) {
-          alert("You do not have permission to print the Procurement Report.");
-          return;
-        }
-        const projectId = document.getElementById("proc-report-project").value;
-        const filtered = projectId
-          ? DB.procurement.filter(
-              (p) => p.projectId === projectId || p.project === projectId,
-            )
-          : DB.procurement;
-        const projectName = projectId
-          ? DB.properties.find((p) => (p._id || p.id) === projectId)?.name ||
-            "Selected Project"
-          : "All Projects";
-        const totalAmount = filtered.reduce(
-          (a, p) => a + (p.amount || p.totalAmount || 0),
-          0,
-        );
-        const approved = filtered.filter((p) => p.status === "approved");
-        const pending = filtered.filter((p) => p.status === "pending");
-        const rows = filtered
-          .map((p, idx) => {
-            const item = p.item || p.title || "Item";
-            const vendor = p.vendor || "-";
-            const category = p.category || "Other";
-            const amount = p.amount || p.totalAmount || 0;
-            const status = p.status || "pending";
-            const requestor = p.requestor || "-";
-            const date = fmt.date(p.requested || p.createdAt || p.date);
-            const proj = DB.properties.find(
-              (x) => (x._id || x.id) === (p.projectId || p.project),
-            );
-            const projName = proj ? proj.name : p.project || "-";
-            return `<tr><td>${idx + 1}</td><td>${item}</td><td>${vendor}</td><td>${projName}</td><td>${category}</td><td style="text-align:right">₦${amount.toLocaleString()}</td><td>${status}</td><td>${requestor}</td><td>${date}</td></tr>`;
-          })
-          .join("");
-        const printContent = `<!DOCTYPE html>
-<html>
-<head>
-  <title>Procurement Report - ${projectName}</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      color: #111827;
-      background: #fff;
-      font-size: 10px;
-      line-height: 1.25;
-    }
-
-    .print-wrapper {
-      padding: 6mm;
-    }
-
-    .print-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 8px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #0a1a3a;
-    }
-
-    .print-logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .print-logo img {
-      width: 42px;
-      height: 42px;
-      object-fit: contain;
-    }
-
-    .print-logo-text h2 {
-      font-size: 16px;
-      color: #0a1a3a;
-      margin: 0 0 2px;
-    }
-
-    .print-logo-text p {
-      font-size: 8px;
-      color: #6b7280;
-      letter-spacing: .4px;
-      text-transform: uppercase;
-      margin: 0;
-    }
-
-    .print-meta {
-      text-align: right;
-    }
-
-    .print-meta h3 {
-      font-size: 15px;
-      font-weight: 700;
-      color: #0a1a3a;
-      margin: 0 0 3px;
-    }
-
-    .print-meta p {
-      font-size: 9px;
-      color: #6b7280;
-      margin: 0 0 1px;
-    }
-
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-
-    .summary-box {
-      border: 1px solid #e5e7eb;
-      border-radius: 5px;
-      padding: 6px;
-      text-align: center;
-    }
-
-    .summary-box .num {
-      font-size: 15px;
-      font-weight: 700;
-      color: #0a1a3a;
-      line-height: 1.1;
-    }
-
-    .summary-box .lbl {
-      font-size: 8px;
-      color: #6b7280;
-      text-transform: uppercase;
-      letter-spacing: .4px;
-      margin-top: 2px;
-    }
-
-    .print-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 6px 0;
-      font-size: 9px;
-    }
-
-    .print-table th {
-      background: #0a1a3a;
-      color: #fff;
-      font-size: 8px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .3px;
-      padding: 5px 6px;
-      text-align: left;
-      white-space: nowrap;
-    }
-
-    .print-table td {
-      padding: 5px 6px;
-      border-bottom: 1px solid #e5e7eb;
-      vertical-align: top;
-    }
-
-    .print-footer {
-      text-align: center;
-      font-size: 8px;
-      color: #6b7280;
-      padding-top: 6px;
-      border-top: 1px solid #e5e7eb;
-      margin-top: 8px;
-    }
-
-    .print-footer p {
-      margin: 1px 0;
-    }
-
-    @media print {
-      html,
-      body {
-        width: 297mm;
-        min-height: 210mm;
-        padding: 0;
-        margin: 0;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-
-      .print-wrapper {
-        width: 297mm;
-        min-height: 210mm;
-        padding: 7mm;
-        margin: 0;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .print-footer {
-        margin-top: auto;
-      }
-    }
-
-    @page {
-      size: A4 landscape;
-      margin: 0;
-    }
-  </style>
-</head>
-
-<body>
-  <div class="print-wrapper">
-    <div class="print-header">
-      <div class="print-logo">
-        <img src="https://res.cloudinary.com/deoqw88yb/image/upload/v1780134973/October_Libra_Building_Co._Ltd_Logo__1__page-0001-removebg-preview_rpwcmp.png" alt="Logo" />
-        <div class="print-logo-text">
-          <h2>October Libra Building Co. Ltd</h2>
-          <p>Construction & Real Estate Development</p>
-        </div>
-      </div>
-
-      <div class="print-meta">
-        <h3>PROCUREMENT REPORT</h3>
-        <p><strong>Project:</strong> ${projectName}</p>
-        <p><strong>Generated:</strong> ${new Date().toLocaleDateString(
-          "en-GB",
-          {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          },
-        )}</p>
-      </div>
-    </div>
-
-    <div class="summary-grid">
-      <div class="summary-box">
-        <div class="num">${filtered.length}</div>
-        <div class="lbl">Total Requests</div>
-      </div>
-
-      <div class="summary-box">
-        <div class="num">₦${totalAmount.toLocaleString()}</div>
-        <div class="lbl">Total Value</div>
-      </div>
-
-      <div class="summary-box">
-        <div class="num">${approved.length}</div>
-        <div class="lbl">Approved</div>
-      </div>
-
-      <div class="summary-box">
-        <div class="num">${pending.length}</div>
-        <div class="lbl">Pending</div>
-      </div>
-    </div>
-
-    <table class="print-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Item</th>
-          <th>Vendor</th>
-          <th>Project</th>
-          <th>Category</th>
-          <th style="text-align:right">Amount</th>
-          <th>Status</th>
-          <th>Requestor</th>
-          <th>Date</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-
-    <div class="print-footer">
-      <p>October Libra Building Co. Ltd | RC: 1234567 | info@octoberlibra.com</p>
-      <p>Generated from the Libra Building Admin Portal.</p>
-    </div>
-  </div>
-</body>
-</html>`;
-        const printWindow = window.open("", "_blank");
-        if (!printWindow) return alert("Popup blocked! Please allow popups.");
-        printWindow.document.write(printContent);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => {
-          printWindow.print();
-          setTimeout(() => printWindow.close(), 1000);
-        }, 500);
-      };
-
-      window.exportProcurementCSV = () => {
-        if (!hasPermission("canViewProcurementReport")) {
-          alert("You do not have permission to export the Procurement Report.");
-          return;
-        }
-        const projectId = document.getElementById("proc-report-project").value;
-        const filtered = projectId
-          ? DB.procurement.filter(
-              (p) => p.projectId === projectId || p.project === projectId,
-            )
-          : DB.procurement;
-        let csv =
-          "S/N,Item,Vendor,Project,Category,Amount,Status,Requestor,Date\n";
-        filtered.forEach((p, idx) => {
-          const item = (p.item || p.title || "Item").replace(/,/g, " ");
-          const vendor = (p.vendor || "-").replace(/,/g, " ");
-          const proj = DB.properties.find(
-            (x) => (x._id || x.id) === (p.projectId || p.project),
-          );
-          const projectName = (proj ? proj.name : p.project || "-").replace(
-            /,/g,
-            " ",
-          );
-          const category = p.category || "Other";
-          const amount = p.amount || p.totalAmount || 0;
-          const status = p.status || "pending";
-          const requestor = (p.requestor || "-").replace(/,/g, " ");
-          const date = fmt.date(p.requested || p.createdAt || p.date);
-          csv += `${idx + 1},${item},${vendor},${projectName},${category},${amount},${status},${requestor},${date}\n`;
-        });
-        const blob = new Blob([csv], { type: "text/csv" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `procurement-report-${new Date().toISOString().split("T")[0]}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
       };
 
       // ==================== MONTHLY REPORT ====================
       window.updateMonthlyReport = () => {
         const monthEl = document.getElementById("report-month");
         const yearEl = document.getElementById("report-year");
+        const companyId =
+          document.getElementById("monthly-report-company")?.value || "";
+        const companyName = selectedCompanyLabel("monthly-report-company");
         if (!monthEl || !yearEl) return;
         const month = monthEl.value;
         const year = yearEl.value;
@@ -4433,6 +4194,8 @@
           12: "December",
         };
         const monthName = monthNames[month];
+        const toNumber = (value) => Number(value) || 0;
+        const matchesCompany = (item) => matchesCompanyFilter(item, companyId);
         const filterDate = (d) => {
           const dt = new Date(d);
           return (
@@ -4440,44 +4203,46 @@
             String(dt.getFullYear()) === year
           );
         };
-        const monthTxns = DB.transactions.filter(
-          (t) => t.date && filterDate(t.date),
+        const monthTxns = (DB.transactions || []).filter(
+          (t) => t.date && filterDate(t.date) && matchesCompany(t),
         );
-        const monthInvoices = DB.invoices.filter((i) => {
+        const monthInvoices = (DB.invoices || []).filter((i) => {
           const dateToCheck = i.issueDate || i.date || i.createdAt;
-          return dateToCheck && filterDate(dateToCheck);
+          return dateToCheck && filterDate(dateToCheck) && matchesCompany(i);
         });
         const income = monthTxns
           .filter((t) => t.type === "income")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const monthReimbursements = monthTxns
           .filter((t) => t.type === "reimbursement")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const monthReimbursementWithdrawals = monthTxns
           .filter((t) => t.type === "reimbursement-withdrawal")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const totalExpense = monthTxns
           .filter((t) => t.type === "expense")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const netProfit = income - totalExpense;
         const netReimbursementPool =
           monthReimbursements - monthReimbursementWithdrawals;
         const invoiceTotal = monthInvoices.reduce(
-          (a, i) => a + (i.totalAmount || 0),
+          (a, i) => a + toNumber(i.totalAmount || i.amount),
           0,
         );
         const invoicePaid = monthInvoices
           .filter((i) => i.status === "paid")
-          .reduce((a, i) => a + (i.totalAmount || 0), 0);
+          .reduce((a, i) => a + toNumber(i.totalAmount || i.amount), 0);
         const invoiceOutstanding = monthInvoices
-          .filter((i) => i.status === "overdue" || i.status === "sent")
-          .reduce((a, i) => a + (i.amount || 0), 0);
+          .filter((i) =>
+            ["overdue", "sent", "unpaid", "pending"].includes(i.status),
+          )
+          .reduce((a, i) => a + toNumber(i.totalAmount || i.amount), 0);
         const expByCat = {};
         monthTxns
           .filter((t) => t.type === "expense")
           .forEach((t) => {
             const c = t.category || "Other";
-            expByCat[c] = (expByCat[c] || 0) + (t.amount || 0);
+            expByCat[c] = (expByCat[c] || 0) + toNumber(t.amount);
           });
         const catRows =
           Object.entries(expByCat)
@@ -4485,7 +4250,7 @@
             .map(
               ([cat, amt]) =>
                 '<div class="report-row"><span class="label">' +
-                cat +
+                safeText(cat) +
                 '</span><span class="value">' +
                 fmt.currency(amt) +
                 "</span></div>",
@@ -4502,11 +4267,16 @@
         monthTxns.forEach((t) => {
           const d = new Date(t.date).getDate() - 1;
           if (d >= 0 && d < daysInMonth) {
-            if (t.type === "income") dailyIncome[d] += t.amount || 0;
-            else if (t.type === "expense") dailyExpense[d] += t.amount || 0;
+            if (t.type === "income") dailyIncome[d] += toNumber(t.amount);
+            else if (t.type === "expense")
+              dailyExpense[d] += toNumber(t.amount);
           }
         });
         document.getElementById("monthly-report-content").innerHTML = `
+                                  <div style="margin-bottom:14px;padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:var(--surface);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+                                    <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700">Monthly Report Company</div><div style="font-size:16px;font-weight:700;color:var(--text)">${safeText(companyName)}</div></div>
+                                    <button class="btn-sm btn-sm-outline" onclick="document.getElementById('monthly-report-company').value='';updateMonthlyReport();">Clear Filter</button>
+                                  </div>
                                   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:20px">
                                     ${kpi("Income", fmt.currency(income), monthName + " " + year, "arrow-down-circle", "#d1fae5", "#059669")}
                                     ${kpi("Expenses", fmt.currency(totalExpense), monthName + " " + year, "arrow-up-circle", "#fee2e2", "#dc2626")}
@@ -4515,7 +4285,7 @@
                                     ${kpi("Invoiced", fmt.currency(invoiceTotal), `${monthInvoices.length} invoices`, "file-text", "#ede9fe", "#7c3aed")}
                                   </div>
                                   <div class="grid-2">
-                                    <div class="card"><div class="card-head"><h3>Daily Cash Flow - ${monthName} ${year}</h3></div><div class="chart-wrap"><canvas id="monthlyChart"></canvas></div></div>
+                                    <div class="card"><div class="card-head"><h3>Daily Cash Flow - ${monthName} ${year}</h3><span>${safeText(companyName)}</span></div><div class="chart-wrap"><canvas id="monthlyChart"></canvas></div></div>
                                     <div class="report-card"><h4>Expense Breakdown by Category</h4>${catRows}<div class="report-total-row"><span>Total Expenses</span><span>${fmt.currency(totalExpense)}</span></div></div>
                                   </div>
                                   <div class="grid-2">
@@ -4544,17 +4314,17 @@
                                         )
                                         .map((t) => {
                                           const type = t.type || "-";
-                                          const desc = t.description || "-";
-                                          const cat = t.category || "Other";
-                                          const amt = t.amount || 0;
-                                          const company = (() => {
-                                            const c = DB.companies.find(
-                                              (x) =>
-                                                (x._id || x.id) === t.companyId,
-                                            );
-                                            return c ? c.name : "-";
-                                          })();
-                                          return `<tr><td>${fmt.date(t.date)}</td><td>${desc}</td><td><span class="pill pill-gray">${cat}</span></td><td><span class="pill ${type === "income" ? "pill-green" : type === "reimbursement" ? "pill-blue" : type === "reimbursement-withdrawal" ? "pill-yellow" : "pill-red"}">${type === "reimbursement-withdrawal" ? "withdrawal" : type}</span></td><td style="font-weight:600;color:${type === "income" ? "var(--success)" : type === "reimbursement" ? "var(--info)" : type === "reimbursement-withdrawal" ? "var(--warning)" : "var(--danger)"}">${type === "income" ? "+" : type === "reimbursement" ? "↺" : type === "reimbursement-withdrawal" ? "↓" : "-"}${fmt.currency(amt)}</td><td>${company}</td></tr>`;
+                                          const desc = safeText(
+                                            t.description || "-",
+                                          );
+                                          const cat = safeText(
+                                            t.category || "Other",
+                                          );
+                                          const amt = toNumber(t.amount);
+                                          const company = companyNameById(
+                                            t.companyId,
+                                          );
+                                          return `<tr><td>${fmt.date(t.date)}</td><td>${desc}</td><td><span class="pill pill-gray">${cat}</span></td><td><span class="pill ${type === "income" ? "pill-green" : type === "reimbursement" ? "pill-blue" : type === "reimbursement-withdrawal" ? "pill-yellow" : "pill-red"}">${type === "reimbursement-withdrawal" ? "withdrawal" : safeText(type)}</span></td><td style="font-weight:600;color:${type === "income" ? "var(--success)" : type === "reimbursement" ? "var(--info)" : type === "reimbursement-withdrawal" ? "var(--warning)" : "var(--danger)"}">${type === "income" ? "+" : type === "reimbursement" ? "↺" : type === "reimbursement-withdrawal" ? "↓" : "-"}${fmt.currency(amt)}</td><td>${safeText(company)}</td></tr>`;
                                         })
                                         .join("") ||
                                       '<tr><td colspan="6" style="text-align:center;color:var(--muted)">No transactions for this month</td></tr>'
@@ -4574,41 +4344,20 @@
                 {
                   label: "Income",
                   data: dailyIncome,
-                  backgroundColor: "rgba(5,150,105,0.8)",
-                  borderRadius: 3,
-                  borderSkipped: false,
+                  backgroundColor: "rgba(5,150,105,0.7)",
                 },
                 {
                   label: "Expenses",
                   data: dailyExpense,
-                  backgroundColor: "rgba(220,38,38,0.8)",
-                  borderRadius: 3,
-                  borderSkipped: false,
+                  backgroundColor: "rgba(220,38,38,0.7)",
                 },
               ],
             },
             options: {
               responsive: true,
               maintainAspectRatio: false,
-              plugins: { legend: { display: true, position: "top" } },
-              scales: {
-                x: {
-                  grid: { display: false },
-                  ticks: {
-                    font: { size: 10 },
-                    color: "#9ca3af",
-                    maxTicksLimit: 10,
-                  },
-                },
-                y: {
-                  grid: { color: "#f3f4f6" },
-                  ticks: {
-                    font: { size: 10 },
-                    color: "#9ca3af",
-                    callback: (v) => "₦" + (v / 1000).toFixed(0) + "K",
-                  },
-                },
-              },
+              plugins: { legend: { display: true } },
+              scales: { y: { beginAtZero: true } },
             },
           });
         }, 100);
@@ -4617,6 +4366,9 @@
       window.printMonthlyReport = () => {
         const month = document.getElementById("report-month").value;
         const year = document.getElementById("report-year").value;
+        const companyId =
+          document.getElementById("monthly-report-company")?.value || "";
+        const companyName = selectedCompanyLabel("monthly-report-company");
         const monthNames = {
           "01": "January",
           "02": "February",
@@ -4632,6 +4384,8 @@
           12: "December",
         };
         const monthName = monthNames[month];
+        const toNumber = (value) => Number(value) || 0;
+        const matchesCompany = (item) => matchesCompanyFilter(item, companyId);
         const filterDate = (d) => {
           const dt = new Date(d);
           return (
@@ -4639,40 +4393,41 @@
             String(dt.getFullYear()) === year
           );
         };
-        const monthTxns = DB.transactions.filter(
-          (t) => t.date && filterDate(t.date),
+        const monthTxns = (DB.transactions || []).filter(
+          (t) => t.date && filterDate(t.date) && matchesCompany(t),
         );
+        const monthInvoices = (DB.invoices || []).filter((i) => {
+          const dateToCheck = i.issueDate || i.date || i.createdAt;
+          return dateToCheck && filterDate(dateToCheck) && matchesCompany(i);
+        });
         const income = monthTxns
           .filter((t) => t.type === "income")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const monthReimbursements = monthTxns
           .filter((t) => t.type === "reimbursement")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const monthReimbursementWithdrawals = monthTxns
           .filter((t) => t.type === "reimbursement-withdrawal")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const totalExpense = monthTxns
           .filter((t) => t.type === "expense")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const netProfit = income - totalExpense;
         const netReimbursementPool =
           monthReimbursements - monthReimbursementWithdrawals;
-        const monthInvoices = DB.invoices.filter(
-          (i) => i.date && filterDate(i.date),
-        );
         const invoiceTotal = monthInvoices.reduce(
-          (a, i) => a + (i.amount || 0),
+          (a, i) => a + toNumber(i.totalAmount || i.amount),
           0,
         );
         const invoicePaid = monthInvoices
           .filter((i) => i.status === "paid")
-          .reduce((a, i) => a + (i.amount || 0), 0);
+          .reduce((a, i) => a + toNumber(i.totalAmount || i.amount), 0);
         const expByCat = {};
         monthTxns
           .filter((t) => t.type === "expense")
           .forEach((t) => {
             const c = t.category || "Other";
-            expByCat[c] = (expByCat[c] || 0) + (t.amount || 0);
+            expByCat[c] = (expByCat[c] || 0) + toNumber(t.amount);
           });
         const catRows =
           Object.entries(expByCat)
@@ -4680,7 +4435,7 @@
             .map(
               ([cat, amt]) =>
                 '<div class="report-row"><span>' +
-                cat +
+                safeText(cat) +
                 "</span><span>₦" +
                 amt.toLocaleString() +
                 "</span></div>",
@@ -4691,17 +4446,17 @@
           monthTxns
             .sort((a, b) => new Date(b.date) - new Date(a.date))
             .map((t) => {
-              const type = t.type || "-";
-              const desc = (t.description || "-").replace(/,/g, " ");
-              const cat = t.category || "Other";
-              const amt = t.amount || 0;
+              const type = safeText(t.type || "-");
+              const desc = safeText(t.description || "-");
+              const cat = safeText(t.category || "Other");
+              const amt = toNumber(t.amount);
               return `<tr><td>${fmt.date(t.date)}</td><td>${desc}</td><td>${cat}</td><td>${type}</td><td style="text-align:right">₦${amt.toLocaleString()}</td></tr>`;
             })
             .join("") ||
           '<tr><td colspan="5" style="text-align:center">No transactions</td></tr>';
         const printContent = `<!DOCTYPE html><html><head><title>Monthly Report - ${monthName} ${year}</title>
                                 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'DM Sans',sans-serif;padding:20px;color:#111827;background:#fff}.print-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #0a1a3a}.print-logo{display:flex;align-items:center;gap:12px}.print-logo img{width:56px;height:56px;object-fit:contain}.print-logo-text h2{font-size:20px;color:#0a1a3a;margin:0}.print-logo-text p{font-size:10px;color:#6b7280;letter-spacing:.5px;text-transform:uppercase}.print-meta{text-align:right}.print-meta h3{font-size:18px;font-weight:700;color:#0a1a3a;margin:0 0 4px}.print-meta p{font-size:11px;color:#6b7280;margin:0 0 2px}.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}.summary-box{border:1px solid #e5e7eb;border-radius:8px;padding:14px;text-align:center}.summary-box .num{font-size:22px;font-weight:700;color:#0a1a3a}.summary-box .lbl{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}.report-card{margin-bottom:16px;padding:16px;border:1px solid #e5e7eb;border-radius:8px}.report-card h4{font-size:12px;font-weight:600;margin-bottom:10px;color:#0a1a3a;text-transform:uppercase;letter-spacing:.5px}.report-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f3f4f6;font-size:11px}.report-total-row{display:flex;justify-content:space-between;padding:8px 0;font-size:13px;font-weight:700;color:#0a1a3a;border-top:2px solid #0a1a3a;margin-top:4px}.print-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:10px}.print-table th{background:#0a1a3a;color:#fff;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:8px 6px;text-align:left}.print-table td{padding:8px 6px;border-bottom:1px solid #e5e7eb}.print-footer{text-align:center;font-size:10px;color:#6b7280;padding-top:16px;border-top:1px solid #e5e7eb;margin-top:24px}@media print{html,body{width:210mm;min-height:297mm;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{width:210mm;min-height:297mm;padding:10mm;box-sizing:border-box;display:flex;flex-direction:column}.print-footer{margin-top:auto}}@page{size:A4 portrait;margin:0}</style></head><body>
-                                <div class="print-header"><div class="print-logo"><img src="https://res.cloudinary.com/deoqw88yb/image/upload/v1780134973/October_Libra_Building_Co._Ltd_Logo__1__page-0001-removebg-preview_rpwcmp.png" alt="Logo" /><div class="print-logo-text"><h2>October Libra Building Co. Ltd</h2><p>Construction & Real Estate Development</p></div></div><div class="print-meta"><h3>MONTHLY GENERAL REPORT</h3><p><strong>Period:</strong> ${monthName} ${year}</p><p><strong>Generated:</strong> ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p></div></div>
+                                <div class="print-header"><div class="print-logo"><img src="https://res.cloudinary.com/deoqw88yb/image/upload/v1780134973/October_Libra_Building_Co._Ltd_Logo__1__page-0001-removebg-preview_rpwcmp.png" alt="Logo" /><div class="print-logo-text"><h2>October Libra Building Co. Ltd</h2><p>Construction & Real Estate Development</p></div></div><div class="print-meta"><h3>MONTHLY COMPANY REPORT</h3><p><strong>Period:</strong> ${monthName} ${year}</p><p><strong>Company:</strong> ${safeText(companyName)}</p><p><strong>Generated:</strong> ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p></div></div>
                                 <div class="summary-grid"><div class="summary-box"><div class="num">₦${income.toLocaleString()}</div><div class="lbl">Income</div></div><div class="summary-box"><div class="num">₦${totalExpense.toLocaleString()}</div><div class="lbl">Expenses</div></div><div class="summary-box"><div class="num">₦${netProfit.toLocaleString()}</div><div class="lbl">Net ${netProfit >= 0 ? "Profit" : "Loss"}</div></div><div class="summary-box"><div class="num">₦${netReimbursementPool.toLocaleString()}</div><div class="lbl">Reimbursement Pool</div></div></div>
                                 <div class="report-card"><h4>Expense Breakdown by Category</h4>${catRows}<div class="report-total-row"><span>Total Expenses</span><span>₦${totalExpense.toLocaleString()}</span></div></div>
                                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
@@ -4709,7 +4464,7 @@
                                   <div class="report-card"><h4>Transaction Counts</h4><div class="report-row"><span>Income Transactions</span><span>${monthTxns.filter((t) => t.type === "income").length}</span></div><div class="report-row"><span>Reimbursements Received</span><span>${monthTxns.filter((t) => t.type === "reimbursement").length} (₦${monthReimbursements.toLocaleString()})</span></div><div class="report-row"><span>Reimbursement Withdrawals</span><span>${monthTxns.filter((t) => t.type === "reimbursement-withdrawal").length} (₦${monthReimbursementWithdrawals.toLocaleString()})</span></div><div class="report-row"><span>Expense Transactions</span><span>${monthTxns.filter((t) => t.type === "expense").length}</span></div></div>
                                 </div>
                                 <div class="report-card"><h4>Transaction Log</h4><table class="print-table"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th><th style="text-align:right">Amount</th></tr></thead><tbody>${logRows}</tbody></table></div>
-                                <div class="print-footer"><p>October Libra Building Co. Ltd | RC: 1234567 | info@octoberlibra.com</p><p>Generated from the Libra Building Admin Portal.</p></div></body></html>`;
+                                <div class="print-footer"><p>October Libra Building Co. Ltd</p><p>Generated from the Libra Building Admin Portal.</p></div></body></html>`;
         const printWindow = window.open("", "_blank");
         if (!printWindow) return alert("Popup blocked! Please allow popups.");
         printWindow.document.write(printContent);
@@ -4724,6 +4479,9 @@
       window.exportMonthlyCSV = () => {
         const month = document.getElementById("report-month").value;
         const year = document.getElementById("report-year").value;
+        const companyId =
+          document.getElementById("monthly-report-company")?.value || "";
+        const companyName = selectedCompanyLabel("monthly-report-company");
         const monthNames = {
           "01": "January",
           "02": "February",
@@ -4738,6 +4496,7 @@
           11: "November",
           12: "December",
         };
+        const matchesCompany = (item) => matchesCompanyFilter(item, companyId);
         const filterDate = (d) => {
           const dt = new Date(d);
           return (
@@ -4745,10 +4504,10 @@
             String(dt.getFullYear()) === year
           );
         };
-        const monthTxns = DB.transactions.filter(
-          (t) => t.date && filterDate(t.date),
+        const monthTxns = (DB.transactions || []).filter(
+          (t) => t.date && filterDate(t.date) && matchesCompany(t),
         );
-        let csv = "Date,Description,Category,Type,Amount,Company,Reference\n";
+        let csv = "Company,Date,Description,Category,Type,Amount,Reference\n";
         monthTxns
           .sort((a, b) => new Date(b.date) - new Date(a.date))
           .forEach((t) => {
@@ -4756,20 +4515,19 @@
             const desc = (t.description || "-").replace(/,/g, " ");
             const cat = t.category || "Other";
             const amt = t.amount || 0;
-            const company = (() => {
-              const c = DB.companies.find(
-                (x) => (x._id || x.id) === t.companyId,
-              );
-              return c ? c.name.replace(/,/g, " ") : "-";
-            })();
+            const company = companyNameById(t.companyId).replace(/,/g, " ");
             const ref = (t.reference || "-").replace(/,/g, " ");
-            csv += `${fmt.date(t.date)},${desc},${cat},${type},${amt},${company},${ref}\n`;
+            csv += `${company},${fmt.date(t.date)},${desc},${cat},${type},${amt},${ref}\n`;
           });
         const blob = new Blob([csv], { type: "text/csv" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `monthly-report-${monthNames[month]}-${year}.csv`;
+        const safeCompany = (companyName || "all-companies")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+        a.download = `monthly-report-${safeCompany}-${monthNames[month]}-${year}.csv`;
         a.click();
         URL.revokeObjectURL(url);
       };
@@ -4790,7 +4548,7 @@
         }
 
         if (companyId) {
-          filtered = filtered.filter((e) => e.companyId === companyId);
+          filtered = filtered.filter((e) => matchesCompanyFilter(e, companyId));
         }
 
         const totalAmount = filtered.reduce((a, e) => a + (e.amount || 0), 0);
@@ -4830,7 +4588,7 @@
             .map((e) => {
               const company = (() => {
                 const c = DB.companies.find(
-                  (x) => (x._id || x.id) === e.companyId,
+                  (x) => entityId(x._id || x.id) === entityId(e.companyId),
                 );
                 return c ? c.name : "-";
               })();
@@ -4893,7 +4651,7 @@
           });
         }
         if (companyId) {
-          filtered = filtered.filter((e) => e.companyId === companyId);
+          filtered = filtered.filter((e) => matchesCompanyFilter(e, companyId));
         }
         const totalAmount = filtered.reduce((a, e) => a + (e.amount || 0), 0);
         const approvedAmount = filtered
@@ -4977,7 +4735,7 @@
           });
         }
         if (companyId) {
-          filtered = filtered.filter((e) => e.companyId === companyId);
+          filtered = filtered.filter((e) => matchesCompanyFilter(e, companyId));
         }
         let csv =
           "Date,Vendor,Description,Category,Amount,Company,Project,Status,Reference\n";
@@ -4986,12 +4744,12 @@
           .forEach((e) => {
             const company = (() => {
               const c = DB.companies.find(
-                (x) => (x._id || x.id) === e.companyId,
+                (x) => entityId(x._id || x.id) === entityId(e.companyId),
               );
               return c ? c.name.replace(/,/g, " ") : "-";
             })();
             const project = (() => {
-              const p = DB.properties.find(
+              const p = DB.projects.find(
                 (x) => (x._id || x.id) === e.projectId,
               );
               return p ? p.name.replace(/,/g, " ") : "-";
@@ -5075,7 +4833,7 @@
         const projectName =
           inv.projectName ||
           (() => {
-            const p = DB.properties.find(
+            const p = DB.projects.find(
               (x) => (x._id || x.id) === (inv.project || inv.project_Id),
             );
             return p ? p.name : inv.project || "-";
@@ -5154,7 +4912,7 @@
         const projectName =
           inv.projectName ||
           (() => {
-            const p = DB.properties.find(
+            const p = DB.projects.find(
               (x) => (x._id || x.id) === (inv.project || inv.project_Id),
             );
             return p ? p.name : inv.project || "-";
@@ -5272,6 +5030,78 @@
           setTimeout(() => printWindow.close(), 1000);
         }, 500);
       };
+      window.filterInvoicesByProperty = (propertyId) => {
+        invoicePropertyFilter = propertyId || "all";
+        navigate("invoices");
+      };
+
+      window.printInvoiceReceipt = (id) => {
+        const inv = DB.invoices.find((i) => i._id === id || i.id === id);
+        if (!inv) return alert("Invoice not found");
+        const invNumber = inv.invoiceNumber || inv._id || "N/A";
+        const propertyName = invoicePropertyName(inv);
+        const paidDate =
+          inv.paidDate ||
+          inv.updatedAt ||
+          inv.issueDate ||
+          new Date().toISOString();
+        const printContent = `<!DOCTYPE html><html><head><title>Receipt - ${invNumber}</title>
+          <style>
+            *{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:24px;color:#111827;background:#fff}.header{display:flex;justify-content:space-between;border-bottom:2px solid #0a1a3a;padding-bottom:16px;margin-bottom:24px}.brand h2{color:#0a1a3a;font-size:22px;margin-bottom:4px}.brand p,.meta p{font-size:12px;color:#6b7280}.meta{text-align:right}.meta h1{font-size:26px;color:#0a1a3a;margin-bottom:8px}.badge{display:inline-block;padding:5px 14px;border-radius:18px;background:#d1fae5;color:#065f46;font-weight:700;font-size:12px;margin-bottom:8px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px}.box{border:1px solid #e5e7eb;border-radius:8px;padding:14px;background:#f8f9fb}.box label{display:block;font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}.box div{font-size:15px;font-weight:600}.total{margin-top:20px;padding:18px;border:2px solid #0a1a3a;border-radius:10px;display:flex;justify-content:space-between;align-items:center}.total span:first-child{font-size:14px;color:#6b7280;text-transform:uppercase}.total span:last-child{font-size:28px;font-weight:800;color:#0a1a3a}.footer{margin-top:40px;text-align:center;font-size:12px;color:#6b7280;border-top:1px solid #e5e7eb;padding-top:16px}@page{size:A4 portrait;margin:12mm}@media print{body{padding:0}}
+          </style></head><body>
+          <div class="header"><div class="brand"><h2>October Libra Building Co. Ltd</h2><p>Construction & Real Estate Development</p></div><div class="meta"><h1>RECEIPT</h1><div class="badge">${(inv.status || "paid").toUpperCase()}</div><p><strong>Receipt Ref:</strong> R-${invNumber}</p><p><strong>Invoice Ref:</strong> ${invNumber}</p></div></div>
+          <div class="grid"><div class="box"><label>Received From</label><div>${safeText(inv.client || "-")}</div></div><div class="box"><label>Property</label><div>${safeText(propertyName)}</div></div><div class="box"><label>Subject</label><div>${safeText(inv.subject || "Maintenance")}</div></div><div class="box"><label>Date</label><div>${new Date(paidDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</div></div><div class="box"><label>Payment Status</label><div>${safeText(inv.status || "paid")}</div></div><div class="box"><label>Notes</label><div>${safeText(inv.notes || "Payment received for invoice")}</div></div></div>
+          <div class="total"><span>Amount Received</span><span>₦${(inv.totalAmount || 0).toLocaleString()}</span></div>
+          <div class="footer"><p>Generated from Libra Construction Admin Portal.</p><p>Thank you for your business.</p></div>
+          </body></html>`;
+        const printWindow = window.open("", "_blank");
+        if (!printWindow) return alert("Popup blocked! Please allow popups.");
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+          printWindow.print();
+          setTimeout(() => printWindow.close(), 1000);
+        }, 500);
+      };
+
+      window.printFilteredInvoiceReceipts = () => {
+        const filtered = (DB.invoices || []).filter((inv) =>
+          invoiceMatchesProperty(inv, invoicePropertyFilter),
+        );
+        if (filtered.length === 0)
+          return alert("No invoices found for this property filter.");
+        const label =
+          invoicePropertyFilter === "all"
+            ? "All Properties"
+            : invoicePropertyName({ propertyId: invoicePropertyFilter });
+        const total = filtered.reduce((a, i) => a + (i.totalAmount || 0), 0);
+        const paid = filtered
+          .filter((i) => i.status === "paid")
+          .reduce((a, i) => a + (i.totalAmount || 0), 0);
+        const outstanding = total - paid;
+        const rows = filtered
+          .map(
+            (inv, idx) =>
+              `<tr><td>${idx + 1}</td><td>${safeText(inv.invoiceNumber || inv._id || "N/A")}</td><td>${safeText(invoicePropertyName(inv))}</td><td>${safeText(inv.client || "-")}</td><td>${safeText(inv.subject || "-")}</td><td>${safeText(inv.status || "pending")}</td><td style="text-align:right">₦${(inv.totalAmount || 0).toLocaleString()}</td></tr>`,
+          )
+          .join("");
+        const printContent = `<!DOCTYPE html><html><head><title>Property Invoice Receipt - ${label}</title>
+          <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:Arial,sans-serif;padding:24px;color:#111827}.header{display:flex;justify-content:space-between;border-bottom:2px solid #0a1a3a;padding-bottom:16px;margin-bottom:22px}.header h2{color:#0a1a3a}.header p{font-size:12px;color:#6b7280}.meta{text-align:right}.meta h1{font-size:22px;color:#0a1a3a}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}.card{border:1px solid #e5e7eb;border-radius:8px;padding:14px;background:#f8f9fb}.card label{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px}.card div{font-size:20px;font-weight:800;color:#0a1a3a;margin-top:4px}table{width:100%;border-collapse:collapse;margin-top:18px}th{background:#0a1a3a;color:#fff;text-align:left;font-size:11px;padding:9px}td{border-bottom:1px solid #e5e7eb;padding:9px;font-size:12px}.footer{margin-top:30px;border-top:1px solid #e5e7eb;padding-top:12px;text-align:center;font-size:11px;color:#6b7280}@page{size:A4 portrait;margin:12mm}@media print{body{padding:0}}</style>
+          </head><body><div class="header"><div><h2>October Libra Building Co. Ltd</h2><p>Invoice Receipt Summary</p></div><div class="meta"><h1>PROPERTY RECEIPT</h1><p><strong>Property:</strong> ${safeText(label)}</p><p><strong>Date:</strong> ${new Date().toLocaleDateString("en-GB")}</p></div></div>
+          <div class="summary"><div class="card"><label>Total Invoiced</label><div>₦${total.toLocaleString()}</div></div><div class="card"><label>Collected</label><div>₦${paid.toLocaleString()}</div></div><div class="card"><label>Outstanding</label><div>₦${outstanding.toLocaleString()}</div></div></div>
+          <table><thead><tr><th>#</th><th>Invoice</th><th>Property</th><th>Client</th><th>Subject</th><th>Status</th><th style="text-align:right">Amount</th></tr></thead><tbody>${rows}</tbody></table><div class="footer">Generated from Libra Construction Admin Portal.</div></body></html>`;
+        const printWindow = window.open("", "_blank");
+        if (!printWindow) return alert("Popup blocked! Please allow popups.");
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+          printWindow.print();
+          setTimeout(() => printWindow.close(), 1000);
+        }, 500);
+      };
+
       // ==================== MODAL DEFINITIONS ====================
       const modalDefs = {
         "new-employee": {
@@ -5460,12 +5290,15 @@
               const dueDate = row.querySelector(".pt-due").value;
               if (title) tasks.push({ title, status, dueDate });
             });
+            const initialBudget =
+              parseFloat(document.getElementById("proj-budget").value) || 0;
             const data = {
               name,
               client,
               pm,
-              budget:
-                parseFloat(document.getElementById("proj-budget").value) || 0,
+              budget: initialBudget,
+              originalBudget: initialBudget,
+              incomeReceived: 0,
               status: document.getElementById("proj-status").value,
               start: document.getElementById("proj-start").value || undefined,
               end: document.getElementById("proj-end").value || undefined,
@@ -5484,17 +5317,17 @@
         "edit-project": {
           title: "Edit Project",
           body: (projectId) => {
-            const p = DB.properties.find(
+            const p = DB.projects.find(
               (x) => x._id === projectId || x.id === projectId,
             );
             return `<div class="form-grid">
-                                      <div class="form-group form-full"><label>Project Name</label><input id="edit-proj-name" value="${p.name}" /></div>
-                                      <div class="form-group"><label>Client</label><input id="edit-proj-client" value="${p.client}" /></div>
-                                      <div class="form-group"><label>Project Manager</label><input id="edit-proj-pm" value="${p.pm}" /></div>
+                                      <div class="form-group form-full"><label>Project Name</label><input id="edit-proj-name" value="${safeAttr(p.name || "")}" /></div>
+                                      <div class="form-group"><label>Client</label><input id="edit-proj-client" value="${safeAttr(p.client || "")}" /></div>
+                                      <div class="form-group"><label>Project Manager</label><input id="edit-proj-pm" value="${safeAttr(p.pm || "")}" /></div>
                                       <div class="form-group"><label>Budget (₦)</label><input id="edit-proj-budget" type="number" value="${p.budget}" /></div>
                                       <div class="form-group"><label>Status</label><select id="edit-proj-status"><option ${p.status === "Planning" ? "selected" : ""}>Planning</option><option ${p.status === "Design" ? "selected" : ""}>Design</option><option ${p.status === "Construction" ? "selected" : ""}>Construction</option><option ${p.status === "Completed" ? "selected" : ""}>Completed</option></select></div>
-                                      <div class="form-group"><label>Start Date</label><input id="edit-proj-start" type="date" value="${p.start}" /></div>
-                                      <div class="form-group"><label>End Date</label><input id="edit-proj-end" type="date" value="${p.end}" /></div>
+                                      <div class="form-group"><label>Start Date</label><input id="edit-proj-start" type="date" value="${dateInputValue(p.start)}" /></div>
+                                      <div class="form-group"><label>End Date</label><input id="edit-proj-end" type="date" value="${dateInputValue(p.end)}" /></div>
                                     </div>`;
           },
           save: "Update Project",
@@ -5515,6 +5348,59 @@
               loadAllData().then(() => navigate("projects"));
             });
           },
+        },
+        "add-project-budget": {
+          title: "Add Project Budget",
+          body: (projectId) => {
+            const p = findProjectById(projectId);
+            if (!p) return "<p>Project not found</p>";
+            return `<div class="form-grid">
+                                      <div class="form-group form-full"><label>Project</label><input value="${safeAttr(p.name || "Unnamed Project")}" disabled /></div>
+                                      <div class="form-group"><label>Current Budget</label><input value="${fmt.currency(Number(p.budget) || 0)}" disabled /></div>
+                                      <div class="form-group"><label>Amount to Add (₦)</label><input id="add-budget-amount" type="number" min="1" placeholder="0" /></div>
+                                      <div class="form-group form-full"><label>Note</label><textarea id="add-budget-note" rows="2" placeholder="Reason for adding this budget"></textarea></div>
+                                    </div>`;
+          },
+          save: "Add Budget",
+          action: (projectId) => {
+            const amount =
+              parseFloat(document.getElementById("add-budget-amount").value) ||
+              0;
+            if (amount <= 0) {
+              alert("Enter a valid amount greater than 0");
+              return;
+            }
+            const data = {
+              amount,
+              note: document.getElementById("add-budget-note").value,
+              recordedBy: CURRENT_USER.name,
+            };
+            apiPut(`projects/${projectId}/budget/add`, data)
+              .then(() => {
+                closeModal();
+                loadAllData().then(() => navigate("projects"));
+              })
+              .catch((err) => alert("Failed to add budget: " + err.message));
+          },
+        },
+        "add-project-income": {
+          title: "Calculated Project Income",
+          body: (projectId) => {
+            const p = findProjectById(projectId);
+            if (!p) return "<p>Project not found</p>";
+            const budget = Number(p.budget) || 0;
+            const procurement = projectProcurementTotal(projectId);
+            const income = budget - procurement;
+            return `<div class="form-grid">
+                                      <div class="form-group form-full"><label>Project</label><input value="${safeAttr(p.name || "Unnamed Project")}" disabled /></div>
+                                      <div class="form-group"><label>Budget</label><input value="${fmt.currency(budget)}" disabled /></div>
+                                      <div class="form-group"><label>Approved Procurement</label><input value="${fmt.currency(procurement)}" disabled /></div>
+                                      <div class="form-group form-full"><label>Calculated Income</label><input value="${fmt.currency(income)}" disabled style="font-weight:700;color:var(--success)" /></div>
+                                      <div class="form-group form-full"><label>Formula</label><textarea rows="2" disabled>Income = Budget - Approved Procurement</textarea></div>
+                                    </div>`;
+          },
+          save: "Close",
+          action: () => closeModal(),
         },
         "new-task": {
           title: "Add Task",
@@ -5539,7 +5425,7 @@
         "edit-task": {
           title: "Edit Task",
           body: (projectId, taskId) => {
-            const p = DB.properties.find(
+            const p = DB.projects.find(
               (x) => x._id === projectId || x.id === projectId,
             );
             const t = p
@@ -5565,7 +5451,7 @@
             apiPut(`tasks/${taskId}`, data).then(() => {
               closeModal();
               loadAllData().then(() => {
-                const project = DB.properties.find(
+                const project = DB.projects.find(
                   (x) => x._id === projectId || x.id === projectId,
                 );
                 if (project && project.tasks && project.tasks.length > 0) {
@@ -5642,20 +5528,8 @@
         "new-procurement": {
           title: "New Procurement Request",
           body: () => {
-            const projectOptions =
-              DB.properties.length > 0
-                ? DB.properties
-                    .map(
-                      (p) =>
-                        '<option value="' +
-                        (p._id || p.id) +
-                        '">' +
-                        p.name +
-                        "</option>",
-                    )
-                    .join("")
-                : '<option value="">No projects available</option>';
-            return `<div class="form-grid"><div class="form-group form-full"><label>Item Description *</label><input id="proc-item" placeholder="Describe the item or service" /></div><div class="form-group"><label>Vendor *</label><input id="proc-vendor" placeholder="Supplier name" /></div><div class="form-group"><label>Category</label><select id="proc-cat"><option>Materials</option><option>Equipment</option><option>Electrical</option><option>Safety</option><option>Facade</option><option>Other</option></select></div><div class="form-group"><label>Amount (₦) *</label><input id="proc-amount" type="number" placeholder="0" /></div><div class="form-group"><label>PROPERTY</label><select id="proc-project">${projectOptions}</select></div><div class="form-group"><label>Urgency</label><select id="proc-urgency"><option>Normal</option><option>High</option><option>Urgent</option></select></div><div class="form-group form-full"><label>Justification</label><textarea id="proc-just" rows="3" placeholder="Why is this needed?"></textarea></div></div>`;
+            const projectOptions = projectOptionsHtml();
+            return `<div class="form-grid"><div class="form-group form-full"><label>Item Description *</label><input id="proc-item" placeholder="Describe the item or service" /></div><div class="form-group"><label>Vendor *</label><input id="proc-vendor" placeholder="Supplier name" /></div><div class="form-group"><label>Category</label><select id="proc-cat"><option>Materials</option><option>Equipment</option><option>Electrical</option><option>Safety</option><option>Facade</option><option>Other</option></select></div><div class="form-group"><label>Amount (₦) *</label><input id="proc-amount" type="number" placeholder="0" oninput="updateProcurementBudgetPreview()" /></div><div class="form-group"><label>Project to Deduct From *</label><select id="proc-project" onchange="updateProcurementBudgetPreview()">${projectOptions}</select></div><div class="form-group"><label>Urgency</label><select id="proc-urgency"><option>Normal</option><option>High</option><option>Urgent</option></select></div><div class="form-group form-full"><label>Budget Impact</label><div id="proc-budget-preview" style="padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;font-size:13px;color:var(--muted)">Select a project and enter amount to see the budget impact.</div></div><div class="form-group form-full"><label>Justification</label><textarea id="proc-just" rows="3" placeholder="Why is this needed?"></textarea></div></div>`;
           },
           save: "Submit Request",
           action: () => {
@@ -5675,6 +5549,26 @@
               );
               return;
             }
+            const projectId = document.getElementById("proc-project").value;
+            const project = findProjectById(projectId);
+            if (!projectId || !project) {
+              alert(
+                "Please select the project this procurement should be deducted from.",
+              );
+              return;
+            }
+            const availableBudget = projectAvailableBudget(projectId);
+            if (amount > availableBudget) {
+              const proceed = confirm(
+                `This procurement is higher than the available project budget.
+
+Available: ${fmt.currency(availableBudget)}
+Request: ${fmt.currency(amount)}
+
+Submit anyway?`,
+              );
+              if (!proceed) return;
+            }
             const data = {
               item,
               title: item,
@@ -5682,8 +5576,10 @@
               category: document.getElementById("proc-cat").value,
               amount,
               totalAmount: amount,
-              projectId: document.getElementById("proc-project").value,
-              project: document.getElementById("proc-project").value,
+              projectId,
+              project: projectId,
+              projectName: project.name || "",
+              deductFromBudget: true,
               urgency: document.getElementById("proc-urgency").value,
               justification: document.getElementById("proc-just").value,
               requestor: CURRENT_USER.name,
@@ -5743,19 +5639,7 @@
         "new-invoice": {
           title: "Create Invoice",
           body: () => {
-            const projectOptions =
-              DB.properties.length > 0
-                ? DB.properties
-                    .map(
-                      (p) =>
-                        '<option value="' +
-                        (p._id || p.id) +
-                        '">' +
-                        p.name +
-                        "</option>",
-                    )
-                    .join("")
-                : '<option value="">No projects available</option>';
+            const projectOptions = propertyOptionsHtml("", false);
             const bankOptions =
               DB.bankAccounts.length > 0
                 ? DB.bankAccounts
@@ -5820,6 +5704,7 @@
             const projectName =
               selectedProject.options[selectedProject.selectedIndex]?.text ||
               "";
+            const selectedProperty = findPropertyById(projectId);
 
             const savedBank = DB.bankAccounts[bankIdx] || {};
             const bankInformation = {
@@ -5846,8 +5731,17 @@
             const data = {
               subject: document.getElementById("inv-subject").value,
               project: projectId,
+              projectId,
               projectName:
-                projectName !== "No projects available" ? projectName : "",
+                projectName !== "No properties available" &&
+                projectName !== "Select Property"
+                  ? projectName
+                  : "",
+              property: projectId,
+              propertyId: projectId,
+              propertyName: selectedProperty
+                ? selectedProperty.name
+                : projectName,
               client: document.getElementById("inv-client").value,
               dueDate: document.getElementById("inv-due").value,
               items,
@@ -5873,23 +5767,10 @@
             );
             if (!inv) return "<p>Invoice not found</p>";
 
-            const projectOptions =
-              DB.properties.length > 0
-                ? DB.properties
-                    .map(
-                      (p) =>
-                        '<option value="' +
-                        (p._id || p.id) +
-                        '" ' +
-                        ((inv.project || inv.project_Id) === (p._id || p.id)
-                          ? "selected"
-                          : "") +
-                        ">" +
-                        p.name +
-                        "</option>",
-                    )
-                    .join("")
-                : '<option value="">No projects available</option>';
+            const projectOptions = propertyOptionsHtml(
+              invoicePropertyId(inv),
+              false,
+            );
 
             const bankOptions =
               DB.bankAccounts.length > 0
@@ -5983,6 +5864,7 @@
             const projectName =
               selectedProject.options[selectedProject.selectedIndex]?.text ||
               "";
+            const selectedProperty = findPropertyById(projectId);
 
             const savedBank = DB.bankAccounts[bankIdx] || {};
             const bankInformation = {
@@ -6011,8 +5893,17 @@
               subject: document.getElementById("edit-inv-subject").value,
               status: document.getElementById("edit-inv-status").value,
               project: projectId,
+              projectId,
               projectName:
-                projectName !== "No projects available" ? projectName : "",
+                projectName !== "No properties available" &&
+                projectName !== "Select Property"
+                  ? projectName
+                  : "",
+              property: projectId,
+              propertyId: projectId,
+              propertyName: selectedProperty
+                ? selectedProperty.name
+                : projectName,
               client: document.getElementById("edit-inv-client").value,
               dueDate: document.getElementById("edit-inv-due").value,
               items,
@@ -6107,6 +5998,29 @@
         if (display) display.textContent = "₦" + total.toLocaleString();
       };
 
+      window.updateProcurementBudgetPreview = () => {
+        const projectId = document.getElementById("proc-project")?.value || "";
+        const amount =
+          parseFloat(document.getElementById("proc-amount")?.value) || 0;
+        const box = document.getElementById("proc-budget-preview");
+        if (!box) return;
+        const project = findProjectById(projectId);
+        if (!project) {
+          box.innerHTML = "Select a project to view its budget balance.";
+          return;
+        }
+        const budget = Number(project.budget) || 0;
+        const approved = projectProcurementTotal(projectId);
+        const available = budget - approved;
+        const after = available - amount;
+        box.innerHTML = `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+          <div><strong>${fmt.currency(budget)}</strong><br><span style="color:var(--muted);font-size:11px">Allocated Budget</span></div>
+          <div><strong>${fmt.currency(approved)}</strong><br><span style="color:var(--muted);font-size:11px">Approved Procurement</span></div>
+          <div><strong>${fmt.currency(available)}</strong><br><span style="color:var(--muted);font-size:11px">Available Now</span></div>
+          <div><strong style="color:${after < 0 ? "var(--danger)" : "var(--success)"}">${fmt.currency(after)}</strong><br><span style="color:var(--muted);font-size:11px">After This Request</span></div>
+        </div>`;
+      };
+
       window.addEditInvoiceItem = () => {
         const container = document.getElementById(
           "edit-invoice-items-container",
@@ -6196,7 +6110,12 @@
           if (typeof def.body === "function") {
             if (type === "new-task" || type === "edit-task")
               body = def.body(param1, param2);
-            else if (type === "edit-project" || type === "edit-invoice")
+            else if (
+              type === "edit-project" ||
+              type === "edit-invoice" ||
+              type === "add-project-budget" ||
+              type === "add-project-income"
+            )
               body = def.body(param1);
             else body = def.body();
           } else {
@@ -6220,6 +6139,7 @@
             .forEach((input) =>
               input.addEventListener("input", calculateInvoiceTotal),
             );
+        if (type === "new-procurement") updateProcurementBudgetPreview();
         if (type === "edit-invoice")
           document
             .querySelectorAll(

@@ -9,6 +9,8 @@ const adminController = require("../controllers/adminController");
 router.get("/projects", adminController.getAllProjects);
 router.post("/projects", adminController.createProject);
 router.put("/projects/:id", adminController.updateProject);
+router.put("/projects/:id/budget/add", adminController.addProjectBudget);
+router.put("/projects/:id/income/add", adminController.addProjectIncome);
 
 // ==================== PROJECT TASKS ====================
 router.post("/projects/:id/tasks", adminController.createTask);

@@ -22,6 +22,17 @@ const invoiceSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    propertyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Property",
+      default: null,
+    },
+
+    propertyName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     client: {
       type: String,
       required: true,
