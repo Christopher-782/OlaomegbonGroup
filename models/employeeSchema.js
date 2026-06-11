@@ -64,6 +64,16 @@ const employeeSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    guarantorForms: [
+      {
+        publicId: { type: String, default: "" },
+        originalName: { type: String, default: "" },
+        mimeType: { type: String, default: "" },
+        size: { type: Number, default: 0 },
+        url: { type: String, default: "" },
+        uploadedAt: { type: Date },
+      },
+    ],
     createdBy: {
       type: String,
     },

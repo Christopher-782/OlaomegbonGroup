@@ -2064,6 +2064,43 @@
         return safeText(value).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
       }
 
+      function entityId(value) {
+        if (!value) return "";
+        if (typeof value === "object") {
+          return String(value._id || value.id || value.$oid || "");
+        }
+        return String(value);
+      }
+
+      function recordCompanyId(record) {
+        return entityId(
+          record?.companyId ||
+            record?.company ||
+            record?.company_id ||
+            record?.companyID ||
+            record?.companyName,
+        );
+      }
+
+      function matchesCompanyFilter(record, selectedCompanyId) {
+        if (!selectedCompanyId) return true;
+        return recordCompanyId(record) === String(selectedCompanyId);
+      }
+
+      function companyNameById(companyId) {
+        const id = entityId(companyId);
+        const company = (DB.companies || []).find(
+          (item) => entityId(item._id || item.id) === id,
+        );
+        return company ? company.name : "-";
+      }
+
+      function selectedCompanyLabel(selectId) {
+        const select = document.getElementById(selectId);
+        if (!select || !select.value) return "All Companies";
+        return select.options[select.selectedIndex]?.text || "Selected Company";
+      }
+
       function dateInputValue(value) {
         if (!value) return "";
         const d = new Date(value);
@@ -2721,46 +2758,42 @@
           const txns = DB.transactions || [];
           const totalIncome = txns
             .filter((t) => t.type === "income")
-            .reduce((a, t) => a + (t.amount || 0), 0);
+            .reduce((a, t) => a + (t.netAmount || t.amount || 0), 0);
           const totalReimbursements = txns
             .filter((t) => t.type === "reimbursement")
             .reduce((a, t) => a + (t.amount || 0), 0);
-          const totalExpense = txns
-            .filter((t) => t.type === "expense")
+          const reimbursementTransactions = txns
+            .filter((t) => t.type === "reimbursement-withdrawal")
             .reduce((a, t) => a + (t.amount || 0), 0);
           const totalCharges = txns
             .filter((t) => t.category === "Charges")
             .reduce((a, t) => a + (t.charges || 0), 0);
-          const reimbursementWithdrawals = txns
-            .filter((t) => t.type === "reimbursement-withdrawal")
-            .reduce((a, t) => a + (t.amount || 0), 0);
-          const netReimbursementPool =
-            totalReimbursements - reimbursementWithdrawals;
-          const net = totalIncome - totalExpense;
+          const reimbursementBalance =
+            totalReimbursements - reimbursementTransactions;
+
           return `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:20px">
-                                    ${kpi("Total Income", fmt.currency(totalIncome), "Logged income", "arrow-down-circle", "#d1fae5", "#059669")}
-                                    ${kpi("Total Expenses", fmt.currency(totalExpense), "All debits", "arrow-up-circle", "#fee2e2", "#dc2626")}
-                                    ${kpi("Net Position", fmt.currency(net), net >= 0 ? "Positive" : "Negative", "activity", net >= 0 ? "#dbeafe" : "#fee2e2", net >= 0 ? "#2563eb" : "#dc2626")}
-                                    ${kpi("Charges Collected", fmt.currency(totalCharges), "Revenue from charges", "percent", "#fef3c7", "#d97706")}
-                                    ${kpi("Reimbursement Pool", fmt.currency(netReimbursementPool), `${fmt.currency(reimbursementWithdrawals)} withdrawn`, "refresh-cw", "#dbeafe", "#2563eb")}
+                                    ${kpi("Total Income", fmt.currency(totalIncome), "Client payments and revenue", "arrow-down-circle", "#d1fae5", "#059669")}
+                                    ${kpi("Reimbursement Received", fmt.currency(totalReimbursements), "Added to company pool", "refresh-cw", "#dbeafe", "#2563eb")}
+                                    ${kpi("Transactions Paid", fmt.currency(reimbursementTransactions), "Deducted from reimbursement", "arrow-up-circle", "#fee2e2", "#dc2626")}
+                                    ${kpi("Reimbursement Balance", fmt.currency(reimbursementBalance), reimbursementBalance >= 0 ? "Available company balance" : "Overdrawn", "wallet", reimbursementBalance >= 0 ? "#fef3c7" : "#fee2e2", reimbursementBalance >= 0 ? "#d97706" : "#dc2626")}
+                                    ${kpi("Charges Collected", fmt.currency(totalCharges), "Bank/transfer charges", "percent", "#f3f4f6", "#6b7280")}
                                   </div>
                                   <div class="card" style="margin-bottom:20px">
-                                    <div class="card-head"><h3>Log Income / Transaction</h3><span>Record client payments, deposits, reimbursements and expenses</span></div>
+                                    <div class="card-head"><h3>Log Income, Reimbursement and Transactions</h3><span>Income adds revenue, reimbursement adds to the company pool, and transactions deduct from that pool</span></div>
                                     <div class="card-body">
                                       <div class="form-grid">
                                         <div class="form-group"><label>Date *</label><input id="txn-date" type="date" value="${new Date().toISOString().split("T")[0]}" /></div>
-                                        <div class="form-group"><label>Type *</label><select id="txn-type" onchange="toggleChargesField()"><option value="income">Income (Revenue)</option><option value="expense">Expense (Debit)</option><option value="reimbursement">Reimbursement (Add to Pool)</option><option value="reimbursement-withdrawal">Reimbursement Withdrawal (From Pool)</option></select></div>
-                                        <div class="form-group form-full"><label>Description *</label><input id="txn-desc" placeholder="e.g. Client payment for foundation stage" /></div>
+                                        <div class="form-group"><label>Entry Type *</label><select id="txn-type" onchange="toggleChargesField();loadReimbursementBalance()"><option value="income">Income</option><option value="reimbursement">Reimbursement Received</option><option value="reimbursement-withdrawal">Transaction - Deduct from Reimbursement</option></select></div>
+                                        <div class="form-group form-full"><label>Description *</label><input id="txn-desc" placeholder="e.g. Client payment, reimbursement received, or material payment from reimbursement" /></div>
                                         <div class="form-group"><label>Category</label><select id="txn-cat" onchange="handleCategoryChange()">
                                           <option value="Client Payment">Client Payment</option><option value="Deposit">Deposit</option><option value="Progress Payment">Progress Payment</option><option value="Retention Release">Retention Release</option>
-                                          <option>Materials</option><option>Labour</option><option>Equipment</option><option>Consulting</option>
-                                          <option>Transfer</option><option>Withdrawal</option><option>Utilities</option><option value="Charges">Charges (Revenue)</option>
-                                          <option value="Reimbursement">Reimbursement (Add to Pool)</option>
-                                          <option value="Reimbursement Withdrawal">Reimbursement Withdrawal (From Pool)</option><option>Other</option>
+                                          <option value="Reimbursement">Reimbursement Received</option>
+                                          <option value="Materials">Materials</option><option value="Labour">Labour</option><option value="Equipment">Equipment</option><option value="Consulting">Consulting</option>
+                                          <option value="Transfer">Transfer</option><option value="Withdrawal">Withdrawal</option><option value="Utilities">Utilities</option><option value="Charges">Charges (Income)</option><option value="Other">Other Transaction</option>
                                         </select></div>
                                         <div class="form-group"><label>Amount (₦) *</label><input id="txn-amount" type="number" placeholder="0" oninput="calculateNetAmount()" /></div>
                                         <div class="form-group" id="charges-group" style="display:none"><label>Charges (₦)</label><input id="txn-charges" type="number" placeholder="0" value="0" oninput="calculateNetAmount()" /></div>
-                                        <div class="form-group" id="net-amount-group" style="display:none"><label>Net Amount (₦)</label><input id="txn-net" type="number" placeholder="0" readonly style="background:var(--surface2);font-weight:600;color:var(--success)" /></div>
+                                        <div class="form-group" id="net-amount-group" style="display:none"><label>Net Income (₦)</label><input id="txn-net" type="number" placeholder="0" readonly style="background:var(--surface2);font-weight:600;color:var(--success)" /></div>
                                         <div class="form-group"><label>Company *</label><select id="txn-company" onchange="loadReimbursementBalance()"><option value="">Select Company</option>${DB.companies.map((c) => '<option value="' + (c._id || c.id) + '">' + safeText(c.name) + "</option>").join("")}</select></div>
                                         <div class="form-group"><label>Project</label><select id="txn-project"><option value="">No project</option>${DB.projects.map((p) => '<option value="' + (p._id || p.id) + '">' + safeText(p.name) + "</option>").join("")}</select></div>
                                         <div class="form-group"><label>Property</label><select id="txn-property">${propertyOptionsHtml("", false)}</select></div>
@@ -2771,12 +2804,13 @@
                                         <i data-lucide="wallet" style="width:16px;height:16px;color:var(--info)"></i>
                                         <span id="reimbursement-balance-text" style="font-size:13px;font-weight:600;color:var(--info)">Loading...</span>
                                       </div>
-                                      <button class="btn-primary" onclick="logTransaction()" style="margin-top:16px"><i data-lucide="save" style="width:14px;height:14px"></i> Save Transaction</button>
+                                      <div id="transaction-mode-help" style="margin-top:10px;font-size:12px;color:var(--muted)">Select a company first. Reimbursement transactions will be checked against that company’s reimbursement balance before saving.</div>
+                                      <button class="btn-primary" onclick="logTransaction()" style="margin-top:16px"><i data-lucide="save" style="width:14px;height:14px"></i> Save Entry</button>
                                     </div>
                                   </div>
                                   <div class="card">
                                     <div class="card-head"><h3>Transaction History</h3><span>${txns.length} entries</span></div>
-                                    <div class="card-table-wrap"><table class="tbl"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th><th>Amount</th><th>Charges</th><th>Net</th><th>Company</th><th>Project / Property</th><th>Ref</th></tr></thead>
+                                    <div class="card-table-wrap"><table class="tbl"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Entry Type</th><th>Amount</th><th>Charges</th><th>Net</th><th>Company</th><th>Project / Property</th><th>Ref</th></tr></thead>
                                     <tbody>${
                                       txns.length > 0
                                         ? txns
@@ -2786,34 +2820,33 @@
                                                   String(x._id || x.id) ===
                                                   String(t.companyId),
                                               );
+                                              const isIncome =
+                                                t.type === "income";
+                                              const isReimbursement =
+                                                t.type === "reimbursement";
+                                              const isTransaction =
+                                                t.type ===
+                                                "reimbursement-withdrawal";
                                               const sign =
-                                                t.type === "income"
+                                                isIncome || isReimbursement
                                                   ? "+"
-                                                  : t.type === "reimbursement"
-                                                    ? "↺"
-                                                    : t.type ===
-                                                        "reimbursement-withdrawal"
-                                                      ? "↓"
-                                                      : "-";
-                                              const amountColor =
-                                                t.type === "income"
-                                                  ? "var(--success)"
-                                                  : t.type === "reimbursement"
-                                                    ? "var(--info)"
-                                                    : t.type ===
-                                                        "reimbursement-withdrawal"
-                                                      ? "var(--warning)"
-                                                      : "var(--danger)";
-                                              const pillClass =
-                                                t.type === "income"
-                                                  ? "pill-green"
-                                                  : t.type === "reimbursement"
-                                                    ? "pill-blue"
-                                                    : t.type ===
-                                                        "reimbursement-withdrawal"
-                                                      ? "pill-yellow"
-                                                      : "pill-red";
-                                              return `<tr><td>${fmt.date(t.date)}</td><td>${safeText(t.description || "-")}</td><td><span class="pill pill-gray">${safeText(t.category || "Other")}</span></td><td><span class="pill ${pillClass}">${t.type === "reimbursement-withdrawal" ? "withdrawal" : safeText(t.type || "-")}</span></td><td style="font-weight:600;color:${amountColor}">${sign}${fmt.currency(t.amount)}</td><td>${t.charges > 0 ? fmt.currency(t.charges) : "-"}</td><td style="font-weight:600">${fmt.currency(t.netAmount || t.amount)}</td><td>${company ? safeText(company.name) : "-"}</td><td>${safeText(linkedProjectPropertyName(t))}</td><td>${safeText(t.reference || "-")}</td></tr>`;
+                                                  : "-";
+                                              const amountColor = isIncome
+                                                ? "var(--success)"
+                                                : isReimbursement
+                                                  ? "var(--info)"
+                                                  : "var(--danger)";
+                                              const pillClass = isIncome
+                                                ? "pill-green"
+                                                : isReimbursement
+                                                  ? "pill-blue"
+                                                  : "pill-red";
+                                              const entryLabel = isIncome
+                                                ? "Income"
+                                                : isReimbursement
+                                                  ? "Reimbursement"
+                                                  : "Transaction";
+                                              return `<tr><td>${fmt.date(t.date)}</td><td>${safeText(t.description || "-")}</td><td><span class="pill pill-gray">${safeText(t.category || "Other")}</span></td><td><span class="pill ${pillClass}">${entryLabel}</span></td><td style="font-weight:600;color:${amountColor}">${sign}${fmt.currency(t.amount)}</td><td>${t.charges > 0 ? fmt.currency(t.charges) : "-"}</td><td style="font-weight:600">${fmt.currency(t.netAmount || t.amount)}</td><td>${company ? safeText(company.name) : "-"}</td><td>${safeText(linkedProjectPropertyName(t))}</td><td>${safeText(t.reference || "-")}</td></tr>`;
                                             })
                                             .join("")
                                         : '<tr><td colspan="10" style="text-align:center;color:var(--muted)">No transactions recorded</td></tr>'
@@ -2939,8 +2972,15 @@
 
         async "generate-reports"() {
           await loadAllData();
-          const companyOptions = DB.companies
-            .map((c) => '<option value="' + c._id + '">' + c.name + "</option>")
+          const companyOptions = (DB.companies || [])
+            .map(
+              (c) =>
+                '<option value="' +
+                safeAttr(c._id || c.id) +
+                '">' +
+                safeText(c.name || "Unnamed Company") +
+                "</option>",
+            )
             .join("");
           return `
                                     <div style="margin-bottom:24px">
@@ -3016,11 +3056,23 @@
           const monthOptions = months
             .map((m) => '<option value="' + m.v + '">' + m.l + "</option>")
             .join("");
+          const companyOptions = (DB.companies || [])
+            .map(
+              (c) =>
+                '<option value="' +
+                safeAttr(c._id || c.id) +
+                '">' +
+                safeText(c.name || "Unnamed Company") +
+                "</option>",
+            )
+            .join("");
           return `<div style="margin-bottom:20px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
                                     <label style="font-weight:600">Month:</label>
                                     <select id="report-month" onchange="updateMonthlyReport()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text)">${monthOptions}</select>
                                     <label style="font-weight:600">Year:</label>
                                     <select id="report-year" onchange="updateMonthlyReport()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text)">${yearOptions}</select>
+                                    <label style="font-weight:600">Company:</label>
+                                    <select id="monthly-report-company" onchange="updateMonthlyReport()" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);min-width:190px"><option value="">All Companies</option>${companyOptions}</select>
                                     <button class="btn-sm btn-sm-print" onclick="printMonthlyReport()"><i data-lucide="printer" style="width:14px;height:14px"></i> Print Report</button>
                                     <button class="btn-sm btn-sm-outline" onclick="exportMonthlyCSV()"><i data-lucide="download" style="width:14px;height:14px"></i> Export CSV</button>
                                   </div>
@@ -3554,29 +3606,47 @@
       };
 
       // ==================== TRANSACTION HELPERS ====================
+      window.currentReimbursementBalance = 0;
+
       window.loadReimbursementBalance = async () => {
-        const companyId = document.getElementById("txn-company").value;
+        const companyId = document.getElementById("txn-company")?.value;
+        const type = document.getElementById("txn-type")?.value;
         const displayEl = document.getElementById(
           "reimbursement-balance-display",
         );
         const textEl = document.getElementById("reimbursement-balance-text");
-        if (!companyId || !displayEl) {
+
+        if (!companyId || !displayEl || !textEl) {
           if (displayEl) displayEl.style.display = "none";
+          window.currentReimbursementBalance = 0;
           return;
         }
+
         try {
           const res = await fetch(
             `/reimbursement-balance?companyId=${companyId}`,
-            { headers: { Authorization: `Bearer ${CURRENT_USER.token}` } },
+            {
+              headers: { Authorization: `Bearer ${CURRENT_USER.token}` },
+            },
           );
           const data = await res.json();
+          const balance = Number(data.balance || 0);
+          window.currentReimbursementBalance = balance;
+
           if (data.success) {
-            textEl.textContent = `Reimbursement Pool Balance: ${fmt.currency(data.balance || 0)}`;
+            const suffix =
+              type === "reimbursement-withdrawal"
+                ? "Available for transaction deductions"
+                : "Current company reimbursement pool";
+            textEl.textContent = `Reimbursement Balance: ${fmt.currency(balance)} · ${suffix}`;
             displayEl.style.display = "flex";
             lucide.createIcons();
           }
-        } catch (e) {
-          console.error("Failed to load reimbursement balance:", e);
+        } catch (error) {
+          console.error("Failed to load reimbursement balance:", error);
+          window.currentReimbursementBalance = 0;
+          textEl.textContent = "Could not load reimbursement balance";
+          displayEl.style.display = "flex";
         }
       };
 
@@ -3589,20 +3659,26 @@
         const chargesInput = document.getElementById("txn-charges");
         const charges = chargesInput ? parseFloat(chargesInput.value) || 0 : 0;
         const type = document.getElementById("txn-type").value;
+
         if (!desc || amount <= 0 || !companyId) {
           alert(
             "Please fill in Description, a valid Amount, and select a Company.",
           );
           return;
         }
+
         if (type === "reimbursement-withdrawal") {
-          const balanceText =
-            document.getElementById("reimbursement-balance-text")
-              ?.textContent || "";
-          const balanceMatch = balanceText.match(/[₦]([\d,]+)/);
-          const availableBalance = balanceMatch
-            ? parseFloat(balanceMatch[1].replace(/,/g, ""))
-            : 0;
+          const availableBalance = Number(
+            window.currentReimbursementBalance || 0,
+          );
+
+          if (availableBalance <= 0) {
+            alert(
+              "This company does not have any reimbursement balance to deduct from.",
+            );
+            return;
+          }
+
           if (amount > availableBalance) {
             alert(
               `Insufficient reimbursement balance. Available: ${fmt.currency(availableBalance)}, Requested: ${fmt.currency(amount)}`,
@@ -3610,12 +3686,14 @@
             return;
           }
         }
+
         const selectedProjectId =
           document.getElementById("txn-project")?.value || "";
         const selectedPropertyId =
           document.getElementById("txn-property")?.value || "";
         const selectedProject = findProjectById(selectedProjectId);
         const selectedProperty = findPropertyById(selectedPropertyId);
+
         const data = {
           date: document.getElementById("txn-date").value,
           type,
@@ -3635,24 +3713,28 @@
           reference: document.getElementById("txn-ref").value,
           loggedBy: CURRENT_USER.name,
         };
+
         apiPost("transactions", data)
           .then(() => {
-            closeModal();
             loadAllData().then(() => navigate("log-transactions"));
           })
-          .catch(() => {
-            DB.transactions.push({ ...data, _id: "local-" + Date.now() });
-            closeModal();
-            navigate("log-transactions");
+          .catch((error) => {
+            console.error("Transaction save failed:", error);
+            alert(
+              "Transaction could not be saved. Please check the backend response and try again.",
+            );
           });
       };
 
       window.toggleChargesField = () => {
-        const type = document.getElementById("txn-type").value;
-        const cat = document.getElementById("txn-cat").value;
+        const type = document.getElementById("txn-type")?.value;
+        const cat = document.getElementById("txn-cat")?.value;
         const chargesGroup = document.getElementById("charges-group");
         const netGroup = document.getElementById("net-amount-group");
+        const help = document.getElementById("transaction-mode-help");
+
         if (!chargesGroup) return;
+
         if (type === "income" || cat === "Charges") {
           chargesGroup.style.display = "flex";
           chargesGroup.style.flexDirection = "column";
@@ -3660,10 +3742,24 @@
             netGroup.style.display = "flex";
             netGroup.style.flexDirection = "column";
           }
+          if (help)
+            help.textContent =
+              "Income entries add to revenue. If linked to a project, the project income history will also update.";
         } else {
           chargesGroup.style.display = "none";
           if (netGroup) netGroup.style.display = "none";
+
+          if (type === "reimbursement") {
+            if (help)
+              help.textContent =
+                "Reimbursement received will increase the selected company’s reimbursement balance.";
+          } else {
+            if (help)
+              help.textContent =
+                "Transactions will be deducted from the selected company’s reimbursement balance.";
+          }
         }
+
         calculateNetAmount();
       };
 
@@ -3677,18 +3773,22 @@
           "Retention Release",
           "Charges",
         ];
-        if (incomeCategories.includes(cat)) typeSelect.value = "income";
-        else if (cat === "Reimbursement") typeSelect.value = "reimbursement";
-        else if (cat === "Reimbursement Withdrawal")
+
+        if (incomeCategories.includes(cat)) {
+          typeSelect.value = "income";
+        } else if (cat === "Reimbursement") {
+          typeSelect.value = "reimbursement";
+        } else {
           typeSelect.value = "reimbursement-withdrawal";
-        else typeSelect.value = "expense";
+        }
+
         toggleChargesField();
         loadReimbursementBalance();
       };
 
       window.calculateNetAmount = () => {
         const amount =
-          parseFloat(document.getElementById("txn-amount").value) || 0;
+          parseFloat(document.getElementById("txn-amount")?.value) || 0;
         const charges =
           parseFloat(document.getElementById("txn-charges")?.value) || 0;
         const netInput = document.getElementById("txn-net");
@@ -3762,9 +3862,8 @@
 
         const toNumber = (value) => Number(value) || 0;
 
-        const matchesCompany = (item) => {
-          return !companyId || item.companyId === companyId;
-        };
+        const companyName = selectedCompanyLabel("report-company");
+        const matchesCompany = (item) => matchesCompanyFilter(item, companyId);
 
         const txns = (DB.transactions || []).filter(matchesCompany);
         const recordedExpenses = (DB.expenses || []).filter(matchesCompany);
@@ -3875,6 +3974,13 @@
         if (!reportContent) return;
 
         reportContent.innerHTML = `
+    <div style="margin-bottom:14px;padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:var(--surface);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700">Company Filter</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text)">${safeText(companyName)}</div>
+      </div>
+      <button class="btn-sm btn-sm-outline" onclick="document.getElementById('report-company').value='';updateReport();">Clear Filter</button>
+    </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px">
       ${kpi("Net Profit", fmt.currency(netProfit), "Income - Expenses", "trending-up", netProfit >= 0 ? "#d1fae5" : "#fee2e2", netProfit >= 0 ? "#059669" : "#dc2626")}
       ${kpi("Invoice Revenue", fmt.currency(invoiceRevenue), "Collected", "file-text", "#dbeafe", "#2563eb")}
@@ -3971,37 +4077,84 @@
       window.printReport = () => {
         const companyId =
           document.getElementById("report-company")?.value || "";
-        const txns = DB.transactions.filter(
-          (t) => !companyId || t.companyId === companyId,
-        );
+        const companyName = selectedCompanyLabel("report-company");
+        const toNumber = (value) => Number(value) || 0;
+        const matchesCompany = (item) => matchesCompanyFilter(item, companyId);
+
+        const txns = (DB.transactions || []).filter(matchesCompany);
+        const recordedExpenses = (DB.expenses || []).filter(matchesCompany);
+        const invoices = (DB.invoices || []).filter(matchesCompany);
+
         const totalIncome = txns
           .filter((t) => t.type === "income")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const totalReimbursements = txns
           .filter((t) => t.type === "reimbursement")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const reimbursementWithdrawals = txns
           .filter((t) => t.type === "reimbursement-withdrawal")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const netReimbursementPool =
           totalReimbursements - reimbursementWithdrawals;
         const totalTxExpense = txns
           .filter((t) => t.type === "expense")
-          .reduce((a, t) => a + (t.amount || 0), 0);
-        const allExpenses = totalTxExpense;
+          .reduce((a, t) => a + toNumber(t.amount), 0);
+        const totalRecordedExpenses = recordedExpenses.reduce(
+          (a, e) => a + toNumber(e.amount),
+          0,
+        );
+        const allExpenses = totalTxExpense + totalRecordedExpenses;
         const netProfit = totalIncome - allExpenses;
-        const printContent = `<!DOCTYPE html><html><head><title>Financial Report</title>
-                                <style>body{font-family:'DM Sans',sans-serif;padding:20px;color:#111827}.report-card{margin-bottom:20px;border:1px solid #e5e7eb;border-radius:8px;padding:16px}.report-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f3f4f6}.report-total-row{display:flex;justify-content:space-between;padding:8px 0;font-weight:700;border-top:2px solid #0a1a3a;margin-top:4px}</style></head><body>
-                                <h2>Financial Report - ${new Date().toLocaleDateString("en-GB")}</h2>
-                                <div class="report-card"><h4>Profit & Loss</h4>
-                                  <div class="report-row"><span>Total Income</span><span style="color:#059669">₦${totalIncome.toLocaleString()}</span></div>
-                                  <div class="report-row"><span>Reimbursements Received</span><span style="color:#2563eb">₦${totalReimbursements.toLocaleString()}</span></div>
-                                  <div class="report-row"><span>Reimbursement Withdrawals</span><span style="color:#d97706">₦${reimbursementWithdrawals.toLocaleString()}</span></div>
-                                  <div class="report-row"><span>Net Reimbursement Pool</span><span style="color:#2563eb">₦${netReimbursementPool.toLocaleString()}</span></div>
-                                  <div class="report-row"><span>Transaction Expenses</span><span style="color:#dc2626">₦${totalTxExpense.toLocaleString()}</span></div>
-                                  <div class="report-row"><span>Recorded Expenses</span><span style="color:#dc2626">₦${totalExpenses.toLocaleString()}</span></div>
-                                  <div class="report-total-row"><span>Net Profit</span><span style="color:${netProfit >= 0 ? "#059669" : "#dc2626"}">₦${netProfit.toLocaleString()}</span></div>
-                                </div></body></html>`;
+        const invoiceAmount = (invoice) =>
+          toNumber(invoice.totalAmount ?? invoice.amount);
+        const totalInvoiced = invoices.reduce(
+          (a, i) => a + invoiceAmount(i),
+          0,
+        );
+        const paidInvoices = invoices
+          .filter((i) => i.status === "paid")
+          .reduce((a, i) => a + invoiceAmount(i), 0);
+        const outstanding = invoices
+          .filter((i) =>
+            ["overdue", "sent", "unpaid", "pending"].includes(i.status),
+          )
+          .reduce((a, i) => a + invoiceAmount(i), 0);
+
+        const transactionRows =
+          txns
+            .sort(
+              (a, b) =>
+                new Date(b.date || b.createdAt) -
+                new Date(a.date || a.createdAt),
+            )
+            .slice(0, 60)
+            .map((t) => {
+              const type = t.type || "-";
+              const amount = toNumber(t.amount);
+              const sign =
+                type === "income"
+                  ? "+"
+                  : type === "reimbursement"
+                    ? "↺"
+                    : type === "reimbursement-withdrawal"
+                      ? "↓"
+                      : "-";
+              return `<tr><td>${fmt.date(t.date || t.createdAt)}</td><td>${safeText(t.description || "-")}</td><td>${safeText(t.category || "Other")}</td><td>${safeText(type)}</td><td style="text-align:right">${sign}₦${amount.toLocaleString()}</td></tr>`;
+            })
+            .join("") ||
+          '<tr><td colspan="5" style="text-align:center;color:#6b7280">No transactions for this company</td></tr>';
+
+        const printContent = `<!DOCTYPE html><html><head><title>Company Financial Report</title>
+          <style>*{box-sizing:border-box}body{font-family:'DM Sans',Arial,sans-serif;padding:24px;color:#111827;background:#fff}.header{display:flex;justify-content:space-between;gap:20px;border-bottom:3px solid #0a1a3a;padding-bottom:16px;margin-bottom:22px}.header h1{font-size:22px;margin:0;color:#0a1a3a}.header p{margin:3px 0;color:#6b7280;font-size:12px}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}.box{border:1px solid #e5e7eb;border-radius:10px;padding:14px}.box small{display:block;color:#6b7280;font-size:10px;text-transform:uppercase;letter-spacing:.5px}.box strong{display:block;margin-top:6px;font-size:18px}.card{border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:16px}.card h3{margin:0 0 12px;color:#0a1a3a;font-size:14px}.row{display:flex;justify-content:space-between;border-bottom:1px solid #f3f4f6;padding:7px 0;font-size:12px}.total{display:flex;justify-content:space-between;border-top:2px solid #0a1a3a;margin-top:6px;padding-top:10px;font-size:14px;font-weight:700}table{width:100%;border-collapse:collapse;font-size:11px}th{background:#0a1a3a;color:#fff;text-align:left;padding:8px}td{border-bottom:1px solid #e5e7eb;padding:8px}@media print{body{padding:10mm}@page{size:A4 portrait;margin:0}}</style>
+        </head><body>
+          <div class="header"><div><h1>Company Financial Report</h1><p><strong>Company:</strong> ${safeText(companyName)}</p><p><strong>Generated:</strong> ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p></div><div><p>October Libra Building Co. Ltd</p><p>Construction & Real Estate Development</p></div></div>
+          <div class="summary"><div class="box"><small>Total Income</small><strong style="color:#059669">₦${totalIncome.toLocaleString()}</strong></div><div class="box"><small>Total Expenses</small><strong style="color:#dc2626">₦${allExpenses.toLocaleString()}</strong></div><div class="box"><small>Net Profit / Loss</small><strong style="color:${netProfit >= 0 ? "#059669" : "#dc2626"}">₦${netProfit.toLocaleString()}</strong></div><div class="box"><small>Reimbursement Balance</small><strong style="color:#2563eb">₦${netReimbursementPool.toLocaleString()}</strong></div></div>
+          <div class="card"><h3>Profit & Loss Summary</h3><div class="row"><span>Income</span><span>₦${totalIncome.toLocaleString()}</span></div><div class="row"><span>Transaction Expenses</span><span>₦${totalTxExpense.toLocaleString()}</span></div><div class="row"><span>Recorded Expenses</span><span>₦${totalRecordedExpenses.toLocaleString()}</span></div><div class="total"><span>Net Profit / Loss</span><span>₦${netProfit.toLocaleString()}</span></div></div>
+          <div class="card"><h3>Reimbursement Summary</h3><div class="row"><span>Reimbursements Received</span><span>₦${totalReimbursements.toLocaleString()}</span></div><div class="row"><span>Transactions Deducted</span><span>₦${reimbursementWithdrawals.toLocaleString()}</span></div><div class="total"><span>Balance</span><span>₦${netReimbursementPool.toLocaleString()}</span></div></div>
+          <div class="card"><h3>Invoice Summary</h3><div class="row"><span>Total Invoiced</span><span>₦${totalInvoiced.toLocaleString()}</span></div><div class="row"><span>Paid</span><span>₦${paidInvoices.toLocaleString()}</span></div><div class="row"><span>Outstanding</span><span>₦${outstanding.toLocaleString()}</span></div></div>
+          <div class="card"><h3>Transaction Log</h3><table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th><th style="text-align:right">Amount</th></tr></thead><tbody>${transactionRows}</tbody></table></div>
+        </body></html>`;
+
         const printWindow = window.open("", "_blank");
         if (!printWindow)
           return alert(
@@ -4014,705 +4167,15 @@
           printWindow.print();
           setTimeout(() => printWindow.close(), 1000);
         }, 500);
-      };
-
-      // ==================== PROCUREMENT ACTIONS ====================
-      window.quickApprove = (id) => {
-        if (!hasPermission("canApproveProcurement")) {
-          alert("You do not have permission to approve procurement requests.");
-          return;
-        }
-        const r = DB.procurement.find((p) => p._id === id || p.id === id);
-        if (!r) return;
-        const projectId = procurementProjectId(r);
-        const amount = procurementAmount(r);
-        const project = findProjectById(projectId);
-        const available = project ? projectAvailableBudget(projectId) : 0;
-        const warning = project
-          ? `
-
-Project: ${project.name}
-Available before approval: ${fmt.currency(available)}
-Available after approval: ${fmt.currency(available - amount)}`
-          : `
-
-No project is attached to this procurement.`;
-        if (
-          confirm(
-            `Approve "${r.item || "Item"}"?
-
-Amount: ${fmt.currency(amount)}${warning}`,
-          )
-        ) {
-          apiPut(`procurement/${id}/approve`, {}).then(async () => {
-            if (project && amount > 0) {
-              try {
-                await apiPut(`projects/${project._id || project.id}`, {
-                  spent: (Number(project.spent) || 0) + amount,
-                });
-              } catch (err) {
-                console.error("Failed to update project spent amount:", err);
-              }
-            }
-            navigate(currentPage);
-          });
-        }
-      };
-
-      window.approveProcurement = (id) => {
-        if (!hasPermission("canApproveProcurement")) {
-          alert("You do not have permission to approve procurement requests.");
-          return;
-        }
-        const req = DB.procurement.find((p) => p._id === id || p.id === id);
-        if (!req) return;
-        const projectId = procurementProjectId(req);
-        const amount = procurementAmount(req);
-        const project = findProjectById(projectId);
-        const available = project ? projectAvailableBudget(projectId) : 0;
-        const message = project
-          ? `Approve this procurement and deduct ${fmt.currency(amount)} from ${project.name}?
-
-Available before approval: ${fmt.currency(available)}
-Available after approval: ${fmt.currency(available - amount)}`
-          : "This procurement has no attached project. Approve anyway?";
-        if (!confirm(message)) return;
-        apiPut(`procurement/${id}/approve`, {})
-          .then(async () => {
-            req.status = "approved";
-            req.approvedByName = CURRENT_USER.name;
-            req.approvalDate = new Date().toISOString();
-            if (project && amount > 0) {
-              try {
-                await apiPut(`projects/${project._id || project.id}`, {
-                  spent: (Number(project.spent) || 0) + amount,
-                });
-              } catch (err) {
-                console.error("Failed to update project spent amount:", err);
-              }
-            }
-            alert(
-              "Procurement request approved and deducted from the project budget.",
-            );
-            loadAllData().then(() => navigate("procurement"));
-          })
-          .catch((err) => {
-            console.error("Approval failed:", err);
-            alert("Approval failed. Please check backend schema.");
-          });
-      };
-
-      window.rejectProcurement = (id) => {
-        if (!hasPermission("canApproveProcurement")) {
-          alert("You do not have permission to reject procurement requests.");
-          return;
-        }
-        if (confirm("Reject this request?"))
-          alert(
-            "Reject endpoint not available on backend. Add a PUT /api/procurement/:id/reject route.",
-          );
-      };
-
-      window.printProcurement = (id) => {
-        const r = DB.procurement.find((p) => p._id === id || p.id === id);
-        if (!r) return alert("Procurement request not found");
-        const displayItem = r.item || r.title || "Item";
-        const displayAmount = r.amount || r.totalAmount || 0;
-        const displayProject = r.project || r.projectId || "-";
-        const displayDate =
-          r.requested || r.createdAt || r.date || new Date().toISOString();
-        const printContent = `<!DOCTYPE html><html><head><title>Procurement Request - ${displayItem}</title>
-                                <style>@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
-                                *{margin:0;padding:0;box-sizing:border-box}body{font-family:'DM Sans',sans-serif;margin:0;padding:0;color:#111827;background:#fff}
-                                .print-document{background:#fff;width:210mm;max-width:none;margin:0;padding:8mm 12mm;min-height:297mm;height:auto;display:flex;flex-direction:column;box-sizing:border-box}
-                                .print-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid #0a1a3a}
-                                .print-logo{display:flex;align-items:center;gap:10px}.print-logo img{width:48px;height:48px;object-fit:contain}
-                                .print-logo-text h2{font-family:'Playfair Display',serif;font-size:18px;color:#0a1a3a;margin:0;font-weight:700;line-height:1.2}
-                                .print-logo-text p{font-size:9px;color:#6b7280;margin:0;letter-spacing:.5px;text-transform:uppercase}
-                                .print-meta{text-align:right}.print-meta h3{font-size:16px;font-weight:700;color:#0a1a3a;margin:0 0 2px}
-                                .print-meta .status-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
-                                .status-pending{background:#fef3c7;color:#92400e}.status-approved{background:#d1fae5;color:#065f46}.status-rejected{background:#fee2e2;color:#991b1b}
-                                .print-meta p{font-size:10px;color:#6b7280;margin:1px 0}
-                                .print-section{margin-bottom:7px}.print-section h4{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin:0 0 6px;font-weight:600}
-                                .print-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-                                .print-field{margin-bottom:4px}.print-field label{display:block;font-size:8px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;font-weight:600}
-                                .print-field value{display:block;font-size:11px;color:#111827;font-weight:500;min-height:14px}
-                                .print-amount-box{background:#f8f9fb;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px;text-align:center;margin:6px 0}
-                                .print-amount-box .label{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
-                                .print-amount-box .value{font-size:18px;font-weight:700;color:#0a1a3a}
-                                .print-table{width:100%;border-collapse:collapse;margin:6px 0;font-size:10px}
-                                .print-table th{background:#0a1a3a;color:#fff;font-size:8px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;padding:4px 8px;text-align:left}
-                                .print-table td{padding:4px 8px;border-bottom:1px solid #e5e7eb;font-size:10px}
-                                .print-footer{text-align:center;margin-top:6px;padding-top:5px;border-top:1px solid #e5e7eb}
-                                .print-footer p{font-size:8px;color:#6b7280;margin:1px 0}
-                                .print-signature{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:28px}
-                                .print-signature-box{border-top:1px solid #111827;padding-top:4px}
-                                .print-signature-box p{font-size:9px;color:#6b7280;margin:0}.print-signature-box strong{font-size:10px;color:#111827}
-                                .payment-box{background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:8px 10px;margin:6px 0}
-                                .payment-box h4{margin:0 0 4px;font-size:9px;color:#166534;text-transform:uppercase;letter-spacing:.5px}
-                                .payment-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-                                .payment-field label{font-size:8px;color:#15803d;text-transform:uppercase;letter-spacing:.5px;margin-bottom:1px;display:block;font-weight:600}
-                                .payment-field value{font-size:10px;color:#111827;font-weight:500;min-height:12px}
-                                @media print{html,body{width:210mm;min-height:297mm;background:#fff;padding:0;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}.print-document{width:210mm;min-height:297mm!important;box-shadow:none;padding:8mm 12mm;max-width:none;margin:0;height:auto!important;display:flex;flex-direction:column;box-sizing:border-box}.print-main{display:flex!important;flex-direction:column!important;flex:1!important}.print-footer{margin-top:auto}}
-                                @page{size:A4 portrait;margin:0}</style></head><body>
-                                <div class="print-document"><div class="print-main">
-                                <div class="print-header">
-                                  <div class="print-logo"><img src="https://res.cloudinary.com/deoqw88yb/image/upload/v1780134973/October_Libra_Building_Co._Ltd_Logo__1__page-0001-removebg-preview_rpwcmp.png" alt="Logo" /><div class="print-logo-text"><h2>October Libra Building Co. Ltd</h2><p>Construction & Real Estate Development</p></div></div>
-                                  <div class="print-meta"><h3>PROCUREMENT REQUEST</h3><span class="status-badge status-${r.status || "pending"}">${r.status ? r.status.toUpperCase() : "PENDING"}</span><p><strong>Ref:</strong> ${r._id || r.id || "N/A"}</p><p><strong>Date:</strong> ${new Date(displayDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p></div>
-                                </div>
-                                <div class="print-amount-box"><div class="label">Total Amount Requested</div><div class="value">₦${displayAmount.toLocaleString()}</div></div>
-                                <div class="print-section"><h4>Request Details</h4><div class="print-grid">
-                                  <div class="print-field"><label>Item / Description</label><value>${displayItem}</value></div>
-                                  <div class="print-field"><label>Vendor / Supplier</label><value>${r.vendor || "-"}</value></div>
-                                  <div class="print-field"><label>Category</label><value>${r.category || "Other"}</value></div>
-                                  <div class="print-field"><label>Urgency Level</label><value>${r.urgency || "Normal"}</value></div>
-                                  <div class="print-field"><label>PROPERTY</label><value>${(() => {
-                                    const proj = DB.projects.find(
-                                      (p) => (p._id || p.id) === displayProject,
-                                    );
-                                    return proj ? proj.name : displayProject;
-                                  })()}</value></div>
-                                  <div class="print-field"><label>Requestor</label><value>${r.requestor || "-"}</value></div>
-                                </div></div>
-                                <div class="print-section"><h4>Justification</h4><div class="print-field"><value style="line-height:1.4;font-size:10px">${r.justification || "No justification provided."}</value></div></div>
-                                <div class="payment-box"><h4>Payment Details</h4><div class="payment-grid">
-                                  <div class="payment-field"><label>Account Name</label><value></value></div>
-                                  <div class="payment-field"><label>Bank Name</label><value></value></div>
-                                  <div class="payment-field"><label>Account Number</label><value></value></div>
-                                  <div class="payment-field"><label>Sort Code / Swift</label><value></value></div>
-                                </div></div>
-                                <div class="print-section"><h4>Approval Status</h4><table class="print-table"><thead><tr><th>Status</th><th>Approved By</th><th>Approval Date</th><th>Amount</th></tr></thead><tbody><tr><td><span class="status-badge status-${r.status || "pending"}">${r.status ? r.status.toUpperCase() : "PENDING"}</span></td><td>${r.approvedByName || r.approvedBy || "-"}</td><td>${r.approvalDate ? new Date(r.approvalDate).toLocaleDateString("en-GB") : "-"}</td><td style="font-weight:700">₦${displayAmount.toLocaleString()}</td></tr></tbody></table></div>
-                                <div class="print-signature">
-                                  <div class="print-signature-box"><strong>Requested By</strong><p>${r.requestor || "_____________________"}</p><p style="margin-top:4px">${r.requestor ? "Signature: _____________________" : ""}</p></div>
-                                  <div class="print-signature-box"><strong>Approved By</strong><p>${r.approvedByName || r.approvedBy || "_____________________"}</p><p style="margin-top:4px">${r.approvedByName || r.approvedBy ? "Signature: _____________________" : "Date: _____________________"}</p></div>
-                                </div>
-                                </div></div></body></html>`;
-        const printWindow = window.open("", "_blank");
-        if (!printWindow)
-          return alert(
-            "Popup blocked! Please allow popups for this site to print.",
-          );
-        printWindow.document.write(printContent);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => {
-          printWindow.print();
-          setTimeout(() => printWindow.close(), 1000);
-        }, 500);
-      };
-
-      // ==================== PROJECT HELPERS ====================
-      window.filterProjects = (f) => {
-        const list =
-          f === "All" ? DB.projects : DB.projects.filter((p) => p.status === f);
-        document.getElementById("projects-tbody").innerHTML =
-          renderProjectRows(list);
-        lucide.createIcons();
-      };
-
-      window.toggleProjectDetails = (id) => {
-        const detailsRow = document.getElementById(`proj-details-${id}`);
-        const toggleIcon = document.getElementById(`toggle-${id}`);
-        if (!detailsRow) return;
-        const isActive = detailsRow.classList.contains("active");
-        document
-          .querySelectorAll(".project-details-row.active")
-          .forEach((row) => {
-            if (row.id !== `proj-details-${id}`) {
-              row.classList.remove("active");
-              const otherId = row.id.replace("proj-details-", "");
-              const otherIcon = document.getElementById(`toggle-${otherId}`);
-              if (otherIcon) otherIcon.classList.remove("rotated");
-            }
-          });
-        detailsRow.classList.toggle("active");
-        if (toggleIcon) toggleIcon.classList.toggle("rotated");
-        if (!isActive) lucide.createIcons();
-      };
-
-      window.openTaskModal = (projectId, mode, taskId = null) => {
-        if (mode === "add") openModal("new-task", projectId);
-        else openModal("edit-task", projectId, taskId);
-      };
-
-      window.deleteTask = (projectId, taskId) => {
-        if (confirm("Delete this task?")) {
-          apiDelete(`tasks/${taskId}`).then(() => {
-            closeModal();
-            loadAllData().then(() => openProjectModal(projectId));
-          });
-        }
-      };
-
-      window.viewMaintenance = (id) => {
-        const m = DB.maintenance.find((x) => x._id === id || x.id === id);
-        if (!m) return;
-        const propName =
-          m.propertyName ||
-          (m.property && typeof m.property === "object"
-            ? m.property.name
-            : m.property) ||
-          "Unknown property";
-        const propAddress =
-          m.property && typeof m.property === "object"
-            ? m.property.address || m.property.location || ""
-            : "";
-        openModal(
-          "maint-detail",
-          `<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">${detailRow("Property", propName + (propAddress ? " — " + propAddress : ""), true)}${detailRow("Priority", `<span class="pill ${m.priority === "urgent" ? "pill-red" : m.priority === "high" ? "pill-yellow" : "pill-blue"}">${m.priority || "normal"}</span>`)}${detailRow("Status", `<span class="pill ${fmt.statusClass[m.status] || "pill-gray"}">${m.status || "-"}</span>`)}${detailRow("Assigned To", m.assigned || "Unassigned")}${detailRow("Date Logged", fmt.date(m.logged))}${detailRow("Completed", fmt.date(m.completed))}</div><div style="margin-top:14px;padding:12px;background:var(--surface2);border-radius:var(--rad);border:1px solid var(--border)"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Issue Description</div><p style="font-size:13.5px">${m.title || m.issue || "-"}</p></div><div style="margin-top:14px;padding:12px;background:var(--surface2);border-radius:var(--rad);border:1px solid var(--border)"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Resolution Notes</div><p style="font-size:13.5px">${m.resolution || "No resolution notes yet."}</p></div>`,
-          m.issue || "Maintenance Details",
-        );
-      };
-
-      window.viewPropertyMaintenance = (propId) => {
-        const prop = DB.properties.find((p) => (p._id || p.id) === propId);
-        if (!prop) return;
-        const propMaint = DB.maintenance.filter((m) => {
-          const mPropId =
-            m.propertyId ||
-            (m.property && typeof m.property === "object"
-              ? m.property._id
-              : m.property);
-          const mPropName =
-            m.propertyName ||
-            (m.property && typeof m.property === "object"
-              ? m.property.name
-              : m.property);
-          return mPropId === propId || mPropName === prop.name;
-        });
-        const historyHtml = propMaint
-          .map(
-            (m, idx) =>
-              "<tr><td>" +
-              (idx + 1) +
-              "</td><td>" +
-              fmt.date(m.logged) +
-              "</td><td>" +
-              (m.title || m.issue || "-") +
-              "</td><td>" +
-              (m.priority || "normal") +
-              "</td><td>" +
-              (m.status || "open") +
-              "</td><td>" +
-              (m.assigned || "Unassigned") +
-              "</td><td>" +
-              fmt.date(m.completed) +
-              "</td></tr>",
-          )
-          .join("");
-        const printContent = `<!DOCTYPE html><html><head><title>Property Maintenance - ${prop.name}</title><style>body{font-family:'DM Sans',sans-serif;margin:0;padding:20px;color:#111827}.print-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px;padding-bottom:20px;border-bottom:2px solid #0a1a3a}.print-logo{display:flex;align-items:center;gap:12px}.print-logo img{width:60px;height:60px;object-fit:contain}.print-logo-text h2{font-family:'Playfair Display',serif;font-size:22px;color:#0a1a3a;margin:0 0 2px}.print-meta{text-align:right}.print-meta h3{font-size:20px;font-weight:700;color:#0a1a3a;margin:0 0 4px}.print-meta p{font-size:12px;color:#6b7280;margin:0 0 2px}.print-body h4{font-size:11px;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin:20px 0 8px}.print-body p{font-size:13px;line-height:1.8;color:#111827;margin:0}.print-table{width:100%;border-collapse:collapse;margin:16px 0}.print-table th{background:#0a1a3a;color:#fff;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;padding:10px 12px;text-align:left}.print-table td{padding:10px 12px;border-bottom:1px solid #e5e7eb;font-size:12px}.print-footer{text-align:center;font-size:11px;color:#6b7280;padding-top:20px;border-top:1px solid #e5e7eb}</style></head><body>
-                                <div class="print-header"><div class="print-logo"><img src="https://res.cloudinary.com/deoqw88yb/image/upload/v1780134973/October_Libra_Building_Co._Ltd_Logo__1__page-0001-removebg-preview_rpwcmp.png" alt="Logo" /><div class="print-logo-text"><h2>October Libra Building Co. Ltd</h2><p>Construction & Real Estate Development</p></div></div><div class="print-meta"><h3>PROPERTY MAINTENANCE HISTORY</h3><p>Property: ${prop.name}</p><p>Generated: ${new Date().toLocaleDateString("en-GB")}</p></div></div>
-                                <div class="print-body"><h4>Property Information</h4><p><strong>Name:</strong> ${prop.name}</p><p><strong>Address:</strong> ${prop.address || prop.location || "No address on record"}</p><p><strong>Total Tickets:</strong> ${propMaint.length}</p><p><strong>Open Tickets:</strong> ${propMaint.filter((m) => m.status === "open").length}</p><h4>Maintenance History</h4><table class="print-table"><thead><tr><th>#</th><th>Date</th><th>Issue</th><th>Priority</th><th>Status</th><th>Assigned</th><th>Completed</th></tr></thead><tbody>${historyHtml}</tbody></table></div>
-                                <div class="print-footer"><p>October Libra Building Co. Ltd | RC: 1234567 | info@octoberlibra.com</p></div></body></html>`;
-        const printWindow = window.open("", "_blank");
-        printWindow.document.write(printContent);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => {
-          printWindow.print();
-          printWindow.close();
-        }, 500);
-      };
-
-      function detailRow(label, val, full) {
-        return `<div style="${full ? "grid-column:1/-1" : ""}"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${label}</div><div style="font-size:13.5px;font-weight:500">${val}</div></div>`;
-      }
-
-      // ==================== PRINTABLE PROCUREMENT REPORT ====================
-      window.updatePrintableProcurement = () => {
-        if (!hasPermission("canViewProcurementReport")) return;
-        const projectId = document.getElementById("proc-report-project")?.value;
-        if (projectId === undefined) return;
-        const filtered = projectId
-          ? DB.procurement.filter(
-              (p) => p.projectId === projectId || p.project === projectId,
-            )
-          : DB.procurement;
-        if (filtered.length === 0) {
-          document.getElementById("proc-report-content").innerHTML =
-            `<div class="card"><div class="card-body"><div class="empty-state"><i data-lucide="clipboard-x" style="width:40px;height:40px"></i><span>No procurement data found for the selected filter.</span></div></div></div>`;
-          lucide.createIcons();
-          return;
-        }
-        const totalAmount = filtered.reduce(
-          (a, p) => a + (p.amount || p.totalAmount || 0),
-          0,
-        );
-        const approved = filtered.filter((p) => p.status === "approved");
-        const pending = filtered.filter((p) => p.status === "pending");
-        const approvedAmt = approved.reduce(
-          (a, p) => a + (p.amount || p.totalAmount || 0),
-          0,
-        );
-        const pendingAmt = pending.reduce(
-          (a, p) => a + (p.amount || p.totalAmount || 0),
-          0,
-        );
-        const rows = filtered
-          .map((p, idx) => {
-            const item = p.item || p.title || "Item";
-            const vendor = p.vendor || "-";
-            const category = p.category || "Other";
-            const amount = p.amount || p.totalAmount || 0;
-            const status = p.status || "pending";
-            const requestor = p.requestor || "-";
-            const date = fmt.date(p.requested || p.createdAt || p.date);
-            const proj = DB.projects.find(
-              (x) => (x._id || x.id) === (p.projectId || p.project),
-            );
-            const projectName = proj ? proj.name : p.project || "-";
-            return `<tr><td>${idx + 1}</td><td><strong>${item}</strong></td><td>${vendor}</td><td>${projectName}</td><td><span class="pill pill-gray">${category}</span></td><td style="font-weight:600">${hasPermission("canViewProcurementValue") ? fmt.currency(amount) : "[Restricted]"}</td><td><span class="pill ${fmt.statusClass[status] || "pill-gray"}">${status}</span></td><td>${requestor}</td><td>${date}</td></tr>`;
-          })
-          .join("");
-        document.getElementById("proc-report-content").innerHTML = `
-                                  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px">
-                                    ${kpi("Total Requests", filtered.length, "All statuses", "shopping-cart", "#dbeafe", "#2563eb")}
-                                    ${kpi("Total Value", hasPermission("canViewProcurementValue") ? fmt.currency(totalAmount) : "[Restricted]", "Combined amount", "banknote", "#ede9fe", "#7c3aed")}
-                                    ${kpi("Approved", hasPermission("canViewProcurementValue") ? fmt.currency(approvedAmt) : "[Restricted]", `${approved.length} requests`, "check-circle", "#d1fae5", "#059669")}
-                                    ${kpi("Pending", hasPermission("canViewProcurementValue") ? fmt.currency(pendingAmt) : "[Restricted]", `${pending.length} requests`, "clock", "#fef3c7", "#d97706")}
-                                  </div>
-                                  <div class="card"><div class="card-head"><h3>Procurement Details</h3><span>${filtered.length} entries</span></div>
-                                  <div class="card-table-wrap"><table class="tbl"><thead><tr><th>#</th><th>Item</th><th>Vendor</th><th>Project</th><th>Category</th><th>Amount</th><th>Status</th><th>Requestor</th><th>Date</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
-        lucide.createIcons();
-      };
-
-      window.printProcurementReport = () => {
-        if (!hasPermission("canViewProcurementReport")) {
-          alert("You do not have permission to print the Procurement Report.");
-          return;
-        }
-        const projectId = document.getElementById("proc-report-project").value;
-        const filtered = projectId
-          ? DB.procurement.filter(
-              (p) => p.projectId === projectId || p.project === projectId,
-            )
-          : DB.procurement;
-        const projectName = projectId
-          ? DB.projects.find((p) => (p._id || p.id) === projectId)?.name ||
-            "Selected Project"
-          : "All Projects";
-        const totalAmount = filtered.reduce(
-          (a, p) => a + (p.amount || p.totalAmount || 0),
-          0,
-        );
-        const approved = filtered.filter((p) => p.status === "approved");
-        const pending = filtered.filter((p) => p.status === "pending");
-        const rows = filtered
-          .map((p, idx) => {
-            const item = p.item || p.title || "Item";
-            const vendor = p.vendor || "-";
-            const category = p.category || "Other";
-            const amount = p.amount || p.totalAmount || 0;
-            const status = p.status || "pending";
-            const requestor = p.requestor || "-";
-            const date = fmt.date(p.requested || p.createdAt || p.date);
-            const proj = DB.projects.find(
-              (x) => (x._id || x.id) === (p.projectId || p.project),
-            );
-            const projName = proj ? proj.name : p.project || "-";
-            return `<tr><td>${idx + 1}</td><td>${item}</td><td>${vendor}</td><td>${projName}</td><td>${category}</td><td style="text-align:right">₦${amount.toLocaleString()}</td><td>${status}</td><td>${requestor}</td><td>${date}</td></tr>`;
-          })
-          .join("");
-        const printContent = `<!DOCTYPE html>
-<html>
-<head>
-  <title>Procurement Report - ${projectName}</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      color: #111827;
-      background: #fff;
-      font-size: 10px;
-      line-height: 1.25;
-    }
-
-    .print-wrapper {
-      padding: 6mm;
-    }
-
-    .print-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 8px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #0a1a3a;
-    }
-
-    .print-logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .print-logo img {
-      width: 42px;
-      height: 42px;
-      object-fit: contain;
-    }
-
-    .print-logo-text h2 {
-      font-size: 16px;
-      color: #0a1a3a;
-      margin: 0 0 2px;
-    }
-
-    .print-logo-text p {
-      font-size: 8px;
-      color: #6b7280;
-      letter-spacing: .4px;
-      text-transform: uppercase;
-      margin: 0;
-    }
-
-    .print-meta {
-      text-align: right;
-    }
-
-    .print-meta h3 {
-      font-size: 15px;
-      font-weight: 700;
-      color: #0a1a3a;
-      margin: 0 0 3px;
-    }
-
-    .print-meta p {
-      font-size: 9px;
-      color: #6b7280;
-      margin: 0 0 1px;
-    }
-
-    .summary-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      margin-bottom: 8px;
-    }
-
-    .summary-box {
-      border: 1px solid #e5e7eb;
-      border-radius: 5px;
-      padding: 6px;
-      text-align: center;
-    }
-
-    .summary-box .num {
-      font-size: 15px;
-      font-weight: 700;
-      color: #0a1a3a;
-      line-height: 1.1;
-    }
-
-    .summary-box .lbl {
-      font-size: 8px;
-      color: #6b7280;
-      text-transform: uppercase;
-      letter-spacing: .4px;
-      margin-top: 2px;
-    }
-
-    .print-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 6px 0;
-      font-size: 9px;
-    }
-
-    .print-table th {
-      background: #0a1a3a;
-      color: #fff;
-      font-size: 8px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .3px;
-      padding: 5px 6px;
-      text-align: left;
-      white-space: nowrap;
-    }
-
-    .print-table td {
-      padding: 5px 6px;
-      border-bottom: 1px solid #e5e7eb;
-      vertical-align: top;
-    }
-
-    .print-footer {
-      text-align: center;
-      font-size: 8px;
-      color: #6b7280;
-      padding-top: 6px;
-      border-top: 1px solid #e5e7eb;
-      margin-top: 8px;
-    }
-
-    .print-footer p {
-      margin: 1px 0;
-    }
-
-    @media print {
-      html,
-      body {
-        width: 297mm;
-        min-height: 210mm;
-        padding: 0;
-        margin: 0;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-
-      .print-wrapper {
-        width: 297mm;
-        min-height: 210mm;
-        padding: 7mm;
-        margin: 0;
-        box-sizing: border-box;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .print-footer {
-        margin-top: auto;
-      }
-    }
-
-    @page {
-      size: A4 landscape;
-      margin: 0;
-    }
-  </style>
-</head>
-
-<body>
-  <div class="print-wrapper">
-    <div class="print-header">
-      <div class="print-logo">
-        <img src="https://res.cloudinary.com/deoqw88yb/image/upload/v1780134973/October_Libra_Building_Co._Ltd_Logo__1__page-0001-removebg-preview_rpwcmp.png" alt="Logo" />
-        <div class="print-logo-text">
-          <h2>October Libra Building Co. Ltd</h2>
-          <p>Construction & Real Estate Development</p>
-        </div>
-      </div>
-
-      <div class="print-meta">
-        <h3>PROCUREMENT REPORT</h3>
-        <p><strong>Project:</strong> ${projectName}</p>
-        <p><strong>Generated:</strong> ${new Date().toLocaleDateString(
-          "en-GB",
-          {
-            day: "numeric",
-            month: "long",
-            year: "numeric",
-          },
-        )}</p>
-      </div>
-    </div>
-
-    <div class="summary-grid">
-      <div class="summary-box">
-        <div class="num">${filtered.length}</div>
-        <div class="lbl">Total Requests</div>
-      </div>
-
-      <div class="summary-box">
-        <div class="num">₦${totalAmount.toLocaleString()}</div>
-        <div class="lbl">Total Value</div>
-      </div>
-
-      <div class="summary-box">
-        <div class="num">${approved.length}</div>
-        <div class="lbl">Approved</div>
-      </div>
-
-      <div class="summary-box">
-        <div class="num">${pending.length}</div>
-        <div class="lbl">Pending</div>
-      </div>
-    </div>
-
-    <table class="print-table">
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Item</th>
-          <th>Vendor</th>
-          <th>Project</th>
-          <th>Category</th>
-          <th style="text-align:right">Amount</th>
-          <th>Status</th>
-          <th>Requestor</th>
-          <th>Date</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-
-    <div class="print-footer">
-      <p>October Libra Building Co. Ltd | RC: 1234567 | info@octoberlibra.com</p>
-      <p>Generated from the Libra Building Admin Portal.</p>
-    </div>
-  </div>
-</body>
-</html>`;
-        const printWindow = window.open("", "_blank");
-        if (!printWindow) return alert("Popup blocked! Please allow popups.");
-        printWindow.document.write(printContent);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => {
-          printWindow.print();
-          setTimeout(() => printWindow.close(), 1000);
-        }, 500);
-      };
-
-      window.exportProcurementCSV = () => {
-        if (!hasPermission("canViewProcurementReport")) {
-          alert("You do not have permission to export the Procurement Report.");
-          return;
-        }
-        const projectId = document.getElementById("proc-report-project").value;
-        const filtered = projectId
-          ? DB.procurement.filter(
-              (p) => p.projectId === projectId || p.project === projectId,
-            )
-          : DB.procurement;
-        let csv =
-          "S/N,Item,Vendor,Project,Category,Amount,Status,Requestor,Date\n";
-        filtered.forEach((p, idx) => {
-          const item = (p.item || p.title || "Item").replace(/,/g, " ");
-          const vendor = (p.vendor || "-").replace(/,/g, " ");
-          const proj = DB.projects.find(
-            (x) => (x._id || x.id) === (p.projectId || p.project),
-          );
-          const projectName = (proj ? proj.name : p.project || "-").replace(
-            /,/g,
-            " ",
-          );
-          const category = p.category || "Other";
-          const amount = p.amount || p.totalAmount || 0;
-          const status = p.status || "pending";
-          const requestor = (p.requestor || "-").replace(/,/g, " ");
-          const date = fmt.date(p.requested || p.createdAt || p.date);
-          csv += `${idx + 1},${item},${vendor},${projectName},${category},${amount},${status},${requestor},${date}\n`;
-        });
-        const blob = new Blob([csv], { type: "text/csv" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `procurement-report-${new Date().toISOString().split("T")[0]}.csv`;
-        a.click();
-        URL.revokeObjectURL(url);
       };
 
       // ==================== MONTHLY REPORT ====================
       window.updateMonthlyReport = () => {
         const monthEl = document.getElementById("report-month");
         const yearEl = document.getElementById("report-year");
+        const companyId =
+          document.getElementById("monthly-report-company")?.value || "";
+        const companyName = selectedCompanyLabel("monthly-report-company");
         if (!monthEl || !yearEl) return;
         const month = monthEl.value;
         const year = yearEl.value;
@@ -4731,6 +4194,8 @@ Available after approval: ${fmt.currency(available - amount)}`
           12: "December",
         };
         const monthName = monthNames[month];
+        const toNumber = (value) => Number(value) || 0;
+        const matchesCompany = (item) => matchesCompanyFilter(item, companyId);
         const filterDate = (d) => {
           const dt = new Date(d);
           return (
@@ -4738,44 +4203,46 @@ Available after approval: ${fmt.currency(available - amount)}`
             String(dt.getFullYear()) === year
           );
         };
-        const monthTxns = DB.transactions.filter(
-          (t) => t.date && filterDate(t.date),
+        const monthTxns = (DB.transactions || []).filter(
+          (t) => t.date && filterDate(t.date) && matchesCompany(t),
         );
-        const monthInvoices = DB.invoices.filter((i) => {
+        const monthInvoices = (DB.invoices || []).filter((i) => {
           const dateToCheck = i.issueDate || i.date || i.createdAt;
-          return dateToCheck && filterDate(dateToCheck);
+          return dateToCheck && filterDate(dateToCheck) && matchesCompany(i);
         });
         const income = monthTxns
           .filter((t) => t.type === "income")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const monthReimbursements = monthTxns
           .filter((t) => t.type === "reimbursement")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const monthReimbursementWithdrawals = monthTxns
           .filter((t) => t.type === "reimbursement-withdrawal")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const totalExpense = monthTxns
           .filter((t) => t.type === "expense")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const netProfit = income - totalExpense;
         const netReimbursementPool =
           monthReimbursements - monthReimbursementWithdrawals;
         const invoiceTotal = monthInvoices.reduce(
-          (a, i) => a + (i.totalAmount || 0),
+          (a, i) => a + toNumber(i.totalAmount || i.amount),
           0,
         );
         const invoicePaid = monthInvoices
           .filter((i) => i.status === "paid")
-          .reduce((a, i) => a + (i.totalAmount || 0), 0);
+          .reduce((a, i) => a + toNumber(i.totalAmount || i.amount), 0);
         const invoiceOutstanding = monthInvoices
-          .filter((i) => i.status === "overdue" || i.status === "sent")
-          .reduce((a, i) => a + (i.amount || 0), 0);
+          .filter((i) =>
+            ["overdue", "sent", "unpaid", "pending"].includes(i.status),
+          )
+          .reduce((a, i) => a + toNumber(i.totalAmount || i.amount), 0);
         const expByCat = {};
         monthTxns
           .filter((t) => t.type === "expense")
           .forEach((t) => {
             const c = t.category || "Other";
-            expByCat[c] = (expByCat[c] || 0) + (t.amount || 0);
+            expByCat[c] = (expByCat[c] || 0) + toNumber(t.amount);
           });
         const catRows =
           Object.entries(expByCat)
@@ -4783,7 +4250,7 @@ Available after approval: ${fmt.currency(available - amount)}`
             .map(
               ([cat, amt]) =>
                 '<div class="report-row"><span class="label">' +
-                cat +
+                safeText(cat) +
                 '</span><span class="value">' +
                 fmt.currency(amt) +
                 "</span></div>",
@@ -4800,11 +4267,16 @@ Available after approval: ${fmt.currency(available - amount)}`
         monthTxns.forEach((t) => {
           const d = new Date(t.date).getDate() - 1;
           if (d >= 0 && d < daysInMonth) {
-            if (t.type === "income") dailyIncome[d] += t.amount || 0;
-            else if (t.type === "expense") dailyExpense[d] += t.amount || 0;
+            if (t.type === "income") dailyIncome[d] += toNumber(t.amount);
+            else if (t.type === "expense")
+              dailyExpense[d] += toNumber(t.amount);
           }
         });
         document.getElementById("monthly-report-content").innerHTML = `
+                                  <div style="margin-bottom:14px;padding:12px 16px;border:1px solid var(--border);border-radius:12px;background:var(--surface);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+                                    <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;font-weight:700">Monthly Report Company</div><div style="font-size:16px;font-weight:700;color:var(--text)">${safeText(companyName)}</div></div>
+                                    <button class="btn-sm btn-sm-outline" onclick="document.getElementById('monthly-report-company').value='';updateMonthlyReport();">Clear Filter</button>
+                                  </div>
                                   <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:20px">
                                     ${kpi("Income", fmt.currency(income), monthName + " " + year, "arrow-down-circle", "#d1fae5", "#059669")}
                                     ${kpi("Expenses", fmt.currency(totalExpense), monthName + " " + year, "arrow-up-circle", "#fee2e2", "#dc2626")}
@@ -4813,7 +4285,7 @@ Available after approval: ${fmt.currency(available - amount)}`
                                     ${kpi("Invoiced", fmt.currency(invoiceTotal), `${monthInvoices.length} invoices`, "file-text", "#ede9fe", "#7c3aed")}
                                   </div>
                                   <div class="grid-2">
-                                    <div class="card"><div class="card-head"><h3>Daily Cash Flow - ${monthName} ${year}</h3></div><div class="chart-wrap"><canvas id="monthlyChart"></canvas></div></div>
+                                    <div class="card"><div class="card-head"><h3>Daily Cash Flow - ${monthName} ${year}</h3><span>${safeText(companyName)}</span></div><div class="chart-wrap"><canvas id="monthlyChart"></canvas></div></div>
                                     <div class="report-card"><h4>Expense Breakdown by Category</h4>${catRows}<div class="report-total-row"><span>Total Expenses</span><span>${fmt.currency(totalExpense)}</span></div></div>
                                   </div>
                                   <div class="grid-2">
@@ -4842,17 +4314,17 @@ Available after approval: ${fmt.currency(available - amount)}`
                                         )
                                         .map((t) => {
                                           const type = t.type || "-";
-                                          const desc = t.description || "-";
-                                          const cat = t.category || "Other";
-                                          const amt = t.amount || 0;
-                                          const company = (() => {
-                                            const c = DB.companies.find(
-                                              (x) =>
-                                                (x._id || x.id) === t.companyId,
-                                            );
-                                            return c ? c.name : "-";
-                                          })();
-                                          return `<tr><td>${fmt.date(t.date)}</td><td>${desc}</td><td><span class="pill pill-gray">${cat}</span></td><td><span class="pill ${type === "income" ? "pill-green" : type === "reimbursement" ? "pill-blue" : type === "reimbursement-withdrawal" ? "pill-yellow" : "pill-red"}">${type === "reimbursement-withdrawal" ? "withdrawal" : type}</span></td><td style="font-weight:600;color:${type === "income" ? "var(--success)" : type === "reimbursement" ? "var(--info)" : type === "reimbursement-withdrawal" ? "var(--warning)" : "var(--danger)"}">${type === "income" ? "+" : type === "reimbursement" ? "↺" : type === "reimbursement-withdrawal" ? "↓" : "-"}${fmt.currency(amt)}</td><td>${company}</td></tr>`;
+                                          const desc = safeText(
+                                            t.description || "-",
+                                          );
+                                          const cat = safeText(
+                                            t.category || "Other",
+                                          );
+                                          const amt = toNumber(t.amount);
+                                          const company = companyNameById(
+                                            t.companyId,
+                                          );
+                                          return `<tr><td>${fmt.date(t.date)}</td><td>${desc}</td><td><span class="pill pill-gray">${cat}</span></td><td><span class="pill ${type === "income" ? "pill-green" : type === "reimbursement" ? "pill-blue" : type === "reimbursement-withdrawal" ? "pill-yellow" : "pill-red"}">${type === "reimbursement-withdrawal" ? "withdrawal" : safeText(type)}</span></td><td style="font-weight:600;color:${type === "income" ? "var(--success)" : type === "reimbursement" ? "var(--info)" : type === "reimbursement-withdrawal" ? "var(--warning)" : "var(--danger)"}">${type === "income" ? "+" : type === "reimbursement" ? "↺" : type === "reimbursement-withdrawal" ? "↓" : "-"}${fmt.currency(amt)}</td><td>${safeText(company)}</td></tr>`;
                                         })
                                         .join("") ||
                                       '<tr><td colspan="6" style="text-align:center;color:var(--muted)">No transactions for this month</td></tr>'
@@ -4872,41 +4344,20 @@ Available after approval: ${fmt.currency(available - amount)}`
                 {
                   label: "Income",
                   data: dailyIncome,
-                  backgroundColor: "rgba(5,150,105,0.8)",
-                  borderRadius: 3,
-                  borderSkipped: false,
+                  backgroundColor: "rgba(5,150,105,0.7)",
                 },
                 {
                   label: "Expenses",
                   data: dailyExpense,
-                  backgroundColor: "rgba(220,38,38,0.8)",
-                  borderRadius: 3,
-                  borderSkipped: false,
+                  backgroundColor: "rgba(220,38,38,0.7)",
                 },
               ],
             },
             options: {
               responsive: true,
               maintainAspectRatio: false,
-              plugins: { legend: { display: true, position: "top" } },
-              scales: {
-                x: {
-                  grid: { display: false },
-                  ticks: {
-                    font: { size: 10 },
-                    color: "#9ca3af",
-                    maxTicksLimit: 10,
-                  },
-                },
-                y: {
-                  grid: { color: "#f3f4f6" },
-                  ticks: {
-                    font: { size: 10 },
-                    color: "#9ca3af",
-                    callback: (v) => "₦" + (v / 1000).toFixed(0) + "K",
-                  },
-                },
-              },
+              plugins: { legend: { display: true } },
+              scales: { y: { beginAtZero: true } },
             },
           });
         }, 100);
@@ -4915,6 +4366,9 @@ Available after approval: ${fmt.currency(available - amount)}`
       window.printMonthlyReport = () => {
         const month = document.getElementById("report-month").value;
         const year = document.getElementById("report-year").value;
+        const companyId =
+          document.getElementById("monthly-report-company")?.value || "";
+        const companyName = selectedCompanyLabel("monthly-report-company");
         const monthNames = {
           "01": "January",
           "02": "February",
@@ -4930,6 +4384,8 @@ Available after approval: ${fmt.currency(available - amount)}`
           12: "December",
         };
         const monthName = monthNames[month];
+        const toNumber = (value) => Number(value) || 0;
+        const matchesCompany = (item) => matchesCompanyFilter(item, companyId);
         const filterDate = (d) => {
           const dt = new Date(d);
           return (
@@ -4937,40 +4393,41 @@ Available after approval: ${fmt.currency(available - amount)}`
             String(dt.getFullYear()) === year
           );
         };
-        const monthTxns = DB.transactions.filter(
-          (t) => t.date && filterDate(t.date),
+        const monthTxns = (DB.transactions || []).filter(
+          (t) => t.date && filterDate(t.date) && matchesCompany(t),
         );
+        const monthInvoices = (DB.invoices || []).filter((i) => {
+          const dateToCheck = i.issueDate || i.date || i.createdAt;
+          return dateToCheck && filterDate(dateToCheck) && matchesCompany(i);
+        });
         const income = monthTxns
           .filter((t) => t.type === "income")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const monthReimbursements = monthTxns
           .filter((t) => t.type === "reimbursement")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const monthReimbursementWithdrawals = monthTxns
           .filter((t) => t.type === "reimbursement-withdrawal")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const totalExpense = monthTxns
           .filter((t) => t.type === "expense")
-          .reduce((a, t) => a + (t.amount || 0), 0);
+          .reduce((a, t) => a + toNumber(t.amount), 0);
         const netProfit = income - totalExpense;
         const netReimbursementPool =
           monthReimbursements - monthReimbursementWithdrawals;
-        const monthInvoices = DB.invoices.filter(
-          (i) => i.date && filterDate(i.date),
-        );
         const invoiceTotal = monthInvoices.reduce(
-          (a, i) => a + (i.amount || 0),
+          (a, i) => a + toNumber(i.totalAmount || i.amount),
           0,
         );
         const invoicePaid = monthInvoices
           .filter((i) => i.status === "paid")
-          .reduce((a, i) => a + (i.amount || 0), 0);
+          .reduce((a, i) => a + toNumber(i.totalAmount || i.amount), 0);
         const expByCat = {};
         monthTxns
           .filter((t) => t.type === "expense")
           .forEach((t) => {
             const c = t.category || "Other";
-            expByCat[c] = (expByCat[c] || 0) + (t.amount || 0);
+            expByCat[c] = (expByCat[c] || 0) + toNumber(t.amount);
           });
         const catRows =
           Object.entries(expByCat)
@@ -4978,7 +4435,7 @@ Available after approval: ${fmt.currency(available - amount)}`
             .map(
               ([cat, amt]) =>
                 '<div class="report-row"><span>' +
-                cat +
+                safeText(cat) +
                 "</span><span>₦" +
                 amt.toLocaleString() +
                 "</span></div>",
@@ -4989,17 +4446,17 @@ Available after approval: ${fmt.currency(available - amount)}`
           monthTxns
             .sort((a, b) => new Date(b.date) - new Date(a.date))
             .map((t) => {
-              const type = t.type || "-";
-              const desc = (t.description || "-").replace(/,/g, " ");
-              const cat = t.category || "Other";
-              const amt = t.amount || 0;
+              const type = safeText(t.type || "-");
+              const desc = safeText(t.description || "-");
+              const cat = safeText(t.category || "Other");
+              const amt = toNumber(t.amount);
               return `<tr><td>${fmt.date(t.date)}</td><td>${desc}</td><td>${cat}</td><td>${type}</td><td style="text-align:right">₦${amt.toLocaleString()}</td></tr>`;
             })
             .join("") ||
           '<tr><td colspan="5" style="text-align:center">No transactions</td></tr>';
         const printContent = `<!DOCTYPE html><html><head><title>Monthly Report - ${monthName} ${year}</title>
                                 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'DM Sans',sans-serif;padding:20px;color:#111827;background:#fff}.print-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #0a1a3a}.print-logo{display:flex;align-items:center;gap:12px}.print-logo img{width:56px;height:56px;object-fit:contain}.print-logo-text h2{font-size:20px;color:#0a1a3a;margin:0}.print-logo-text p{font-size:10px;color:#6b7280;letter-spacing:.5px;text-transform:uppercase}.print-meta{text-align:right}.print-meta h3{font-size:18px;font-weight:700;color:#0a1a3a;margin:0 0 4px}.print-meta p{font-size:11px;color:#6b7280;margin:0 0 2px}.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}.summary-box{border:1px solid #e5e7eb;border-radius:8px;padding:14px;text-align:center}.summary-box .num{font-size:22px;font-weight:700;color:#0a1a3a}.summary-box .lbl{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}.report-card{margin-bottom:16px;padding:16px;border:1px solid #e5e7eb;border-radius:8px}.report-card h4{font-size:12px;font-weight:600;margin-bottom:10px;color:#0a1a3a;text-transform:uppercase;letter-spacing:.5px}.report-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f3f4f6;font-size:11px}.report-total-row{display:flex;justify-content:space-between;padding:8px 0;font-size:13px;font-weight:700;color:#0a1a3a;border-top:2px solid #0a1a3a;margin-top:4px}.print-table{width:100%;border-collapse:collapse;margin:12px 0;font-size:10px}.print-table th{background:#0a1a3a;color:#fff;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:8px 6px;text-align:left}.print-table td{padding:8px 6px;border-bottom:1px solid #e5e7eb}.print-footer{text-align:center;font-size:10px;color:#6b7280;padding-top:16px;border-top:1px solid #e5e7eb;margin-top:24px}@media print{html,body{width:210mm;min-height:297mm;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{width:210mm;min-height:297mm;padding:10mm;box-sizing:border-box;display:flex;flex-direction:column}.print-footer{margin-top:auto}}@page{size:A4 portrait;margin:0}</style></head><body>
-                                <div class="print-header"><div class="print-logo"><img src="https://res.cloudinary.com/deoqw88yb/image/upload/v1780134973/October_Libra_Building_Co._Ltd_Logo__1__page-0001-removebg-preview_rpwcmp.png" alt="Logo" /><div class="print-logo-text"><h2>October Libra Building Co. Ltd</h2><p>Construction & Real Estate Development</p></div></div><div class="print-meta"><h3>MONTHLY GENERAL REPORT</h3><p><strong>Period:</strong> ${monthName} ${year}</p><p><strong>Generated:</strong> ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p></div></div>
+                                <div class="print-header"><div class="print-logo"><img src="https://res.cloudinary.com/deoqw88yb/image/upload/v1780134973/October_Libra_Building_Co._Ltd_Logo__1__page-0001-removebg-preview_rpwcmp.png" alt="Logo" /><div class="print-logo-text"><h2>October Libra Building Co. Ltd</h2><p>Construction & Real Estate Development</p></div></div><div class="print-meta"><h3>MONTHLY COMPANY REPORT</h3><p><strong>Period:</strong> ${monthName} ${year}</p><p><strong>Company:</strong> ${safeText(companyName)}</p><p><strong>Generated:</strong> ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p></div></div>
                                 <div class="summary-grid"><div class="summary-box"><div class="num">₦${income.toLocaleString()}</div><div class="lbl">Income</div></div><div class="summary-box"><div class="num">₦${totalExpense.toLocaleString()}</div><div class="lbl">Expenses</div></div><div class="summary-box"><div class="num">₦${netProfit.toLocaleString()}</div><div class="lbl">Net ${netProfit >= 0 ? "Profit" : "Loss"}</div></div><div class="summary-box"><div class="num">₦${netReimbursementPool.toLocaleString()}</div><div class="lbl">Reimbursement Pool</div></div></div>
                                 <div class="report-card"><h4>Expense Breakdown by Category</h4>${catRows}<div class="report-total-row"><span>Total Expenses</span><span>₦${totalExpense.toLocaleString()}</span></div></div>
                                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
@@ -5007,7 +4464,7 @@ Available after approval: ${fmt.currency(available - amount)}`
                                   <div class="report-card"><h4>Transaction Counts</h4><div class="report-row"><span>Income Transactions</span><span>${monthTxns.filter((t) => t.type === "income").length}</span></div><div class="report-row"><span>Reimbursements Received</span><span>${monthTxns.filter((t) => t.type === "reimbursement").length} (₦${monthReimbursements.toLocaleString()})</span></div><div class="report-row"><span>Reimbursement Withdrawals</span><span>${monthTxns.filter((t) => t.type === "reimbursement-withdrawal").length} (₦${monthReimbursementWithdrawals.toLocaleString()})</span></div><div class="report-row"><span>Expense Transactions</span><span>${monthTxns.filter((t) => t.type === "expense").length}</span></div></div>
                                 </div>
                                 <div class="report-card"><h4>Transaction Log</h4><table class="print-table"><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th><th style="text-align:right">Amount</th></tr></thead><tbody>${logRows}</tbody></table></div>
-                                <div class="print-footer"><p>October Libra Building Co. Ltd | RC: 1234567 | info@octoberlibra.com</p><p>Generated from the Libra Building Admin Portal.</p></div></body></html>`;
+                                <div class="print-footer"><p>October Libra Building Co. Ltd</p><p>Generated from the Libra Building Admin Portal.</p></div></body></html>`;
         const printWindow = window.open("", "_blank");
         if (!printWindow) return alert("Popup blocked! Please allow popups.");
         printWindow.document.write(printContent);
@@ -5022,6 +4479,9 @@ Available after approval: ${fmt.currency(available - amount)}`
       window.exportMonthlyCSV = () => {
         const month = document.getElementById("report-month").value;
         const year = document.getElementById("report-year").value;
+        const companyId =
+          document.getElementById("monthly-report-company")?.value || "";
+        const companyName = selectedCompanyLabel("monthly-report-company");
         const monthNames = {
           "01": "January",
           "02": "February",
@@ -5036,6 +4496,7 @@ Available after approval: ${fmt.currency(available - amount)}`
           11: "November",
           12: "December",
         };
+        const matchesCompany = (item) => matchesCompanyFilter(item, companyId);
         const filterDate = (d) => {
           const dt = new Date(d);
           return (
@@ -5043,10 +4504,10 @@ Available after approval: ${fmt.currency(available - amount)}`
             String(dt.getFullYear()) === year
           );
         };
-        const monthTxns = DB.transactions.filter(
-          (t) => t.date && filterDate(t.date),
+        const monthTxns = (DB.transactions || []).filter(
+          (t) => t.date && filterDate(t.date) && matchesCompany(t),
         );
-        let csv = "Date,Description,Category,Type,Amount,Company,Reference\n";
+        let csv = "Company,Date,Description,Category,Type,Amount,Reference\n";
         monthTxns
           .sort((a, b) => new Date(b.date) - new Date(a.date))
           .forEach((t) => {
@@ -5054,20 +4515,19 @@ Available after approval: ${fmt.currency(available - amount)}`
             const desc = (t.description || "-").replace(/,/g, " ");
             const cat = t.category || "Other";
             const amt = t.amount || 0;
-            const company = (() => {
-              const c = DB.companies.find(
-                (x) => (x._id || x.id) === t.companyId,
-              );
-              return c ? c.name.replace(/,/g, " ") : "-";
-            })();
+            const company = companyNameById(t.companyId).replace(/,/g, " ");
             const ref = (t.reference || "-").replace(/,/g, " ");
-            csv += `${fmt.date(t.date)},${desc},${cat},${type},${amt},${company},${ref}\n`;
+            csv += `${company},${fmt.date(t.date)},${desc},${cat},${type},${amt},${ref}\n`;
           });
         const blob = new Blob([csv], { type: "text/csv" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `monthly-report-${monthNames[month]}-${year}.csv`;
+        const safeCompany = (companyName || "all-companies")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-|-$/g, "");
+        a.download = `monthly-report-${safeCompany}-${monthNames[month]}-${year}.csv`;
         a.click();
         URL.revokeObjectURL(url);
       };
@@ -5088,7 +4548,7 @@ Available after approval: ${fmt.currency(available - amount)}`
         }
 
         if (companyId) {
-          filtered = filtered.filter((e) => e.companyId === companyId);
+          filtered = filtered.filter((e) => matchesCompanyFilter(e, companyId));
         }
 
         const totalAmount = filtered.reduce((a, e) => a + (e.amount || 0), 0);
@@ -5128,7 +4588,7 @@ Available after approval: ${fmt.currency(available - amount)}`
             .map((e) => {
               const company = (() => {
                 const c = DB.companies.find(
-                  (x) => (x._id || x.id) === e.companyId,
+                  (x) => entityId(x._id || x.id) === entityId(e.companyId),
                 );
                 return c ? c.name : "-";
               })();
@@ -5191,7 +4651,7 @@ Available after approval: ${fmt.currency(available - amount)}`
           });
         }
         if (companyId) {
-          filtered = filtered.filter((e) => e.companyId === companyId);
+          filtered = filtered.filter((e) => matchesCompanyFilter(e, companyId));
         }
         const totalAmount = filtered.reduce((a, e) => a + (e.amount || 0), 0);
         const approvedAmount = filtered
@@ -5275,7 +4735,7 @@ Available after approval: ${fmt.currency(available - amount)}`
           });
         }
         if (companyId) {
-          filtered = filtered.filter((e) => e.companyId === companyId);
+          filtered = filtered.filter((e) => matchesCompanyFilter(e, companyId));
         }
         let csv =
           "Date,Vendor,Description,Category,Amount,Company,Project,Status,Reference\n";
@@ -5284,7 +4744,7 @@ Available after approval: ${fmt.currency(available - amount)}`
           .forEach((e) => {
             const company = (() => {
               const c = DB.companies.find(
-                (x) => (x._id || x.id) === e.companyId,
+                (x) => entityId(x._id || x.id) === entityId(e.companyId),
               );
               return c ? c.name.replace(/,/g, " ") : "-";
             })();

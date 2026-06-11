@@ -4,6 +4,7 @@ const Transaction = require("../models/transactions");
 const Expense = require("../models/expense");
 
 const adminController = require("../controllers/adminController");
+const uploadGuarantorForm = require("../middleware/uploadGuarantorForm");
 
 // ==================== PROJECTS ====================
 router.get("/projects", adminController.getAllProjects);
@@ -73,5 +74,11 @@ router.get("/procurement/report", adminController.getProcurementByProject);
 
 // REIMBURSEMENT ROUTE
 router.get("/reimbursement-balance", adminController.getReimbursementBalance);
+
+router.post(
+  "/employees/:id/guarantor-forms",
+  uploadGuarantorForm.array("guarantorForms", 2),
+  adminController.uploadEmployeeGuarantorForms,
+);
 
 module.exports = router;

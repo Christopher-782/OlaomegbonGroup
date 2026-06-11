@@ -1,12 +1,14 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const dotenv = require("dotenv").config();
+require("dotenv").config();
 const path = require("path");
+
 const authRouter = require("./routes/authRoutes");
 const adminRouter = require("./routes/adminRoutes");
 const hrRouter = require("./routes/hrRoutes");
+
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000;
 
 mongoose
   .connect(process.env.MONGO)
@@ -20,23 +22,11 @@ mongoose
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static("public"));
 
-// Home Route
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-app.get("/admin", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "adminDashboard.html"));
-});
-app.get("/director", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "adminDashboard.html"));
-});
+// Uploads,
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-app.get("/employees", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "adminDashboard.html"));
-});
-
+// Load models
 require("./models/propertySchema");
 require("./models/projectSchema");
 require("./models/procurementSChema");
@@ -46,13 +36,29 @@ require("./models/transactions");
 require("./models/expense");
 require("./models/company");
 require("./models/reimbursementAccount");
+require("./models/employeeSchema");
 
-// Routes
+// API ROUTES
 app.use("/", authRouter);
 app.use("/", adminRouter);
 app.use("/api/admin", adminRouter);
 app.use("/", hrRouter);
-app.use("/employees", hrRouter);
+
+// Static frontend files
+app.use(express.static(path.join(__dirname, "public")));
+
+// Frontend pages
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "adminDashboard.html"));
+});
+
+app.get("/director", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "adminDashboard.html"));
+});
 
 // 404 Handler
 app.use((req, res) => {
@@ -64,5 +70,5 @@ app.use((req, res) => {
 
 // Start Server
 app.listen(PORT, () => {
-  console.log(` Server running on port`);
+  console.log(`Server running on port ${PORT}`);
 });

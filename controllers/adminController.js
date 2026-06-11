@@ -1,3 +1,6 @@
+const fs = require("fs");
+const path = require("path");
+
 const Project = require("../models/projectSchema");
 const Procurement = require("../models/procurementSChema");
 const Maintenance = require("../models/propertyMaintainance");
@@ -7,6 +10,29 @@ const Expense = require("../models/expense");
 const Company = require("../models/company");
 const ReimbursementAccount = require("../models/reimbursementAccount");
 const Employee = require("../models/employeeSchema");
+const cloudinary = require("../config/cloudinary");
+
+function uploadPdfToCloudinary(file, folder = "olaomegbon/guarantor-forms") {
+  return new Promise((resolve, reject) => {
+    const safeName = file.originalname
+      .replace(/\s+/g, "-")
+      .replace(/[^a-zA-Z0-9.\-_]/g, "");
+
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder,
+        resource_type: "raw",
+        public_id: `guarantor-${Date.now()}-${safeName.replace(".pdf", "")}`,
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      },
+    );
+
+    uploadStream.end(file.buffer);
+  });
+}
 
 // ==========================================
 // HELPERS
@@ -373,7 +399,7 @@ exports.deleteTask = async (req, res) => {
     const project = await Project.findOneAndUpdate(
       { "tasks._id": req.params.id },
       { $pull: { tasks: { _id: req.params.id } } },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     if (!project) {
@@ -536,7 +562,7 @@ exports.rejectProcurement = async (req, res) => {
         rejectedAt: new Date(),
         rejectedBy: getUserName(req),
       },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     if (!procurement) {
@@ -597,7 +623,7 @@ exports.updateMaintenance = async (req, res) => {
     const maintenance = await Maintenance.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true },
+      { returnDocument: "after" },
     );
 
     if (!maintenance) {
@@ -1160,6 +1186,82 @@ exports.deleteEmployee = async (req, res) => {
   } catch (error) {
     console.error("deleteEmployee error:", error.message);
     res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.uploadEmployeeGuarantorForms = async (req, res) => {
+  try {
+    const employee = await Employee.findById(req.params.id);
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
+    }
+
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Please upload at least one PDF guarantor form",
+      });
+    }
+
+    if (req.files.length > 2) {
+      return res.status(400).json({
+        success: false,
+        message: "You can only upload two guarantor forms",
+      });
+    }
+
+    // Delete old guarantor forms from Cloudinary
+    if (employee.guarantorForms && employee.guarantorForms.length > 0) {
+      for (const form of employee.guarantorForms) {
+        if (form.publicId) {
+          try {
+            await cloudinary.uploader.destroy(form.publicId, {
+              resource_type: "raw",
+            });
+          } catch (deleteError) {
+            console.warn(
+              "Could not delete old Cloudinary PDF:",
+              deleteError.message,
+            );
+          }
+        }
+      }
+    }
+
+    const uploadedForms = [];
+
+    for (const file of req.files) {
+      const result = await uploadPdfToCloudinary(file);
+
+      uploadedForms.push({
+        publicId: result.public_id,
+        originalName: file.originalname,
+        mimeType: file.mimetype,
+        size: file.size,
+        url: result.secure_url,
+        uploadedAt: new Date(),
+      });
+    }
+
+    employee.guarantorForms = uploadedForms;
+    await employee.save();
+
+    res.json({
+      success: true,
+      message: "Guarantor forms uploaded successfully",
+      employee,
+    });
+  } catch (error) {
+    console.error("uploadEmployeeGuarantorForms error:", error.message);
+
+    res.status(400).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
 

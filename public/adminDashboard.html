@@ -2101,6 +2101,38 @@
         return select.options[select.selectedIndex]?.text || "Selected Company";
       }
 
+      function employeeGuarantorForms(employee) {
+        const forms = [];
+
+        if (Array.isArray(employee?.guarantorForms)) {
+          forms.push(...employee.guarantorForms);
+        }
+
+        if (employee?.guarantorForm?.url) {
+          forms.push(employee.guarantorForm);
+        }
+
+        return forms.filter((form) => form && form.url);
+      }
+
+      function employeeGuarantorLinks(employee) {
+        const forms = employeeGuarantorForms(employee);
+
+        if (!forms.length) {
+          return '<span style="color:var(--muted);font-size:12px">No forms</span>';
+        }
+
+        return forms
+          .slice(0, 2)
+          .map((form, index) => {
+            const label = form.originalName
+              ? safeText(form.originalName)
+              : `Guarantor ${index + 1}`;
+            return `<a href="${safeAttr(form.url)}" target="_blank" rel="noopener" class="btn-sm btn-sm-outline" style="display:inline-flex;margin:2px;padding:4px 8px;font-size:11px">PDF ${index + 1}</a>`;
+          })
+          .join("");
+      }
+
       function dateInputValue(value) {
         if (!value) return "";
         const d = new Date(value);
@@ -2304,6 +2336,51 @@
         if (!res.ok)
           throw new Error(`DELETE /${endpoint} failed: ${res.status}`);
         return res.json();
+      }
+
+      async function uploadEmployeeGuarantorForms(employeeId, inputId) {
+        const input = document.getElementById(inputId);
+        if (!input || !input.files || input.files.length === 0) return null;
+
+        const files = Array.from(input.files);
+
+        if (files.length > 2) {
+          throw new Error("You can only upload two guarantor PDF forms.");
+        }
+
+        for (const file of files) {
+          const isPdf =
+            file.type === "application/pdf" ||
+            file.name.toLowerCase().endsWith(".pdf");
+
+          if (!isPdf) {
+            throw new Error("Only PDF files are allowed for guarantor forms.");
+          }
+        }
+
+        const formData = new FormData();
+        files.forEach((file) => formData.append("guarantorForms", file));
+
+        const res = await fetch(`/employees/${employeeId}/guarantor-forms`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${CURRENT_USER.token}` },
+          body: formData,
+        });
+
+        let result;
+        try {
+          result = await res.json();
+        } catch (error) {
+          throw new Error("Upload failed. Server did not return JSON.");
+        }
+
+        if (!res.ok || result.success === false) {
+          throw new Error(
+            result.message || "Failed to upload guarantor forms.",
+          );
+        }
+
+        return result.employee || result;
       }
 
       async function loadAllData() {
@@ -3124,7 +3201,7 @@
                           </div>
                           <div class="card">
                             <div class="card-head"><h3>Employee Records</h3><span>${employees.length} registered</span></div>
-                            <div class="card-table-wrap"><table class="tbl"><thead><tr><th>Staff ID</th><th>Name</th><th>Role / Designation</th><th>Department</th><th>Phone</th><th>Email</th><th>Salary (₦)</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+                            <div class="card-table-wrap"><table class="tbl"><thead><tr><th>Staff ID</th><th>Name</th><th>Role / Designation</th><th>Department</th><th>Phone</th><th>Email</th><th>Salary (₦)</th><th>Status</th><th>Joined</th><th>Guarantor Forms</th><th>Actions</th></tr></thead>
                             <tbody>${
                               employees.length > 0
                                 ? employees
@@ -3137,10 +3214,10 @@
                                         .map((w) => w[0])
                                         .join("")
                                         .slice(0, 2)
-                                        .toUpperCase()}</div><span style="font-weight:500">${e.name || "-"}</span></div></td><td>${e.role || e.designation || "-"}</td><td><span class="pill pill-gray">${e.department || "Unassigned"}</span></td><td>${e.phone || "-"}</td><td>${e.email || "-"}</td><td style="font-weight:600">${fmt.currency(parseFloat(e.salary) || 0)}</td><td><span class="pill ${e.status === "Active" || !e.status ? "pill-green" : e.status === "On Leave" ? "pill-yellow" : "pill-red"}">${e.status || "Active"}</span></td><td>${fmt.date(e.dateJoined || e.joinedDate)}</td><td style="display:flex;gap:4px"><button class="btn-sm btn-sm-outline" onclick="openModal('edit-employee','${eid}')">Edit</button><button class="btn-sm btn-sm-danger" onclick="deleteEmployee('${eid}')">Delete</button></td></tr>`;
+                                        .toUpperCase()}</div><span style="font-weight:500">${e.name || "-"}</span></div></td><td>${e.role || e.designation || "-"}</td><td><span class="pill pill-gray">${e.department || "Unassigned"}</span></td><td>${e.phone || "-"}</td><td>${e.email || "-"}</td><td style="font-weight:600">${fmt.currency(parseFloat(e.salary) || 0)}</td><td><span class="pill ${e.status === "Active" || !e.status ? "pill-green" : e.status === "On Leave" ? "pill-yellow" : "pill-red"}">${e.status || "Active"}</span></td><td>${fmt.date(e.dateJoined || e.joinedDate)}</td><td>${employeeGuarantorLinks(e)}</td><td style="display:flex;gap:4px"><button class="btn-sm btn-sm-outline" onclick="openModal('edit-employee','${eid}')">Edit</button><button class="btn-sm btn-sm-danger" onclick="deleteEmployee('${eid}')">Delete</button></td></tr>`;
                                     })
                                     .join("")
-                                : '<tr><td colspan="10" style="text-align:center;color:var(--muted)">No employees registered</td></tr>'
+                                : '<tr><td colspan="11" style="text-align:center;color:var(--muted)">No employees registered</td></tr>'
                             }</tbody></table></div>
                           </div>`;
         },
@@ -3360,6 +3437,26 @@
           })
           .join("");
       }
+
+      window.toggleProjectDetails = function (projectId) {
+        const detailsRow = document.getElementById(`proj-details-${projectId}`);
+        const toggleIcon = document.getElementById(`toggle-${projectId}`);
+
+        if (!detailsRow) {
+          console.warn("Project details row not found:", projectId);
+          return;
+        }
+
+        detailsRow.classList.toggle("active");
+
+        if (toggleIcon) {
+          toggleIcon.classList.toggle("rotated");
+        }
+
+        if (window.lucide) {
+          lucide.createIcons();
+        }
+      };
 
       let currentPage = "dashboard";
       const pageMeta = {
@@ -4804,14 +4901,14 @@
         );
         const rows = employees
           .map((e, idx) => {
-            return `<tr><td>${idx + 1}</td><td><strong>${e.staffId || e.employeeId || "N/A"}</strong></td><td>${e.name || "-"}</td><td>${e.role || e.designation || "-"}</td><td>${e.department || "Unassigned"}</td><td>${e.phone || "-"}</td><td>${e.email || "-"}</td><td style="text-align:right">₦${(parseFloat(e.salary) || 0).toLocaleString()}</td><td>${e.status || "Active"}</td><td>${fmt.date(e.dateJoined || e.joinedDate)}</td></tr>`;
+            return `<tr><td>${idx + 1}</td><td><strong>${e.staffId || e.employeeId || "N/A"}</strong></td><td>${e.name || "-"}</td><td>${e.role || e.designation || "-"}</td><td>${e.department || "Unassigned"}</td><td>${e.phone || "-"}</td><td>${e.email || "-"}</td><td style="text-align:right">₦${(parseFloat(e.salary) || 0).toLocaleString()}</td><td>${e.status || "Active"}</td><td>${fmt.date(e.dateJoined || e.joinedDate)}</td><td>${employeeGuarantorForms(e).length}/2</td></tr>`;
           })
           .join("");
         const printContent = `<!DOCTYPE html><html><head><title>Employee Report</title>
                                 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'DM Sans',sans-serif;padding:20px;color:#111827;background:#fff}.print-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #0a1a3a}.print-logo{display:flex;align-items:center;gap:12px}.print-logo img{width:56px;height:56px;object-fit:contain}.print-logo-text h2{font-size:20px;color:#0a1a3a;margin:0}.print-logo-text p{font-size:10px;color:#6b7280;letter-spacing:.5px;text-transform:uppercase}.print-meta{text-align:right}.print-meta h3{font-size:18px;font-weight:700;color:#0a1a3a;margin:0 0 4px}.print-meta p{font-size:11px;color:#6b7280;margin:0 0 2px}.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}.summary-box{border:1px solid #e5e7eb;border-radius:8px;padding:14px;text-align:center}.summary-box .num{font-size:22px;font-weight:700;color:#0a1a3a}.summary-box .lbl{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}.print-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:10px}.print-table th{background:#0a1a3a;color:#fff;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:10px 8px;text-align:left}.print-table td{padding:10px 8px;border-bottom:1px solid #e5e7eb}.print-footer{text-align:center;font-size:10px;color:#6b7280;padding-top:16px;border-top:1px solid #e5e7eb;margin-top:24px}@media print{html,body{width:297mm;min-height:210mm;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{width:297mm;min-height:210mm;padding:10mm;box-sizing:border-box;display:flex;flex-direction:column}.print-footer{margin-top:auto}}@page{size:A4 landscape;margin:0}</style></head><body>
                                 <div class="print-header"><div class="print-logo"><img src="https://res.cloudinary.com/deoqw88yb/image/upload/v1780134973/October_Libra_Building_Co._Ltd_Logo__1__page-0001-removebg-preview_rpwcmp.png" alt="Logo" /><div class="print-logo-text"><h2>October Libra Building Co. Ltd</h2><p>Construction & Real Estate Development</p></div></div><div class="print-meta"><h3>EMPLOYEE DIRECTORY</h3><p><strong>Generated:</strong> ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p></div></div>
                                 <div class="summary-grid"><div class="summary-box"><div class="num">${employees.length}</div><div class="lbl">Total Staff</div></div><div class="summary-box"><div class="num">${activeCount}</div><div class="lbl">Active</div></div><div class="summary-box"><div class="num">${inactiveCount}</div><div class="lbl">Inactive</div></div><div class="summary-box"><div class="num">₦${totalSalary.toLocaleString()}</div><div class="lbl">Monthly Payroll</div></div></div>
-                                <table class="print-table"><thead><tr><th>#</th><th>Staff ID</th><th>Name</th><th>Role</th><th>Department</th><th>Phone</th><th>Email</th><th style="text-align:right">Salary</th><th>Status</th><th>Joined</th></tr></thead><tbody>${rows || '<tr><td colspan="10" style="text-align:center">No employees registered</td></tr>'}</tbody></table>
+                                <table class="print-table"><thead><tr><th>#</th><th>Staff ID</th><th>Name</th><th>Role</th><th>Department</th><th>Phone</th><th>Email</th><th style="text-align:right">Salary</th><th>Status</th><th>Joined</th><th>Forms</th></tr></thead><tbody>${rows || '<tr><td colspan="11" style="text-align:center">No employees registered</td></tr>'}</tbody></table>
                                 <div class="print-footer"><p>October Libra Building Co. Ltd | RC: 1234567 | info@octoberlibra.com</p><p>Generated from the Libra Building Admin Portal.</p></div></body></html>`;
         const printWindow = window.open("", "_blank");
         if (!printWindow) return alert("Popup blocked! Please allow popups.");
@@ -5119,6 +5216,11 @@
                     <div class="form-group"><label>Emergency Contact</label><input id="emp-emergency" placeholder="Name & phone" /></div>
                     <div class="form-group form-full"><label>Address</label><textarea id="emp-address" rows="2" placeholder="Residential address"></textarea></div>
                     <div class="form-group form-full"><label>Notes</label><textarea id="emp-notes" rows="2" placeholder="Additional information..."></textarea></div>
+                    <div class="form-group form-full">
+                      <label>Guarantor Forms PDF (Max 2)</label>
+                      <input id="emp-guarantor-forms" type="file" accept="application/pdf,.pdf" multiple />
+                      <small style="font-size:11px;color:var(--muted)">Upload up to two PDF guarantor forms. Maximum 5MB each.</small>
+                    </div>
                   </div>`,
           save: "Add Employee",
           action: () => {
@@ -5153,9 +5255,18 @@
 
             // 3. API Submission
             apiPost("employees", data)
-              .then(() => {
+              .then(async (response) => {
+                const employee = response.employee || response.data || response;
+                const employeeId = employee._id || employee.id;
+
+                if (employeeId) {
+                  await uploadEmployeeGuarantorForms(
+                    employeeId,
+                    "emp-guarantor-forms",
+                  );
+                }
+
                 closeModal();
-                // Ensure 'hr-management' exists in your pageMeta object!
                 loadAllData().then(() => navigate("hr-management"));
               })
               .catch((err) => {
@@ -5197,6 +5308,15 @@
                             <div class="form-group"><label>Emergency Contact</label><input id="edit-emp-emergency" value="${(e.emergencyContact || "").replace(/"/g, "&quot;")}" /></div>
                             <div class="form-group form-full"><label>Address</label><textarea id="edit-emp-address" rows="2">${e.address || ""}</textarea></div>
                             <div class="form-group form-full"><label>Notes</label><textarea id="edit-emp-notes" rows="2">${e.notes || ""}</textarea></div>
+                            <div class="form-group form-full">
+                              <label>Current Guarantor Forms</label>
+                              <div style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 0">${employeeGuarantorLinks(e)}</div>
+                            </div>
+                            <div class="form-group form-full">
+                              <label>Replace Guarantor Forms PDF (Max 2)</label>
+                              <input id="edit-emp-guarantor-forms" type="file" accept="application/pdf,.pdf" multiple />
+                              <small style="font-size:11px;color:var(--muted)">Optional. Selecting files will upload/replace with up to two PDF guarantor forms.</small>
+                            </div>
                           </div>`;
           },
           save: "Save Changes",
@@ -5219,7 +5339,16 @@
               notes: document.getElementById("edit-emp-notes").value,
             };
             apiPut(`employees/${employeeId}`, data)
-              .then(() => {
+              .then(async (response) => {
+                const employee = response.employee || response.data || response;
+                const updatedEmployeeId =
+                  employee._id || employee.id || employeeId;
+
+                await uploadEmployeeGuarantorForms(
+                  updatedEmployeeId,
+                  "edit-emp-guarantor-forms",
+                );
+
                 closeModal();
                 loadAllData().then(() => navigate("hr-management"));
               })
