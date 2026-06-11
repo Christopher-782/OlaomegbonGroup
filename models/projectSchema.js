@@ -70,12 +70,11 @@ const projectSchema = new mongoose.Schema(
   { timestamps: true },
 );
 
-projectSchema.pre("save", function (next) {
+projectSchema.pre("save", function () {
   if (this.isNew && !this.originalBudget) {
     this.originalBudget = this.budget || 0;
   }
-
-  next();
 });
 
-module.exports = mongoose.model("Project", projectSchema);
+module.exports =
+  mongoose.models.Project || mongoose.model("Project", projectSchema);

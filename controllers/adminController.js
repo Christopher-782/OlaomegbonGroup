@@ -6,6 +6,7 @@ const Transaction = require("../models/transactions");
 const Expense = require("../models/expense");
 const Company = require("../models/company");
 const ReimbursementAccount = require("../models/reimbursementAccount");
+const Employee = require("../models/employeeSchema");
 
 // ==========================================
 // HELPERS
@@ -736,27 +737,6 @@ exports.getInvoiceById = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
-exports.getInvoiceById = async (req, res) => {
-  try {
-    const invoice = await Invoice.findById(req.params.id).populate({
-      path: "project",
-      select: "name",
-      strictPopulate: false,
-    });
-
-    if (!invoice) {
-      return res.status(404).json({
-        success: false,
-        message: "Invoice not found",
-      });
-    }
-
-    res.json({ success: true, invoice });
-  } catch (error) {
-    console.error("getInvoiceById error:", error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
 
 exports.generateInvoice = async (req, res) => {
   console.log("=== GENERATE INVOICE ===");
@@ -1100,6 +1080,85 @@ exports.updateExpense = async (req, res) => {
     res.json({ success: true, expense });
   } catch (error) {
     console.error("updateExpense error:", error.message);
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// ==========================================
+// EMPLOYEES
+// ==========================================
+
+exports.getEmployees = async (req, res) => {
+  try {
+    const employees = await Employee.find().sort({ createdAt: -1 });
+    res.json(employees);
+  } catch (error) {
+    console.error("getEmployees error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+exports.createEmployee = async (req, res) => {
+  try {
+    const employee = await Employee.create(req.body);
+    res.status(201).json({ success: true, employee });
+  } catch (error) {
+    console.error("createEmployee error:", error.message);
+
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "Staff ID already exists",
+      });
+    }
+
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.updateEmployee = async (req, res) => {
+  try {
+    const employee = await Employee.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
+    }
+
+    res.json({ success: true, employee });
+  } catch (error) {
+    console.error("updateEmployee error:", error.message);
+
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "Staff ID already exists",
+      });
+    }
+
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+exports.deleteEmployee = async (req, res) => {
+  try {
+    const employee = await Employee.findByIdAndDelete(req.params.id);
+
+    if (!employee) {
+      return res.status(404).json({
+        success: false,
+        message: "Employee not found",
+      });
+    }
+
+    res.json({ success: true, message: "Employee deleted" });
+  } catch (error) {
+    console.error("deleteEmployee error:", error.message);
     res.status(400).json({ success: false, message: error.message });
   }
 };

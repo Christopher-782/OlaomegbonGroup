@@ -50,7 +50,7 @@ const employeeSchema = new mongoose.Schema(
       default: "Active",
     },
     dateJoined: {
-      type: String, // Matches frontend string input (YYYY-MM-DD)
+      type: String,
     },
     emergencyContact: {
       type: String,
@@ -73,4 +73,5 @@ const employeeSchema = new mongoose.Schema(
   },
 );
 
-module.exports = mongoose.model("Employee", employeeSchema);
+module.exports =
+  mongoose.models.Employee || mongoose.model("Employee", employeeSchema);

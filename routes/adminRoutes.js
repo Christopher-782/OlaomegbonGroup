@@ -35,6 +35,12 @@ router.post("/properties", adminController.createProperty);
 router.put("/properties/:id", adminController.updateProperty);
 router.delete("/properties/:id", adminController.deleteProperty);
 
+// ==================== EMPLOYEES ====================
+router.get("/employees", adminController.getEmployees);
+router.post("/employees", adminController.createEmployee);
+router.put("/employees/:id", adminController.updateEmployee);
+router.delete("/employees/:id", adminController.deleteEmployee);
+
 // ==================== INVOICES ====================
 router.get("/invoices", adminController.getAllInvoices);
 router.get("/invoice/:id", adminController.getInvoiceById); // singular
