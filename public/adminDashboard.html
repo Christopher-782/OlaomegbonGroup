@@ -1806,6 +1806,10 @@
           canViewProcurementValue: true,
           canViewProcurementReport: true,
           canViewInvoiceAmounts: true,
+          canCreateMaintenanceProperty: true,
+          canCreateMaintenance: true,
+          canPrintMaintenance: true,
+          canUpdateMaintenanceStatus: true,
         },
         Admin: {
           pages: [
@@ -1836,6 +1840,10 @@
           canViewProcurementValue: true,
           canViewProcurementReport: true,
           canViewInvoiceAmounts: true,
+          canCreateMaintenanceProperty: true,
+          canCreateMaintenance: true,
+          canPrintMaintenance: true,
+          canUpdateMaintenanceStatus: true,
         },
         Manager: {
           pages: [
@@ -1862,6 +1870,10 @@
           canViewProcurementValue: false,
           canViewProcurementReport: false,
           canViewInvoiceAmounts: false,
+          canCreateMaintenanceProperty: true,
+          canCreateMaintenance: true,
+          canPrintMaintenance: true,
+          canUpdateMaintenanceStatus: true,
         },
         Accountant: {
           pages: [
@@ -1889,6 +1901,10 @@
           canViewProcurementValue: true,
           canViewProcurementReport: true,
           canViewInvoiceAmounts: true,
+          canCreateMaintenanceProperty: false,
+          canCreateMaintenance: false,
+          canPrintMaintenance: true,
+          canUpdateMaintenanceStatus: false,
         },
         "HR Officer": {
           pages: ["hr-management", "maintenance"],
@@ -1906,6 +1922,10 @@
           canViewProcurementValue: false,
           canViewProcurementReport: false,
           canViewInvoiceAmounts: false,
+          canCreateMaintenanceProperty: false,
+          canCreateMaintenance: true,
+          canPrintMaintenance: true,
+          canUpdateMaintenanceStatus: true,
         },
         Procurement: {
           pages: ["dashboard", "procurement"],
@@ -1923,6 +1943,31 @@
           canViewProcurementValue: true,
           canViewProcurementReport: false,
           canViewInvoiceAmounts: false,
+          canCreateMaintenanceProperty: false,
+          canCreateMaintenance: false,
+          canPrintMaintenance: false,
+          canUpdateMaintenanceStatus: false,
+        },
+        Support: {
+          pages: ["maintenance"],
+          canCreateProject: false,
+          canEditProject: false,
+          canCreateTask: false,
+          canEditTask: false,
+          canDeleteTask: false,
+          canCreateProcurement: false,
+          canApproveProcurement: false,
+          canCreateInvoice: false,
+          canViewRevenue: false,
+          canViewBudget: false,
+          canViewOutstanding: false,
+          canViewProcurementValue: false,
+          canViewProcurementReport: false,
+          canViewInvoiceAmounts: false,
+          canCreateMaintenanceProperty: false,
+          canCreateMaintenance: true,
+          canPrintMaintenance: true,
+          canUpdateMaintenanceStatus: true,
         },
         Staff: {
           pages: ["dashboard"],
@@ -1940,6 +1985,10 @@
           canViewProcurementValue: false,
           canViewProcurementReport: false,
           canViewInvoiceAmounts: false,
+          canCreateMaintenanceProperty: false,
+          canCreateMaintenance: false,
+          canPrintMaintenance: false,
+          canUpdateMaintenanceStatus: false,
         },
       };
       function getUserRole() {
@@ -2045,6 +2094,7 @@
           "in-progress": "pill-yellow",
           scheduled: "pill-blue",
           resolved: "pill-green",
+          closed: "pill-gray",
           todo: "pill-gray",
           done: "pill-green",
           income: "pill-green",
@@ -2463,6 +2513,72 @@
         return `<div class="kpi" style="--kpi-color:${bg};--kpi-text:${iconColor}"><div class="kpi-header"><span class="kpi-label">${label}</span><div class="kpi-icon"><i data-lucide="${icon}"></i></div></div><div class="kpi-val">${value}</div><div class="kpi-sub">${sub}</div></div>`;
       }
 
+      // ==================== MAINTENANCE HELPERS ====================
+      function maintenanceIdOf(ticket) {
+        return ticket ? ticket._id || ticket.id || "" : "";
+      }
+
+      function maintenanceTicketNumber(ticket) {
+        const direct =
+          ticket?.ticketNumber ||
+          ticket?.ticketNo ||
+          ticket?.reference ||
+          ticket?.code ||
+          "";
+        if (direct) return String(direct);
+        const id = maintenanceIdOf(ticket);
+        return id ? `MT-${String(id).slice(-6).toUpperCase()}` : "MT-NEW";
+      }
+
+      function maintenanceStatus(ticket) {
+        return String(ticket?.status || "open").toLowerCase();
+      }
+
+      function maintenancePriority(ticket) {
+        return String(
+          ticket?.priority || ticket?.urgency || "normal",
+        ).toLowerCase();
+      }
+
+      function maintenancePropertyName(ticket) {
+        if (!ticket) return "Unknown property";
+        return (
+          ticket.propertyName ||
+          (ticket.property && typeof ticket.property === "object"
+            ? ticket.property.name
+            : ticket.property) ||
+          "Unknown property"
+        );
+      }
+
+      function maintenanceLoggedDate(ticket) {
+        return ticket?.logged || ticket?.createdAt || ticket?.date || "";
+      }
+
+      function maintenancePriorityColor(priority) {
+        const p = String(priority || "").toLowerCase();
+        if (p === "urgent") return "#dc2626";
+        if (p === "high") return "#d97706";
+        if (p === "normal") return "#1a3c5e";
+        return "#6b7280";
+      }
+
+      function canCreateMaintenanceTicket() {
+        return hasPermission("canCreateMaintenance");
+      }
+
+      function canCreateMaintenanceProperty() {
+        return hasPermission("canCreateMaintenanceProperty");
+      }
+
+      function canPrintMaintenanceTicket() {
+        return hasPermission("canPrintMaintenance");
+      }
+
+      function canUpdateMaintenanceStatus() {
+        return hasPermission("canUpdateMaintenanceStatus");
+      }
+
       // ==================== PAGE RENDERERS ====================
       const Pages = {
         async dashboard() {
@@ -2688,86 +2804,163 @@
 
         async maintenance() {
           await loadAllData();
-          const urgent = DB.maintenance.filter((m) => m.priority === "urgent");
-          return `<div style="display:flex;gap:8px;margin-bottom:20px">
-                                    <button class="btn-primary" onclick="openModal('new-property')"><i data-lucide="plus" style="width:14px;height:14px"></i> Register Property</button>
-                                    <button class="btn-primary" onclick="openModal('new-maintenance')" style="background:var(--success)"><i data-lucide="wrench" style="width:14px;height:14px"></i> Log Ticket</button>
+
+          const tickets = DB.maintenance || [];
+          const openTickets = tickets.filter(
+            (m) => maintenanceStatus(m) === "open",
+          );
+          const inProgressTickets = tickets.filter(
+            (m) => maintenanceStatus(m) === "in-progress",
+          );
+          const urgentTickets = tickets.filter(
+            (m) => maintenancePriority(m) === "urgent",
+          );
+          const resolvedTickets = tickets.filter(
+            (m) => maintenanceStatus(m) === "resolved",
+          );
+          const closedTickets = tickets.filter(
+            (m) => maintenanceStatus(m) === "closed",
+          );
+
+          const registerPropertyButton = canCreateMaintenanceProperty()
+            ? `<button class="btn-primary" onclick="openModal('new-property')"><i data-lucide="plus" style="width:14px;height:14px"></i> Register Property</button>`
+            : "";
+
+          const logTicketButton = canCreateMaintenanceTicket()
+            ? `<button class="btn-primary" onclick="openModal('new-maintenance')" style="background:var(--success)"><i data-lucide="wrench" style="width:14px;height:14px"></i> Log Ticket</button>`
+            : "";
+
+          const printAllButton =
+            canPrintMaintenanceTicket() && tickets.length > 0
+              ? `<button class="btn-primary" onclick="printMaintenanceTicketList()" style="background:var(--brand)"><i data-lucide="printer" style="width:14px;height:14px"></i> Print Ticket List</button>`
+              : "";
+
+          const ticketCards =
+            tickets.length > 0
+              ? tickets
+                  .map((m) => {
+                    const mid = maintenanceIdOf(m);
+                    const propName = maintenancePropertyName(m);
+                    const status = maintenanceStatus(m);
+                    const priority = maintenancePriority(m);
+                    const title = m.title || m.issue || "Maintenance issue";
+                    const description =
+                      m.description || m.details || "No description provided.";
+                    const assigned = m.assigned || m.assignedTo || "Unassigned";
+                    const loggedBy = m.loggedBy || m.createdBy || "-";
+                    const priorityColor = maintenancePriorityColor(priority);
+                    const printButton = canPrintMaintenanceTicket()
+                      ? `<button class="btn-sm btn-sm-print" onclick="event.stopPropagation(); printMaintenanceTicket('${safeAttr(mid)}')" title="Print Ticket"><i data-lucide="printer" style="width:12px;height:12px"></i> Print</button>`
+                      : "";
+                    return `<div class="maint-card" onclick="viewMaintenance('${safeAttr(mid)}')" style="padding:16px 18px">
+                              <div class="priority-bar" style="background:${priorityColor};width:4px"></div>
+                              <div class="maint-info">
+                                <div style="display:flex;gap:12px;align-items:flex-start;justify-content:space-between;margin-bottom:4px">
+                                  <div>
+                                    <strong style="font-size:14.5px">${safeText(title)}</strong>
+                                    <p style="margin-top:3px">${safeText(propName)}</p>
                                   </div>
-                                  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:20px">
-                                    <div class="card" style="padding:18px 20px"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Open Tickets</div><div style="font-size:28px;font-weight:700">${DB.maintenance.filter((m) => m.status === "open").length}</div></div>
-                                    <div class="card" style="padding:18px 20px"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">In Progress</div><div style="font-size:28px;font-weight:700;color:var(--warning)">${DB.maintenance.filter((m) => m.status === "in-progress").length}</div></div>
-                                    <div class="card" style="padding:18px 20px"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">Urgent</div><div style="font-size:28px;font-weight:700;color:var(--danger)">${urgent.length}</div></div>
+                                  <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+                                    <span class="pill ${fmt.statusClass[status] || "pill-gray"}">${safeText(status)}</span>
+                                    ${printButton}
                                   </div>
-                                  <div class="grid-2">
-                                    <div class="card">
-                                      <div class="card-head"><h3>Properties (${DB.properties.length})</h3></div>
-                                      <div class="card-body">
-                                        ${
-                                          DB.properties.length > 0
-                                            ? DB.properties
-                                                .map((prop) => {
-                                                  const propId =
-                                                    prop._id || prop.id;
-                                                  const propMaint =
-                                                    DB.maintenance.filter(
-                                                      (m) => {
-                                                        const mPropId =
-                                                          m.propertyId ||
-                                                          (m.property &&
-                                                          typeof m.property ===
-                                                            "object"
-                                                            ? m.property._id
-                                                            : m.property);
-                                                        const mPropName =
-                                                          m.propertyName ||
-                                                          (m.property &&
-                                                          typeof m.property ===
-                                                            "object"
-                                                            ? m.property.name
-                                                            : m.property);
-                                                        return (
-                                                          mPropId === propId ||
-                                                          mPropName ===
-                                                            prop.name
-                                                        );
-                                                      },
-                                                    );
-                                                  return `<div class="property-card" onclick="viewPropertyMaintenance('${propId}')"><strong>${prop.name}</strong><p>${prop.address || prop.location || "No address"}</p><div class="meta"><span><i data-lucide="wrench" style="width:12px;height:12px;display:inline;vertical-align:middle"></i> ${propMaint.length} tickets</span><span><i data-lucide="alert-circle" style="width:12px;height:12px;display:inline;vertical-align:middle"></i> ${propMaint.filter((m) => m.status === "open").length} open</span></div></div>`;
-                                                })
-                                                .join("")
-                                            : '<div class="empty-state"><i data-lucide="building-2"></i><span>No properties registered</span></div>'
-                                        }
-                                      </div>
-                                    </div>
-                                    <div class="card">
-                                      <div class="card-head"><h3>All Maintenance Tickets</h3></div>
-                                      <div class="card-body">
-                                        ${
-                                          DB.maintenance.length > 0
-                                            ? DB.maintenance
-                                                .map((m) => {
-                                                  const pc = {
-                                                    urgent: "var(--danger)",
-                                                    high: "var(--warning)",
-                                                    normal: "var(--brand-mid)",
-                                                  };
-                                                  const mid = m._id || m.id;
-                                                  const propName =
-                                                    m.propertyName ||
-                                                    (m.property &&
-                                                    typeof m.property ===
-                                                      "object"
-                                                      ? m.property.name
-                                                      : m.property) ||
-                                                    "Unknown property";
-                                                  return `<div class="maint-card" onclick="viewMaintenance('${mid}')"><div class="priority-bar" style="background:${pc[m.priority] || "var(--border)"}"></div><div class="maint-info"><strong>${m.title || m.issue || "-"}</strong><p>${propName}</p><div class="maint-meta"><span class="pill ${fmt.statusClass[m.status] || "pill-gray"}">${m.status}</span><span style="font-size:11.5px;color:var(--muted)">${m.assigned || "Unassigned"}</span><span style="font-size:11.5px;color:var(--muted);margin-left:auto">${fmt.date(m.logged)}</span></div></div></div>`;
-                                                })
-                                                .join("")
-                                            : '<div class="empty-state"><i data-lucide="clipboard-list"></i><span>No maintenance tickets</span></div>'
-                                        }
-                                      </div>
-                                    </div>
-                                  </div>`;
+                                </div>
+                                <p style="font-size:12.5px;line-height:1.5;margin-bottom:8px">${safeText(description).slice(0, 180)}${String(description).length > 180 ? "..." : ""}</p>
+                                <div class="maint-meta" style="flex-wrap:wrap">
+                                  <span style="font-size:11.5px;color:var(--muted)"><strong>Ticket:</strong> ${safeText(maintenanceTicketNumber(m))}</span>
+                                  <span style="font-size:11.5px;color:var(--muted)"><strong>Priority:</strong> ${safeText(priority)}</span>
+                                  <span style="font-size:11.5px;color:var(--muted)"><strong>Assigned:</strong> ${safeText(assigned)}</span>
+                                  <span style="font-size:11.5px;color:var(--muted)"><strong>Logged by:</strong> ${safeText(loggedBy)}</span>
+                                  <span style="font-size:11.5px;color:var(--muted);margin-left:auto">${fmt.date(maintenanceLoggedDate(m))}</span>
+                                </div>
+                              </div>
+                            </div>`;
+                  })
+                  .join("")
+              : '<div class="empty-state"><i data-lucide="clipboard-list"></i><span>No maintenance tickets</span></div>';
+
+          const propertyCards =
+            DB.properties.length > 0
+              ? DB.properties
+                  .map((prop) => {
+                    const propId = prop._id || prop.id;
+                    const propMaint = tickets.filter((m) => {
+                      const mPropId =
+                        m.propertyId ||
+                        (m.property && typeof m.property === "object"
+                          ? m.property._id
+                          : m.property);
+                      const mPropName =
+                        m.propertyName ||
+                        (m.property && typeof m.property === "object"
+                          ? m.property.name
+                          : m.property);
+                      return mPropId === propId || mPropName === prop.name;
+                    });
+                    return `<div class="property-card" onclick="viewPropertyMaintenance('${safeAttr(propId)}')">
+                              <strong>${safeText(prop.name || "Unnamed Property")}</strong>
+                              <p>${safeText(prop.address || prop.location || "No address")}</p>
+                              <div class="meta">
+                                <span><i data-lucide="wrench" style="width:12px;height:12px;display:inline;vertical-align:middle"></i> ${propMaint.length} tickets</span>
+                                <span><i data-lucide="alert-circle" style="width:12px;height:12px;display:inline;vertical-align:middle"></i> ${propMaint.filter((m) => maintenanceStatus(m) === "open").length} open</span>
+                              </div>
+                            </div>`;
+                  })
+                  .join("")
+              : '<div class="empty-state"><i data-lucide="building-2"></i><span>No properties registered</span></div>';
+
+          const urgentList =
+            urgentTickets.length > 0
+              ? urgentTickets
+                  .slice(0, 5)
+                  .map(
+                    (m) =>
+                      `<div class="activity-item">
+                        <div class="act-icon" style="background:var(--danger-bg);color:var(--danger)"><i data-lucide="alert-triangle"></i></div>
+                        <div class="act-info">
+                          <strong>${safeText(m.title || m.issue || "Urgent ticket")}</strong>
+                          <span>${safeText(maintenancePropertyName(m))} • ${safeText(m.assigned || "Unassigned")}</span>
+                        </div>
+                      </div>`,
+                  )
+                  .join("")
+              : '<div class="empty-state" style="height:120px"><i data-lucide="check-circle"></i><span>No urgent maintenance issue</span></div>';
+
+          return `<div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+                    ${registerPropertyButton}
+                    ${logTicketButton}
+                    ${printAllButton}
+                  </div>
+
+                  <div class="kpi-grid">
+                    ${kpi("Total Tickets", tickets.length, "All maintenance records", "clipboard-list", "#e8f0fb", "#1a3c5e")}
+                    ${kpi("Open Tickets", openTickets.length, "Awaiting action", "alert-circle", "#fee2e2", "#dc2626")}
+                    ${kpi("In Progress", inProgressTickets.length, "Currently assigned", "loader", "#fef3c7", "#d97706")}
+                    ${kpi("Closed", closedTickets.length, "Finalized tickets", "check-circle", "#f3f4f6", "#374151")}
+                  </div>
+
+                  <div class="grid-3-1">
+                    <div class="card">
+                      <div class="card-head">
+                        <div>
+                          <h3>Maintenance Tickets</h3>
+                          <span>Click any ticket to view details or print a professional job ticket.</span>
+                        </div>
+                      </div>
+                      <div class="card-body">${ticketCards}</div>
+                    </div>
+
+                    <div>
+                      <div class="card" style="margin-bottom:20px">
+                        <div class="card-head"><h3>Urgent Attention</h3><span>${urgentTickets.length} urgent</span></div>
+                        <div class="card-body">${urgentList}</div>
+                      </div>
+                      <div class="card">
+                        <div class="card-head"><h3>Properties (${DB.properties.length})</h3></div>
+                        <div class="card-body">${propertyCards}</div>
+                      </div>
+                    </div>
+                  </div>`;
         },
         async invoices() {
           await loadAllData();
@@ -5731,9 +5924,9 @@ Submit anyway?`,
                     .map(
                       (p) =>
                         '<option value="' +
-                        (p._id || p.id) +
+                        safeAttr(p._id || p.id) +
                         '">' +
-                        p.name +
+                        safeText(p.name || "Unnamed Property") +
                         "</option>",
                     )
                     .join("")
@@ -5742,10 +5935,23 @@ Submit anyway?`,
           },
           save: "Log Ticket",
           action: () => {
+            if (!canCreateMaintenanceTicket()) {
+              alert("You do not have permission to log maintenance tickets.");
+              return;
+            }
+
+            const issueTitle = document
+              .getElementById("maint-issue")
+              .value.trim();
+            if (!issueTitle) {
+              alert("Please enter the issue title.");
+              return;
+            }
+
             const propId = document.getElementById("maint-property").value;
             const prop = DB.properties.find((p) => (p._id || p.id) === propId);
             const data = {
-              title: document.getElementById("maint-issue").value,
+              title: issueTitle,
               property: propId,
               propertyName: prop ? prop.name : "",
               propertyId: propId,
@@ -6295,6 +6501,377 @@ Submit anyway?`,
       };
       window.handleOverlayClick = (e) => {
         if (e.target.classList.contains("modal-overlay")) closeModal();
+      };
+
+      // ==================== MAINTENANCE VIEW & PRINT ====================
+
+      window.updateMaintenanceStatus = async (id, status) => {
+        if (!canUpdateMaintenanceStatus()) {
+          alert(
+            "You do not have permission to update maintenance ticket status.",
+          );
+          return;
+        }
+
+        const allowedStatuses = ["open", "in-progress", "resolved", "closed"];
+        if (!allowedStatuses.includes(status)) {
+          alert("Invalid maintenance status selected.");
+          return;
+        }
+
+        const ticket = (DB.maintenance || []).find(
+          (m) => String(maintenanceIdOf(m)) === String(id),
+        );
+        if (!ticket) return alert("Maintenance ticket not found.");
+
+        const confirmText =
+          status === "closed"
+            ? "Are you sure you want to close this maintenance ticket?"
+            : `Change this maintenance ticket status to ${status}?`;
+        if (!confirm(confirmText)) return;
+
+        const payload = {
+          status,
+          updatedBy: CURRENT_USER.name,
+          updatedAt: new Date().toISOString(),
+        };
+
+        if (status === "closed") {
+          payload.closedBy = CURRENT_USER.name;
+          payload.closedAt = new Date().toISOString();
+        }
+
+        if (status === "resolved") {
+          payload.resolvedBy = CURRENT_USER.name;
+          payload.resolvedAt = new Date().toISOString();
+        }
+
+        try {
+          await apiPut(`maintenance/${id}`, payload);
+          await loadAllData();
+          closeModal();
+          navigate("maintenance");
+        } catch (err) {
+          alert("Failed to update ticket status: " + err.message);
+        }
+      };
+
+      window.viewMaintenance = (id) => {
+        const ticket = (DB.maintenance || []).find(
+          (m) => String(maintenanceIdOf(m)) === String(id),
+        );
+        if (!ticket) return alert("Maintenance ticket not found.");
+
+        const status = maintenanceStatus(ticket);
+        const priority = maintenancePriority(ticket);
+        const ticketNo = maintenanceTicketNumber(ticket);
+        const propName = maintenancePropertyName(ticket);
+        const priorityColor = maintenancePriorityColor(priority);
+
+        document.getElementById("modal-root").innerHTML = `
+          <div class="modal-overlay" onclick="handleOverlayClick(event)">
+            <div class="modal" style="width:680px">
+              <div class="modal-head">
+                <div>
+                  <h3>${safeText(ticket.title || ticket.issue || "Maintenance Ticket")}</h3>
+                  <span style="font-size:12px;color:var(--muted)">${safeText(ticketNo)} • ${safeText(propName)}</span>
+                </div>
+                <button class="modal-close" onclick="closeModal()"><i data-lucide="x" style="width:16px;height:16px"></i></button>
+              </div>
+              <div class="modal-body">
+                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px">
+                  <div class="report-card" style="margin-bottom:0;padding:14px">
+                    <h4>Ticket No.</h4>
+                    <strong>${safeText(ticketNo)}</strong>
+                  </div>
+                  <div class="report-card" style="margin-bottom:0;padding:14px">
+                    <h4>Status</h4>
+                    <span class="pill ${fmt.statusClass[status] || "pill-gray"}">${safeText(status)}</span>
+                  </div>
+                  <div class="report-card" style="margin-bottom:0;padding:14px">
+                    <h4>Priority</h4>
+                    <span class="pill" style="background:${priorityColor}22;color:${priorityColor}">${safeText(priority)}</span>
+                  </div>
+                </div>
+
+                <div class="report-card">
+                  <h4>Ticket Information</h4>
+                  <div class="report-row"><span class="label">Property / Location</span><span class="value">${safeText(propName)}</span></div>
+                  <div class="report-row"><span class="label">Assigned To</span><span class="value">${safeText(ticket.assigned || ticket.assignedTo || "Unassigned")}</span></div>
+                  <div class="report-row"><span class="label">Logged By</span><span class="value">${safeText(ticket.loggedBy || ticket.createdBy || "-")}</span></div>
+                  <div class="report-row"><span class="label">Date Logged</span><span class="value">${fmt.date(maintenanceLoggedDate(ticket))}</span></div>
+                </div>
+
+                <div class="report-card">
+                  <h4>Description / Work Required</h4>
+                  <p style="font-size:14px;line-height:1.65;color:var(--text)">${safeText(ticket.description || ticket.details || "No description provided.")}</p>
+                </div>
+              </div>
+              <div class="modal-foot">
+                <button class="btn-cancel" onclick="closeModal()">Close</button>
+                ${
+                  canUpdateMaintenanceStatus() &&
+                  status !== "in-progress" &&
+                  status !== "closed"
+                    ? `<button class="btn-sm btn-sm-outline" onclick="updateMaintenanceStatus('${safeAttr(id)}', 'in-progress')">Mark In Progress</button>`
+                    : ""
+                }
+                ${
+                  canUpdateMaintenanceStatus() &&
+                  status !== "resolved" &&
+                  status !== "closed"
+                    ? `<button class="btn-sm btn-sm-success" onclick="updateMaintenanceStatus('${safeAttr(id)}', 'resolved')">Mark Resolved</button>`
+                    : ""
+                }
+                ${
+                  canUpdateMaintenanceStatus() && status !== "closed"
+                    ? `<button class="btn-sm btn-sm-danger" onclick="updateMaintenanceStatus('${safeAttr(id)}', 'closed')">Close Ticket</button>`
+                    : ""
+                }
+                ${
+                  canPrintMaintenanceTicket()
+                    ? `<button class="btn-save" onclick="printMaintenanceTicket('${safeAttr(id)}')"><i data-lucide="printer" style="width:14px;height:14px;vertical-align:middle"></i> Print Ticket</button>`
+                    : ""
+                }
+              </div>
+            </div>
+          </div>`;
+        if (window.lucide) lucide.createIcons();
+      };
+
+      window.viewPropertyMaintenance = (propertyId) => {
+        const property = (DB.properties || []).find(
+          (p) => String(p._id || p.id) === String(propertyId),
+        );
+        const tickets = (DB.maintenance || []).filter((m) => {
+          const mPropId =
+            m.propertyId ||
+            (m.property && typeof m.property === "object"
+              ? m.property._id
+              : m.property);
+          const mPropName =
+            m.propertyName ||
+            (m.property && typeof m.property === "object"
+              ? m.property.name
+              : m.property);
+          return (
+            String(mPropId) === String(propertyId) ||
+            (property && String(mPropName) === String(property.name))
+          );
+        });
+
+        const rows =
+          tickets.length > 0
+            ? tickets
+                .map((m) => {
+                  const id = maintenanceIdOf(m);
+                  return `<tr>
+                    <td><strong>${safeText(maintenanceTicketNumber(m))}</strong></td>
+                    <td>${safeText(m.title || m.issue || "-")}</td>
+                    <td><span class="pill ${fmt.statusClass[maintenanceStatus(m)] || "pill-gray"}">${safeText(maintenanceStatus(m))}</span></td>
+                    <td>${safeText(maintenancePriority(m))}</td>
+                    <td>${safeText(m.assigned || "Unassigned")}</td>
+                    <td>${fmt.date(maintenanceLoggedDate(m))}</td>
+                    <td><button class="btn-sm btn-sm-print" onclick="printMaintenanceTicket('${safeAttr(id)}')">Print</button></td>
+                  </tr>`;
+                })
+                .join("")
+            : `<tr><td colspan="7" style="text-align:center;color:var(--muted)">No tickets found for this property</td></tr>`;
+
+        document.getElementById("modal-root").innerHTML = `
+          <div class="modal-overlay" onclick="handleOverlayClick(event)">
+            <div class="modal" style="width:860px">
+              <div class="modal-head">
+                <div>
+                  <h3>${safeText(property?.name || "Property Maintenance")}</h3>
+                  <span style="font-size:12px;color:var(--muted)">${safeText(property?.address || property?.location || "Maintenance history")}</span>
+                </div>
+                <button class="modal-close" onclick="closeModal()"><i data-lucide="x" style="width:16px;height:16px"></i></button>
+              </div>
+              <div class="modal-body">
+                <div class="card-table-wrap">
+                  <table class="tbl">
+                    <thead>
+                      <tr><th>Ticket</th><th>Issue</th><th>Status</th><th>Priority</th><th>Assigned</th><th>Logged</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="modal-foot">
+                <button class="btn-cancel" onclick="closeModal()">Close</button>
+              </div>
+            </div>
+          </div>`;
+        if (window.lucide) lucide.createIcons();
+      };
+
+      window.printMaintenanceTicket = (id) => {
+        const ticket = (DB.maintenance || []).find(
+          (m) => String(maintenanceIdOf(m)) === String(id),
+        );
+        if (!ticket) return alert("Maintenance ticket not found.");
+        if (!canPrintMaintenanceTicket()) {
+          alert("You do not have permission to print maintenance tickets.");
+          return;
+        }
+
+        const ticketNo = maintenanceTicketNumber(ticket);
+        const status = maintenanceStatus(ticket);
+        const priority = maintenancePriority(ticket);
+        const propName = maintenancePropertyName(ticket);
+        const priorityColor = maintenancePriorityColor(priority);
+        const printDate = new Date().toLocaleDateString("en-GB", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+        const logoUrl =
+          "https://res.cloudinary.com/deoqw88yb/image/upload/v1780134973/October_Libra_Building_Co._Ltd_Logo__1__page-0001-removebg-preview_rpwcmp.png";
+
+        const printContent = `<!doctype html>
+<html>
+<head>
+  <title>Maintenance Ticket - ${safeText(ticketNo)}</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,Helvetica,sans-serif;background:#fff;color:#111827;padding:18mm;font-size:13px;line-height:1.45}
+    .ticket{min-height:260mm;border:1px solid #d1d5db;padding:18mm;position:relative}
+    .top{display:flex;justify-content:space-between;gap:24px;border-bottom:3px solid #0a1a3a;padding-bottom:18px;margin-bottom:22px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .brand img{width:62px;height:62px;object-fit:contain}
+    .brand h1{font-family:Georgia,serif;font-size:22px;color:#0a1a3a;margin-bottom:2px}
+    .brand p{font-size:11px;color:#6b7280;letter-spacing:.5px;text-transform:uppercase}
+    .doc-meta{text-align:right}
+    .doc-meta h2{font-size:24px;color:#0a1a3a;margin-bottom:6px;letter-spacing:.5px}
+    .doc-meta p{font-size:12px;color:#4b5563;margin-bottom:2px}
+    .status-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px}
+    .status-box{border:1px solid #e5e7eb;border-radius:10px;padding:12px;background:#f9fafb}
+    .status-box label{display:block;font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;font-weight:700}
+    .status-box strong{display:block;font-size:15px;color:#111827;text-transform:uppercase}
+    .badge{display:inline-block;border-radius:999px;padding:5px 11px;font-weight:700;text-transform:uppercase;font-size:11px}
+    .badge-status{background:#dbeafe;color:#1e40af}
+    .section{margin-bottom:20px}
+    .section-title{background:#0a1a3a;color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:.9px;padding:8px 11px;border-radius:6px 6px 0 0;font-weight:700}
+    .grid{display:grid;grid-template-columns:1fr 1fr;border:1px solid #e5e7eb;border-top:none}
+    .item{padding:12px;border-top:1px solid #e5e7eb}
+    .item:nth-child(odd){border-right:1px solid #e5e7eb}
+    .item label{display:block;color:#6b7280;font-size:10px;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px;font-weight:700}
+    .item value{display:block;font-size:14px;color:#111827;font-weight:700}
+    .desc{border:1px solid #e5e7eb;border-top:none;padding:14px;min-height:82px;white-space:pre-wrap}
+    .approval{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:38px}
+    .sig{padding-top:42px;border-top:1.5px solid #111827;text-align:center;font-size:12px;color:#374151}
+    .footer{position:absolute;left:18mm;right:18mm;bottom:14mm;border-top:1px solid #d1d5db;padding-top:10px;display:flex;justify-content:space-between;color:#6b7280;font-size:11px}
+    @media print{body{padding:0}.ticket{border:none;min-height:297mm;padding:16mm}.footer{left:16mm;right:16mm;bottom:12mm}@page{size:A4 portrait;margin:0}}
+  </style>
+</head>
+<body>
+  <div class="ticket">
+    <div class="top">
+      <div class="brand">
+        <img src="${logoUrl}" alt="Logo">
+        <div>
+          <h1>October Libra Building Co. Ltd</h1>
+          <p>Construction & Real Estate Development</p>
+        </div>
+      </div>
+      <div class="doc-meta">
+        <h2>MAINTENANCE TICKET</h2>
+        <p><strong>Ticket No:</strong> ${safeText(ticketNo)}</p>
+        <p><strong>Printed:</strong> ${printDate}</p>
+      </div>
+    </div>
+
+    <div class="status-row">
+      <div class="status-box"><label>Status</label><span class="badge badge-status">${safeText(status)}</span></div>
+      <div class="status-box"><label>Priority</label><span class="badge" style="background:${priorityColor}22;color:${priorityColor}">${safeText(priority)}</span></div>
+      <div class="status-box"><label>Date Logged</label><strong>${fmt.date(maintenanceLoggedDate(ticket))}</strong></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Ticket Details</div>
+      <div class="grid">
+        <div class="item"><label>Issue Title</label><value>${safeText(ticket.title || ticket.issue || "-")}</value></div>
+        <div class="item"><label>Property / Location</label><value>${safeText(propName)}</value></div>
+        <div class="item"><label>Assigned To</label><value>${safeText(ticket.assigned || ticket.assignedTo || "Unassigned")}</value></div>
+        <div class="item"><label>Logged By</label><value>${safeText(ticket.loggedBy || ticket.createdBy || "-")}</value></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Description / Work Required</div>
+      <div class="desc">${safeText(ticket.description || ticket.details || "No description provided.")}</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Completion Notes</div>
+      <div class="desc" style="min-height:96px"></div>
+    </div>
+
+    <div class="approval">
+      <div class="sig">Technician / Contractor Signature</div>
+      <div class="sig">Supervisor / Client Confirmation</div>
+    </div>
+
+    <div class="footer">
+      <span>October Libra Building Co. Ltd | Admin Portal</span>
+      <span>${safeText(ticketNo)}</span>
+    </div>
+  </div>
+</body>
+</html>`;
+
+        const printWindow = window.open("", "_blank");
+        if (!printWindow) return alert("Popup blocked! Please allow popups.");
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+          printWindow.print();
+          setTimeout(() => printWindow.close(), 1000);
+        }, 500);
+      };
+
+      window.printMaintenanceTicketList = () => {
+        if (!canPrintMaintenanceTicket()) {
+          alert("You do not have permission to print maintenance tickets.");
+          return;
+        }
+
+        const tickets = DB.maintenance || [];
+        const rows = tickets
+          .map(
+            (m, index) => `<tr>
+              <td>${index + 1}</td>
+              <td><strong>${safeText(maintenanceTicketNumber(m))}</strong></td>
+              <td>${safeText(m.title || m.issue || "-")}</td>
+              <td>${safeText(maintenancePropertyName(m))}</td>
+              <td>${safeText(maintenancePriority(m))}</td>
+              <td>${safeText(maintenanceStatus(m))}</td>
+              <td>${safeText(m.assigned || m.assignedTo || "Unassigned")}</td>
+              <td>${fmt.date(maintenanceLoggedDate(m))}</td>
+            </tr>`,
+          )
+          .join("");
+
+        const printContent = `<!doctype html><html><head><title>Maintenance Ticket List</title>
+          <style>
+            *{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,Helvetica,sans-serif;padding:14mm;color:#111827;background:#fff;font-size:12px}.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0a1a3a;padding-bottom:14px;margin-bottom:18px}.brand{display:flex;gap:10px;align-items:center}.brand img{width:54px;height:54px;object-fit:contain}.brand h1{font-family:Georgia,serif;font-size:20px;color:#0a1a3a}.brand p{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px}.meta{text-align:right}.meta h2{font-size:22px;color:#0a1a3a;margin-bottom:4px}table{width:100%;border-collapse:collapse}th{background:#0a1a3a;color:#fff;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:9px}td{border-bottom:1px solid #e5e7eb;padding:9px;vertical-align:top}tr:nth-child(even) td{background:#f9fafb}.footer{margin-top:20px;border-top:1px solid #d1d5db;padding-top:8px;color:#6b7280;font-size:10px;display:flex;justify-content:space-between}@media print{@page{size:A4 landscape;margin:8mm}body{padding:0}}
+          </style></head><body>
+          <div class="header"><div class="brand"><img src="https://res.cloudinary.com/deoqw88yb/image/upload/v1780134973/October_Libra_Building_Co._Ltd_Logo__1__page-0001-removebg-preview_rpwcmp.png" alt="Logo"><div><h1>October Libra Building Co. Ltd</h1><p>Construction & Real Estate Development</p></div></div><div class="meta"><h2>MAINTENANCE TICKET LIST</h2><p><strong>Generated:</strong> ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p><p><strong>Total Tickets:</strong> ${tickets.length}</p></div></div>
+          <table><thead><tr><th>#</th><th>Ticket</th><th>Issue</th><th>Property</th><th>Priority</th><th>Status</th><th>Assigned</th><th>Logged</th></tr></thead><tbody>${rows || '<tr><td colspan="8" style="text-align:center">No tickets available</td></tr>'}</tbody></table>
+          <div class="footer"><span>October Libra Building Co. Ltd | Admin Portal</span><span>Maintenance Department</span></div>
+          </body></html>`;
+
+        const printWindow = window.open("", "_blank");
+        if (!printWindow) return alert("Popup blocked! Please allow popups.");
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+          printWindow.print();
+          setTimeout(() => printWindow.close(), 1000);
+        }, 500);
       };
 
       // ==================== DARK MODE ====================
