@@ -45,18 +45,24 @@ const invoiceSchema = new mongoose.Schema(
     },
     items: [
       {
-        description: String,
-        quantity: {
-          type: Number,
-          default: 1,
+        description: {
+          type: String,
+          required: true,
+          trim: true,
         },
-        unitCost: {
+        amount: {
           type: Number,
+          required: true,
           default: 0,
         },
-        amount: Number,
       },
     ],
+
+    totalAmount: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
     totalAmount: {
       type: Number,
       required: true,

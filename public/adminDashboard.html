@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <title>Libra Construction | Admin</title>
+    <title>Olaomegbon Group | Admin</title>
     <link
       rel="icon"
       type="image/png"
@@ -891,6 +891,498 @@
         justify-content: flex-end;
         gap: 10px;
       }
+      .modal-fullscreen-overlay {
+        padding: 0;
+        background: rgba(10, 26, 58, 0.52);
+        backdrop-filter: blur(6px);
+      }
+      .modal-fullscreen {
+        width: 100vw;
+        height: 100vh;
+        max-width: none;
+        max-height: none;
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: none;
+      }
+      .modal-fullscreen .modal-head {
+        flex-shrink: 0;
+        padding: 18px 28px;
+        background: linear-gradient(135deg, var(--brand), var(--brand-mid));
+        color: #fff;
+      }
+      .modal-fullscreen .modal-head h3 {
+        color: #fff;
+        font-size: 20px;
+        margin: 0;
+      }
+      .modal-fullscreen .modal-kicker {
+        display: block;
+        margin-bottom: 3px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.62);
+      }
+      .modal-fullscreen .modal-close {
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+      }
+      .modal-fullscreen .modal-close:hover {
+        background: rgba(255, 255, 255, 0.22);
+        color: #fff;
+      }
+      .modal-fullscreen .modal-body {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 24px 28px;
+        background:
+          radial-gradient(
+            circle at top right,
+            rgba(201, 168, 76, 0.11),
+            transparent 34%
+          ),
+          var(--bg);
+      }
+      .modal-fullscreen .modal-foot {
+        flex-shrink: 0;
+        padding: 16px 28px;
+        background: var(--surface);
+        box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.05);
+      }
+      .modal-fullscreen .btn-cancel,
+      .modal-fullscreen .btn-save {
+        padding: 11px 22px;
+        border-radius: 10px;
+      }
+      .invoice-modal-shell,
+      .invoice-detail-shell {
+        width: 100%;
+        max-width: none;
+        margin: 0;
+      }
+      .modal-fullscreen .modal-body:has(.invoice-modal-shell),
+      .modal-fullscreen .modal-body:has(.invoice-detail-shell) {
+        padding-left: 18px;
+        padding-right: 18px;
+      }
+      .invoice-form-intro,
+      .invoice-hero {
+        background: linear-gradient(135deg, var(--surface), var(--surface2));
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: var(--shadow);
+        padding: 20px 22px;
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+      }
+      .invoice-form-intro h2,
+      .invoice-hero h2 {
+        margin: 0 0 4px;
+        font-family: "Playfair Display", serif;
+        font-size: 26px;
+        color: var(--text);
+      }
+      .invoice-form-intro p,
+      .invoice-hero p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+      .invoice-badge-soft {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: var(--gold-light);
+        color: var(--brand);
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .invoice-form-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+        gap: 18px;
+        align-items: start;
+      }
+      .invoice-form-main,
+      .invoice-form-side,
+      .invoice-detail-grid {
+        display: grid;
+        gap: 18px;
+      }
+      .invoice-detail-grid {
+        grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+        align-items: start;
+      }
+      .invoice-panel,
+      .invoice-total-card,
+      .invoice-hero-total {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        padding: 18px;
+      }
+      .invoice-section-title {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      .invoice-section-title h4 {
+        margin: 0;
+        color: var(--text);
+        font-size: 15px;
+        font-weight: 700;
+      }
+      .invoice-section-title p {
+        margin: 3px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.45;
+      }
+      .invoice-form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .invoice-items-header {
+        display: grid;
+        grid-template-columns: 2fr 1fr 40px;
+        gap: 10px;
+        margin-bottom: 8px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+      }
+      .invoice-total-card {
+        position: sticky;
+        top: 0;
+      }
+      .invoice-total-card .invoice-item-total {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px;
+        border-radius: 14px;
+        background: var(--brand);
+        color: #fff;
+      }
+      .invoice-total-card .invoice-item-total span {
+        color: rgba(255, 255, 255, 0.76);
+        margin-right: 0;
+      }
+      .invoice-total-card #invoice-total-display {
+        font-size: 24px;
+        font-weight: 800;
+        color: #fff;
+      }
+      .invoice-total-help {
+        margin-top: 12px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      .invoice-summary-list {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .invoice-summary-item {
+        padding: 12px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: var(--surface2);
+      }
+      .invoice-summary-item label {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+      }
+      .invoice-summary-item div {
+        color: var(--text);
+        font-size: 13px;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+      }
+      .invoice-hero-total {
+        min-width: 260px;
+        text-align: right;
+      }
+      .invoice-hero-total span {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.6px;
+        text-transform: uppercase;
+      }
+      .invoice-hero-total strong {
+        display: block;
+        margin: 5px 0 8px;
+        color: var(--brand);
+        font-size: 28px;
+        line-height: 1;
+      }
+      .invoice-action-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .invoice-detail-table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+      }
+      .invoice-detail-table {
+        width: 100%;
+        min-width: 560px;
+        border-collapse: collapse;
+      }
+      .invoice-detail-table th {
+        background: var(--brand);
+        color: #fff;
+        padding: 12px 14px;
+        font-size: 11px;
+        text-align: left;
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+      }
+      .invoice-detail-table td {
+        padding: 13px 14px;
+        border-bottom: 1px solid var(--border);
+        font-size: 13px;
+        vertical-align: top;
+      }
+      .invoice-detail-table tr:last-child td {
+        border-bottom: none;
+      }
+      .invoice-detail-table tfoot td {
+        background: var(--surface2);
+        font-weight: 800;
+      }
+      .invoice-notes-box {
+        margin-top: 14px;
+        padding: 14px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--surface2);
+      }
+      .invoice-notes-box p {
+        margin: 0;
+        color: var(--text);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .invoice-warning-box {
+        margin: 0 0 14px;
+        padding: 12px 14px;
+        border: 1px solid var(--warning);
+        border-radius: 12px;
+        background: var(--warning-bg);
+        color: #92400e;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      .invoice-warning-box strong {
+        display: block;
+        margin-bottom: 3px;
+        font-size: 12px;
+      }
+      .hr-roster-section {
+        margin-bottom: 20px;
+      }
+      .hr-roster-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      .hr-roster-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .hr-roster-controls input,
+      .hr-roster-controls select {
+        padding: 8px 10px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--surface);
+        color: var(--text);
+        font-size: 13px;
+      }
+      .hr-roster-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(170px, 1fr));
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+      }
+      .hr-roster-day {
+        min-width: 170px;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 12px;
+      }
+      .hr-roster-day-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 8px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 10px;
+      }
+      .hr-roster-day-head strong {
+        display: block;
+        color: var(--text);
+        font-size: 13px;
+      }
+      .hr-roster-day-head span {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        margin-top: 2px;
+      }
+      .hr-roster-add-day {
+        border: none;
+        background: var(--brand-mid);
+        color: #fff;
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .hr-roster-shift {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px;
+        margin-bottom: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      }
+      .hr-roster-shift:last-child {
+        margin-bottom: 0;
+      }
+      .hr-roster-shift strong {
+        display: block;
+        color: var(--text);
+        font-size: 13px;
+        margin-bottom: 4px;
+      }
+      .hr-roster-meta {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+        align-items: center;
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.45;
+      }
+      .hr-roster-actions {
+        display: flex;
+        gap: 5px;
+        margin-top: 8px;
+      }
+      .hr-roster-empty {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+        padding: 8px 2px;
+      }
+      .hr-roster-table-wrap {
+        margin-top: 14px;
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+      }
+      .hr-roster-table {
+        width: 100%;
+        min-width: 860px;
+        border-collapse: collapse;
+      }
+      .hr-roster-table th {
+        background: var(--brand);
+        color: #fff;
+        padding: 10px 12px;
+        font-size: 11px;
+        text-align: left;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .hr-roster-table td {
+        padding: 11px 12px;
+        border-bottom: 1px solid var(--border);
+        font-size: 13px;
+        vertical-align: middle;
+      }
+      .hr-roster-table tr:last-child td {
+        border-bottom: none;
+      }
+      .roster-form-note {
+        grid-column: 1 / -1;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: var(--gold-light);
+        color: var(--brand);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+      @media (max-width: 900px) {
+        .modal-fullscreen .modal-head,
+        .modal-fullscreen .modal-body,
+        .modal-fullscreen .modal-foot {
+          padding-left: 16px;
+          padding-right: 16px;
+        }
+        .invoice-form-intro,
+        .invoice-hero {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .invoice-form-layout,
+        .invoice-detail-grid {
+          grid-template-columns: 1fr;
+        }
+        .invoice-form-grid,
+        .invoice-summary-list {
+          grid-template-columns: 1fr;
+        }
+        .invoice-total-card {
+          position: static;
+        }
+        .invoice-hero-total {
+          width: 100%;
+          text-align: left;
+        }
+      }
       .btn-cancel {
         padding: 9px 18px;
         border-radius: 8px;
@@ -1052,7 +1544,7 @@
       }
       .invoice-item-row {
         display: grid;
-        grid-template-columns: 2fr 80px 1fr 1fr 40px;
+        grid-template-columns: 2fr 1fr 40px;
         gap: 10px;
         align-items: end;
         margin-bottom: 10px;
@@ -1641,7 +2133,7 @@
             alt="Libra"
           />
           <div class="sb-logo-text">
-            <strong>Libra Building</strong>
+            <strong>Olaomegbon group</strong>
             <span>Admin Portal</span>
           </div>
         </div>
@@ -1825,6 +2317,7 @@
             "printable-procurement",
             "monthly-report",
             "hr-management",
+            "hr-roster",
           ],
           canCreateProject: true,
           canEditProject: true,
@@ -1844,6 +2337,7 @@
           canCreateMaintenance: true,
           canPrintMaintenance: true,
           canUpdateMaintenanceStatus: true,
+          canManageRoster: true,
         },
         Manager: {
           pages: [
@@ -1907,7 +2401,7 @@
           canUpdateMaintenanceStatus: false,
         },
         "HR Officer": {
-          pages: ["hr-management", "maintenance"],
+          pages: ["hr-management", "hr-roster", "maintenance"],
           canCreateProject: false,
           canEditProject: false,
           canCreateTask: false,
@@ -1926,6 +2420,7 @@
           canCreateMaintenance: true,
           canPrintMaintenance: true,
           canUpdateMaintenanceStatus: true,
+          canManageRoster: true,
         },
         Procurement: {
           pages: ["dashboard", "procurement"],
@@ -2031,7 +2526,7 @@
         "monthly-report",
       ];
       const ADMIN_PAGES = ["maintenance"];
-      const HR_PAGES = ["hr-management"];
+      const HR_PAGES = ["hr-management", "hr-roster"];
       let accountingDropdownOpen = true;
       function isAccountingPage(page) {
         return ACCOUNTING_PAGES.includes(page);
@@ -2064,6 +2559,7 @@
         expenses: [],
         companies: [],
         employees: [],
+        rosters: [],
       };
 
       // ==================== FORMATTERS ====================
@@ -2145,6 +2641,85 @@
         return company ? company.name : "-";
       }
 
+      function companyOptionItems(selectedId = "", includeAll = false) {
+        const companies = DB.companies || [];
+        const firstOption = includeAll
+          ? '<option value="all">All Companies</option>'
+          : '<option value="">Select Company</option>';
+
+        if (!companies.length) {
+          return includeAll
+            ? '<option value="all">All Companies</option>'
+            : '<option value="">No companies registered</option>';
+        }
+
+        return (
+          firstOption +
+          companies
+            .map((company) => {
+              const id = entityId(company._id || company.id);
+              const selected =
+                String(selectedId || "") === String(id) ? "selected" : "";
+              return `<option value="${safeAttr(id)}" ${selected}>${safeText(company.name || "Unnamed Company")}</option>`;
+            })
+            .join("")
+        );
+      }
+
+      function employeeCompanyId(employee) {
+        if (!employee) return "";
+        const raw =
+          employee.companyId ||
+          employee.company ||
+          employee.company_id ||
+          employee.companyID ||
+          "";
+        if (raw && typeof raw === "object") return entityId(raw._id || raw.id);
+        return entityId(raw);
+      }
+
+      function employeeCompanyName(employee) {
+        if (!employee) return "Unassigned";
+        const direct = employee.companyName || employee.company_name || "";
+        if (direct) return direct;
+        const rawCompany = employee.company;
+        if (rawCompany && typeof rawCompany === "object" && rawCompany.name) {
+          return rawCompany.name;
+        }
+        const id = employeeCompanyId(employee);
+        const name = companyNameById(id);
+        return name === "-" ? "Unassigned" : name;
+      }
+
+      function employeeMatchesCompanyFilter(employee, selectedCompanyId) {
+        if (!selectedCompanyId || selectedCompanyId === "all") return true;
+        const selectedCompany = (DB.companies || []).find(
+          (company) =>
+            entityId(company._id || company.id) === String(selectedCompanyId),
+        );
+        const selectedName = String(selectedCompany?.name || "").toLowerCase();
+        const employeeId = String(employeeCompanyId(employee));
+        const employeeCompany = String(
+          employeeCompanyName(employee),
+        ).toLowerCase();
+        return (
+          employeeId === String(selectedCompanyId) ||
+          (!!selectedName && employeeCompany === selectedName)
+        );
+      }
+
+      function selectedCompanyFromForm(selectId) {
+        const select = document.getElementById(selectId);
+        const companyId = select ? select.value : "";
+        const company = (DB.companies || []).find(
+          (item) => entityId(item._id || item.id) === String(companyId),
+        );
+        return {
+          companyId,
+          companyName: company ? company.name || "" : "",
+        };
+      }
+
       function selectedCompanyLabel(selectId) {
         const select = document.getElementById(selectId);
         if (!select || !select.value) return "All Companies";
@@ -2182,6 +2757,371 @@
           })
           .join("");
       }
+
+      // ==================== HR ROSTER HELPERS ====================
+      const HR_ROSTER_STORAGE_KEY = "october-libra-hr-roster-v1";
+
+      function parseDateOnly(value) {
+        if (!value) return new Date();
+        if (value instanceof Date) return value;
+        const parts = String(value).split("T")[0].split("-").map(Number);
+        if (parts.length >= 3 && parts.every((n) => !Number.isNaN(n))) {
+          return new Date(parts[0], parts[1] - 1, parts[2]);
+        }
+        const fallback = new Date(value);
+        return Number.isNaN(fallback.getTime()) ? new Date() : fallback;
+      }
+
+      function dateToInputValue(date) {
+        const d = parseDateOnly(date);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${y}-${m}-${day}`;
+      }
+
+      function addDays(dateValue, days) {
+        const d = parseDateOnly(dateValue);
+        d.setDate(d.getDate() + days);
+        return d;
+      }
+
+      function getWeekStart(value = new Date()) {
+        const d = parseDateOnly(value);
+        const day = d.getDay();
+        const diff = day === 0 ? -6 : 1 - day;
+        d.setDate(d.getDate() + diff);
+        return dateToInputValue(d);
+      }
+
+      function rosterWeekDays(weekStartValue) {
+        const start = parseDateOnly(weekStartValue || getWeekStart());
+        return Array.from({ length: 7 }, (_, index) => {
+          const d = addDays(start, index);
+          return {
+            dateValue: dateToInputValue(d),
+            dayName: d.toLocaleDateString("en-GB", { weekday: "short" }),
+            label: d.toLocaleDateString("en-GB", {
+              day: "numeric",
+              month: "short",
+            }),
+          };
+        });
+      }
+
+      function loadRosterData() {
+        try {
+          const stored = JSON.parse(
+            localStorage.getItem(HR_ROSTER_STORAGE_KEY) || "[]",
+          );
+          DB.rosters = Array.isArray(stored) ? stored : [];
+        } catch (error) {
+          console.warn("Could not load HR roster from local storage:", error);
+          DB.rosters = [];
+        }
+        return DB.rosters;
+      }
+
+      function saveRosterData() {
+        localStorage.setItem(
+          HR_ROSTER_STORAGE_KEY,
+          JSON.stringify(DB.rosters || []),
+        );
+      }
+
+      function rosterId() {
+        return `RST-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      }
+
+      function findEmployeeById(employeeId) {
+        return (DB.employees || []).find(
+          (e) =>
+            String(e._id || e.id || e.staffId || e.employeeId) ===
+            String(employeeId),
+        );
+      }
+
+      function employeeRosterName(employeeId, fallback = "") {
+        const employee = findEmployeeById(employeeId);
+        if (employee)
+          return employee.name || employee.staffId || "Unnamed Staff";
+        return fallback || "Unassigned Staff";
+      }
+
+      function employeeOptionsHtml(selectedId = "") {
+        const employees = DB.employees || [];
+        if (!employees.length)
+          return '<option value="">No employees available</option>';
+        return (
+          '<option value="">Select employee</option>' +
+          employees
+            .map((employee) => {
+              const id =
+                employee._id ||
+                employee.id ||
+                employee.staffId ||
+                employee.employeeId ||
+                employee.name;
+              const label = `${employee.name || "Unnamed Staff"}${employee.department ? " — " + employee.department : ""}`;
+              return `<option value="${safeAttr(id)}" ${String(selectedId) === String(id) ? "selected" : ""}>${safeText(label)}</option>`;
+            })
+            .join("")
+        );
+      }
+
+      function rosterStatusClass(status) {
+        const value = String(status || "Scheduled").toLowerCase();
+        if (value === "completed") return "pill-green";
+        if (value === "absent" || value === "cancelled") return "pill-red";
+        if (value === "on leave") return "pill-yellow";
+        return "pill-blue";
+      }
+
+      function rosterShiftTime(entry) {
+        const start = entry.startTime || "--:--";
+        const end = entry.endTime || "--:--";
+        return `${start} - ${end}`;
+      }
+
+      function rostersForWeek(weekStartValue) {
+        const days = rosterWeekDays(weekStartValue).map((day) => day.dateValue);
+        return (DB.rosters || [])
+          .filter((entry) => days.includes(entry.date))
+          .sort((a, b) =>
+            `${a.date} ${a.startTime || ""}`.localeCompare(
+              `${b.date} ${b.startTime || ""}`,
+            ),
+          );
+      }
+
+      function rosterBoardInnerHtml(weekStartValue = getWeekStart()) {
+        loadRosterData();
+        const weekStart = getWeekStart(weekStartValue);
+        const weekDays = rosterWeekDays(weekStart);
+        const entries = rostersForWeek(weekStart);
+        const weekEnd = weekDays[6]?.dateValue || weekStart;
+        const activeEmployees = (DB.employees || []).filter(
+          (e) => e.status === "Active" || !e.status,
+        ).length;
+        const scheduledStaff = new Set(
+          entries
+            .map((entry) => entry.employeeId || entry.employeeName)
+            .filter(Boolean),
+        ).size;
+        const todayValue = dateToInputValue(new Date());
+        const todayEntries = entries.filter(
+          (entry) => entry.date === todayValue,
+        ).length;
+
+        const dayCards = weekDays
+          .map((day) => {
+            const dayEntries = entries.filter(
+              (entry) => entry.date === day.dateValue,
+            );
+            const shifts = dayEntries.length
+              ? dayEntries
+                  .map((entry) => {
+                    const id = safeAttr(entry.id);
+                    return `<div class="hr-roster-shift">
+                              <strong>${safeText(employeeRosterName(entry.employeeId, entry.employeeName))}</strong>
+                              <div class="hr-roster-meta">
+                                <span class="pill ${rosterStatusClass(entry.status)}">${safeText(entry.status || "Scheduled")}</span>
+                                <span>${safeText(entry.shift || "Shift")}</span>
+                                <span>${safeText(rosterShiftTime(entry))}</span>
+                              </div>
+                              <div class="hr-roster-meta" style="margin-top:5px"><span>${safeText(entry.dutyPost || entry.location || "No duty post")}</span></div>
+                              <div class="hr-roster-actions">
+                                <button class="btn-sm btn-sm-outline" onclick="openModal('edit-roster','${id}')">Edit</button>
+                                <button class="btn-sm btn-sm-danger" onclick="deleteRosterEntry('${id}')">Delete</button>
+                              </div>
+                            </div>`;
+                  })
+                  .join("")
+              : '<div class="hr-roster-empty">No staff scheduled.</div>';
+
+            return `<div class="hr-roster-day">
+                      <div class="hr-roster-day-head">
+                        <div><strong>${safeText(day.dayName)}</strong><span>${safeText(day.label)}</span></div>
+                        <button class="hr-roster-add-day" onclick="openModal('new-roster','${safeAttr(day.dateValue)}')" title="Add shift">+</button>
+                      </div>
+                      ${shifts}
+                    </div>`;
+          })
+          .join("");
+
+        const tableRows = entries.length
+          ? entries
+              .map(
+                (entry, index) => `<tr>
+                <td>${index + 1}</td>
+                <td>${fmt.date(entry.date)}</td>
+                <td><strong>${safeText(employeeRosterName(entry.employeeId, entry.employeeName))}</strong></td>
+                <td>${safeText(entry.department || findEmployeeById(entry.employeeId)?.department || "-")}</td>
+                <td>${safeText(entry.shift || "-")}</td>
+                <td>${safeText(rosterShiftTime(entry))}</td>
+                <td>${safeText(entry.dutyPost || entry.location || "-")}</td>
+                <td><span class="pill ${rosterStatusClass(entry.status)}">${safeText(entry.status || "Scheduled")}</span></td>
+                <td style="display:flex;gap:5px;flex-wrap:wrap"><button class="btn-sm btn-sm-outline" onclick="openModal('edit-roster','${safeAttr(entry.id)}')">Edit</button><button class="btn-sm btn-sm-danger" onclick="deleteRosterEntry('${safeAttr(entry.id)}')">Delete</button></td>
+              </tr>`,
+              )
+              .join("")
+          : '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">No roster entries for this week</td></tr>';
+
+        return `<div class="hr-roster-toolbar">
+                  <div>
+                    <h3 style="margin:0 0 4px;color:var(--text);font-size:17px">Weekly Staff Roster</h3>
+                    <p style="margin:0;color:var(--muted);font-size:12px">Week of ${fmt.date(weekStart)} to ${fmt.date(weekEnd)} · ${entries.length} shift${entries.length === 1 ? "" : "s"}</p>
+                  </div>
+                  <div class="hr-roster-controls">
+                    <label style="font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase">Week</label>
+                    <input id="hr-roster-week-picker" type="date" value="${safeAttr(weekStart)}" onchange="updateRosterWeek(this.value)" />
+                    <button class="btn-sm btn-sm-outline" onclick="updateRosterWeek(getWeekStart(new Date()))">This Week</button>
+                    <button class="btn-sm btn-sm-print" onclick="printRoster()"><i data-lucide="printer" style="width:14px;height:14px"></i> Print Roster</button>
+                    <button class="btn-sm btn-sm-outline" onclick="exportRosterCSV()"><i data-lucide="download" style="width:14px;height:14px"></i> Export CSV</button>
+                    <button class="btn-primary" onclick="openModal('new-roster')"><i data-lucide="plus" style="width:14px;height:14px"></i> Add Shift</button>
+                  </div>
+                </div>
+                <div class="invoice-summary-list" style="margin-bottom:14px">
+                  <div class="invoice-summary-item"><label>Active Staff</label><div>${activeEmployees}</div></div>
+                  <div class="invoice-summary-item"><label>Scheduled This Week</label><div>${scheduledStaff}</div></div>
+                  <div class="invoice-summary-item"><label>Today&apos;s Shifts</label><div>${todayEntries}</div></div>
+                  <div class="invoice-summary-item"><label>Total Weekly Shifts</label><div>${entries.length}</div></div>
+                </div>
+                <div class="hr-roster-grid">${dayCards}</div>
+                <div class="hr-roster-table-wrap">
+                  <table class="hr-roster-table">
+                    <thead><tr><th>#</th><th>Date</th><th>Employee</th><th>Department</th><th>Shift</th><th>Time</th><th>Duty Post</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody>${tableRows}</tbody>
+                  </table>
+                </div>`;
+      }
+
+      function hrRosterSectionHtml(employees, weekStartValue = getWeekStart()) {
+        return `<div class="card hr-roster-section">
+                  <div class="card-head">
+                    <h3>Staff Roster</h3>
+                    <span>${(employees || []).length} employee${(employees || []).length === 1 ? "" : "s"} available</span>
+                  </div>
+                  <div class="card-body" id="hr-roster-board">${rosterBoardInnerHtml(weekStartValue)}</div>
+                </div>`;
+      }
+
+      window.updateRosterWeek = function (value) {
+        const board = document.getElementById("hr-roster-board");
+        if (!board) return;
+        board.innerHTML = rosterBoardInnerHtml(value || getWeekStart());
+        if (window.lucide) lucide.createIcons();
+      };
+
+      window.saveRosterEntry = function (entry) {
+        if (!requireRosterAccess()) return;
+        loadRosterData();
+        const idx = (DB.rosters || []).findIndex(
+          (item) => item.id === entry.id,
+        );
+        if (idx >= 0)
+          DB.rosters[idx] = {
+            ...DB.rosters[idx],
+            ...entry,
+            updatedAt: new Date().toISOString(),
+          };
+        else
+          DB.rosters.unshift({
+            ...entry,
+            id: entry.id || rosterId(),
+            createdAt: new Date().toISOString(),
+          });
+        saveRosterData();
+      };
+
+      window.deleteRosterEntry = function (id) {
+        if (!requireRosterAccess()) return;
+        if (!confirm("Delete this roster entry?")) return;
+        loadRosterData();
+        DB.rosters = (DB.rosters || []).filter((entry) => entry.id !== id);
+        saveRosterData();
+        updateRosterWeek(
+          document.getElementById("hr-roster-week-picker")?.value ||
+            getWeekStart(),
+        );
+      };
+
+      window.exportRosterCSV = function () {
+        if (!requireRosterAccess()) return;
+        loadRosterData();
+        const weekStart =
+          document.getElementById("hr-roster-week-picker")?.value ||
+          getWeekStart();
+        const entries = rostersForWeek(weekStart);
+        const header = [
+          "Date",
+          "Employee",
+          "Department",
+          "Shift",
+          "Start",
+          "End",
+          "Duty Post",
+          "Status",
+          "Notes",
+        ];
+        const lines = [
+          header,
+          ...entries.map((entry) => [
+            entry.date,
+            employeeRosterName(entry.employeeId, entry.employeeName),
+            entry.department ||
+              findEmployeeById(entry.employeeId)?.department ||
+              "",
+            entry.shift || "",
+            entry.startTime || "",
+            entry.endTime || "",
+            entry.dutyPost || "",
+            entry.status || "Scheduled",
+            entry.notes || "",
+          ]),
+        ].map((row) =>
+          row
+            .map((cell) => `"${String(cell ?? "").replace(/"/g, '""')}"`)
+            .join(","),
+        );
+        const blob = new Blob([lines.join("\n")], {
+          type: "text/csv;charset=utf-8;",
+        });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `hr-roster-${weekStart}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      };
+
+      window.printRoster = function () {
+        if (!requireRosterAccess()) return;
+        loadRosterData();
+        const weekStart =
+          document.getElementById("hr-roster-week-picker")?.value ||
+          getWeekStart();
+        const weekDays = rosterWeekDays(weekStart);
+        const entries = rostersForWeek(weekStart);
+        const rows = entries.length
+          ? entries
+              .map(
+                (entry, idx) =>
+                  `<tr><td>${idx + 1}</td><td>${safeText(fmt.date(entry.date))}</td><td>${safeText(employeeRosterName(entry.employeeId, entry.employeeName))}</td><td>${safeText(entry.department || findEmployeeById(entry.employeeId)?.department || "-")}</td><td>${safeText(entry.shift || "-")}</td><td>${safeText(rosterShiftTime(entry))}</td><td>${safeText(entry.dutyPost || "-")}</td><td>${safeText(entry.status || "Scheduled")}</td><td>${safeText(entry.notes || "")}</td></tr>`,
+              )
+              .join("")
+          : '<tr><td colspan="9" style="text-align:center">No roster entries for this week</td></tr>';
+        const printContent = `<!DOCTYPE html><html><head><title>HR Staff Roster</title>
+          <style>*{box-sizing:border-box}body{font-family:Arial,sans-serif;padding:24px;color:#111827}.header{display:flex;justify-content:space-between;border-bottom:2px solid #0a1a3a;padding-bottom:14px;margin-bottom:18px}.header h2{margin:0;color:#0a1a3a}.header p{margin:4px 0 0;color:#6b7280;font-size:12px}.meta{text-align:right}.meta h1{font-size:22px;margin:0;color:#0a1a3a}table{width:100%;border-collapse:collapse;margin-top:16px}th{background:#0a1a3a;color:#fff;text-align:left;font-size:11px;padding:8px}td{border-bottom:1px solid #e5e7eb;padding:8px;font-size:12px}.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:18px 0}.box{border:1px solid #e5e7eb;border-radius:8px;padding:12px;background:#f8f9fb}.box label{font-size:10px;color:#6b7280;text-transform:uppercase}.box div{font-size:18px;font-weight:800;color:#0a1a3a;margin-top:4px}@page{size:A4 landscape;margin:12mm}@media print{body{padding:0}}</style>
+          </head><body><div class="header"><div><h2>Sel Center Amuzement Park</h2><p>Staff Weekely Roster</p></div><div class="meta"><h1>WEEKLY ROSTER</h1><p><strong>Week:</strong> ${safeText(fmt.date(weekStart))} - ${safeText(fmt.date(weekDays[6].dateValue))}</p><p><strong>Printed:</strong> ${new Date().toLocaleDateString("en-GB")}</p></div></div><div class="summary"><div class="box"><label>Total Shifts</label><div>${entries.length}</div></div><div class="box"><label>Scheduled Staff</label><div>${new Set(entries.map((e) => e.employeeId || e.employeeName).filter(Boolean)).size}</div></div><div class="box"><label>Active Staff</label><div>${(DB.employees || []).filter((e) => e.status === "Active" || !e.status).length}</div></div></div><table><thead><tr><th>#</th><th>Date</th><th>Employee</th><th>Department</th><th>Shift</th><th>Time</th><th>Duty Post</th><th>Status</th><th>Notes</th></tr></thead><tbody>${rows}</tbody></table></body></html>`;
+        const win = window.open("", "_blank");
+        win.document.write(printContent);
+        win.document.close();
+        win.focus();
+        setTimeout(() => win.print(), 400);
+      };
 
       function dateInputValue(value) {
         if (!value) return "";
@@ -2304,6 +3244,145 @@
           : invoice.property || invoice.project || "-";
       }
 
+      function invoiceMoneyValue(value) {
+        if (value === null || value === undefined || value === "") return 0;
+        if (typeof value === "number")
+          return Number.isFinite(value) ? value : 0;
+
+        const cleaned = String(value).replace(/[^0-9.-]/g, "");
+        const parsed = Number(cleaned);
+        return Number.isFinite(parsed) ? parsed : 0;
+      }
+
+      function invoiceItemAmount(item) {
+        if (!item) return 0;
+
+        const directAmount = invoiceMoneyValue(
+          item.amount ||
+            item.Amount ||
+            item.itemAmount ||
+            item.lineAmount ||
+            item.item_amount ||
+            item.line_amount,
+        );
+        if (directAmount > 0) return directAmount;
+
+        const storedTotal = invoiceMoneyValue(
+          item.totalAmount ||
+            item.TotalAmount ||
+            item.total ||
+            item.cost ||
+            item.itemCost ||
+            item.totalCost ||
+            item.lineTotal ||
+            item.subtotal ||
+            item.value,
+        );
+        if (storedTotal > 0) return storedTotal;
+
+        const quantity = invoiceMoneyValue(item.quantity || item.qty || 1);
+        const unitCost = invoiceMoneyValue(
+          item.unitCost ||
+            item.UnitCost ||
+            item.unit_cost ||
+            item.unitPrice ||
+            item.unit_price ||
+            item.rate ||
+            item.price,
+        );
+
+        if (quantity > 0 && unitCost > 0) return quantity * unitCost;
+        if (unitCost > 0) return unitCost;
+
+        return 0;
+      }
+
+      function invoiceTotalAmount(invoice) {
+        const itemsTotal = (invoice?.items || []).reduce(
+          (sum, item) => sum + invoiceItemAmount(item),
+          0,
+        );
+
+        if (itemsTotal > 0) return itemsTotal;
+
+        return invoiceMoneyValue(invoice?.totalAmount || invoice?.amount);
+      }
+
+      function makeInvoiceItem(description, amount) {
+        const cleanAmount = invoiceMoneyValue(amount);
+        return {
+          description: String(description || "").trim(),
+          amount: cleanAmount,
+          cost: cleanAmount,
+          unitCost: cleanAmount,
+          quantity: 1,
+          totalAmount: cleanAmount,
+          lineTotal: cleanAmount,
+        };
+      }
+
+      function invoiceDisplayItems(invoice) {
+        const rawItems = Array.isArray(invoice?.items) ? invoice.items : [];
+        const totalAmount = invoiceMoneyValue(
+          invoice?.totalAmount || invoice?.amount,
+        );
+        const rows = rawItems.map((item) => {
+          const amount = invoiceItemAmount(item);
+          return {
+            ...item,
+            _displayAmount: amount,
+            _missingAmount: amount <= 0,
+            _fallbackTotal: false,
+          };
+        });
+        const rowsTotal = rows.reduce(
+          (sum, item) => sum + item._displayAmount,
+          0,
+        );
+
+        if (rows.length && rowsTotal <= 0 && totalAmount > 0) {
+          return [
+            ...rows,
+            {
+              description: "Unallocated invoice amount",
+              _displayAmount: totalAmount,
+              _missingAmount: false,
+              _fallbackTotal: true,
+            },
+          ];
+        }
+
+        if (!rows.length && totalAmount > 0) {
+          return [
+            {
+              description: "Invoice amount",
+              _displayAmount: totalAmount,
+              _missingAmount: false,
+              _fallbackTotal: true,
+            },
+          ];
+        }
+
+        if (rows.length && totalAmount > rowsTotal) {
+          const difference = totalAmount - rowsTotal;
+          if (difference > 0.009) {
+            rows.push({
+              description: "Balance not attached to an item",
+              _displayAmount: difference,
+              _missingAmount: false,
+              _fallbackTotal: true,
+            });
+          }
+        }
+
+        return rows;
+      }
+
+      function invoiceHasMissingItemAmounts(invoice) {
+        const rawItems = Array.isArray(invoice?.items) ? invoice.items : [];
+        return rawItems.some((item) => invoiceItemAmount(item) <= 0);
+      }
+
       function invoiceMatchesProperty(invoice, propertyId) {
         if (!propertyId || propertyId === "all") return true;
         const id = String(invoicePropertyId(invoice));
@@ -2339,6 +3418,7 @@
       }
 
       let invoicePropertyFilter = "all";
+      let employeeCompanyFilter = "all";
 
       // ==================== API HELPERS ====================
       async function apiGet(endpoint) {
@@ -2577,6 +3657,22 @@
 
       function canUpdateMaintenanceStatus() {
         return hasPermission("canUpdateMaintenanceStatus");
+      }
+
+      function canManageRoster() {
+        const role = String(getUserRole() || "").toLowerCase();
+        return (
+          hasPermission("canManageRoster") ||
+          role === "admin" ||
+          role === "hr officer" ||
+          role === "hr"
+        );
+      }
+
+      function requireRosterAccess() {
+        if (canManageRoster()) return true;
+        alert("Access denied. Staff roster is available to Admin and HR only.");
+        return false;
       }
 
       // ==================== PAGE RENDERERS ====================
@@ -3016,7 +4112,7 @@
                                         inv.invoiceNumber || inv._id || "N/A";
                                       const propertyName =
                                         invoicePropertyName(inv);
-                                      return `<tr><td><strong style="color:var(--brand-mid)">${safeText(invNumber)}</strong></td><td>${safeText(inv.subject || "Maintenance")}</td><td>${safeText(propertyName)}</td><td>${safeText(inv.client || "-")}</td><td class="inv-amount">${hasPermission("canViewInvoiceAmounts") ? fmt.currency(inv.totalAmount) : "[Restricted]"}</td><td><span class="pill ${fmt.statusClass[inv.status] || "pill-gray"}">${safeText(inv.status || "pending")}</span>${hasPermission("canCreateInvoice") && inv.status !== "paid" ? ` <button class="btn-sm btn-sm-success" onclick="quickMarkPaid('${inv._id || inv.id}')" style="padding:2px 8px;font-size:10px;margin-left:4px">Mark Paid</button>` : ""}</td><td>${fmt.date(inv.issueDate)}</td><td>${fmt.date(inv.dueDate)}</td><td><button class="btn-sm btn-sm-outline" onclick="viewInvoice('${inv._id || inv.id}')">View</button>${hasPermission("canCreateInvoice") ? `<button class="btn-sm btn-sm-success" onclick="openModal('edit-invoice','${inv._id || inv.id}')" style="margin-left:4px">Edit</button>` : ""}<button class="btn-sm btn-sm-print" onclick="printInvoice('${inv._id || inv.id}')" style="margin-left:4px"><i data-lucide="printer" style="width:12px;height:12px"></i></button><button class="btn-sm btn-sm-success" onclick="printInvoiceReceipt('${inv._id || inv.id}')" style="margin-left:4px"><i data-lucide="receipt" style="width:12px;height:12px"></i></button></td></tr>`;
+                                      return `<tr><td><strong style="color:var(--brand-mid)">${safeText(invNumber)}</strong></td><td>${safeText(inv.subject || "Maintenance")}</td><td>${safeText(propertyName)}</td><td>${safeText(inv.client || "-")}</td><td class="inv-amount">${hasPermission("canViewInvoiceAmounts") ? fmt.currency(invoiceTotalAmount(inv)) : "[Restricted]"}</td><td><span class="pill ${fmt.statusClass[inv.status] || "pill-gray"}">${safeText(inv.status || "pending")}</span>${hasPermission("canCreateInvoice") && inv.status !== "paid" ? ` <button class="btn-sm btn-sm-success" onclick="quickMarkPaid('${inv._id || inv.id}')" style="padding:2px 8px;font-size:10px;margin-left:4px">Mark Paid</button>` : ""}</td><td>${fmt.date(inv.issueDate)}</td><td>${fmt.date(inv.dueDate)}</td><td><button class="btn-sm btn-sm-outline" onclick="viewInvoice('${inv._id || inv.id}')">View</button>${hasPermission("canCreateInvoice") ? `<button class="btn-sm btn-sm-success" onclick="openModal('edit-invoice','${inv._id || inv.id}')" style="margin-left:4px">Edit</button>` : ""}<button class="btn-sm btn-sm-print" onclick="printInvoice('${inv._id || inv.id}')" style="margin-left:4px"><i data-lucide="printer" style="width:12px;height:12px"></i></button><button class="btn-sm btn-sm-success" onclick="printInvoiceReceipt('${inv._id || inv.id}')" style="margin-left:4px"><i data-lucide="receipt" style="width:12px;height:12px"></i></button></td></tr>`;
                                     })
                                     .join("")
                                 : '<tr><td colspan="9" style="text-align:center;color:var(--muted)">No invoices for this property</td></tr>'
@@ -3352,31 +4448,40 @@
         async "hr-management"() {
           await loadAllData();
           const employees = DB.employees || [];
-          const activeCount = employees.filter(
+          const selectedCompanyId = employeeCompanyFilter || "all";
+          const filteredEmployees = employees.filter((employee) =>
+            employeeMatchesCompanyFilter(employee, selectedCompanyId),
+          );
+          const companyOptions = companyOptionItems(selectedCompanyId, true);
+          const selectedCompanyName =
+            selectedCompanyId === "all"
+              ? "All Companies"
+              : companyNameById(selectedCompanyId);
+          const activeCount = filteredEmployees.filter(
             (e) => e.status === "Active" || !e.status,
           ).length;
-          const inactiveCount = employees.filter(
+          const inactiveCount = filteredEmployees.filter(
             (e) => e.status === "Inactive",
           ).length;
-          const totalSalary = employees.reduce(
+          const totalSalary = filteredEmployees.reduce(
             (a, e) => a + (parseFloat(e.salary) || 0),
             0,
           );
           const deptBreakdown = {};
-          employees.forEach((e) => {
+          filteredEmployees.forEach((e) => {
             const dept = e.department || "Unassigned";
             deptBreakdown[dept] = (deptBreakdown[dept] || 0) + 1;
           });
           const deptCards = Object.entries(deptBreakdown)
             .map(
               ([dept, count]) =>
-                `<div class="card" style="padding:14px 16px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--brand-mid)">${count}</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">${dept}</div></div>`,
+                `<div class="card" style="padding:14px 16px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--brand-mid)">${count}</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">${safeText(dept)}</div></div>`,
             )
             .join("");
           return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
                             <div>
                               <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--text);margin-bottom:4px">Employee Directory</h2>
-                              <p style="font-size:13px;color:var(--muted)">Manage staff records, roles, and departments</p>
+                              <p style="font-size:13px;color:var(--muted)">Manage staff records, roles, departments, and company allocation.</p>
                             </div>
                             <div style="display:flex;gap:10px">
                               <button class="btn-sm btn-sm-print" onclick="printEmployeeReport()"><i data-lucide="printer" style="width:14px;height:14px"></i> Print</button>
@@ -3384,35 +4489,69 @@
                             </div>
                           </div>
                           <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px">
-                            ${kpi("Total Staff", employees.length, "All employees", "users", "#dbeafe", "#2563eb")}
+                            ${kpi("Total Staff", filteredEmployees.length, selectedCompanyName, "users", "#dbeafe", "#2563eb")}
                             ${kpi("Active", activeCount, "Currently active", "user-check", "#d1fae5", "#059669")}
                             ${kpi("Inactive", inactiveCount, "On leave / exited", "user-x", "#fee2e2", "#dc2626")}
-                            ${kpi("Monthly Payroll", fmt.currency(totalSalary), "Total salary burden", "banknote", "#fef3c7", "#d97706")}
+                            ${kpi("Monthly Payroll", fmt.currency(totalSalary), "Filtered salary burden", "banknote", "#fef3c7", "#d97706")}
                           </div>
                           <div style="display:grid;grid-template-columns:repeat(${Math.min(Object.keys(deptBreakdown).length || 1, 6)},1fr);gap:12px;margin-bottom:20px">
                             ${deptCards || `<div class="card" style="padding:14px 16px;text-align:center"><div style="font-size:22px;font-weight:700;color:var(--brand-mid)">0</div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:2px">No Departments</div></div>`}
                           </div>
                           <div class="card">
-                            <div class="card-head"><h3>Employee Records</h3><span>${employees.length} registered</span></div>
-                            <div class="card-table-wrap"><table class="tbl"><thead><tr><th>Staff ID</th><th>Name</th><th>Role / Designation</th><th>Department</th><th>Phone</th><th>Email</th><th>Salary (₦)</th><th>Status</th><th>Joined</th><th>Guarantor Forms</th><th>Actions</th></tr></thead>
+                            <div class="card-head" style="gap:14px;align-items:center;flex-wrap:wrap">
+                              <div>
+                                <h3>Employee Records</h3>
+                                <span>${filteredEmployees.length} of ${employees.length} registered staff shown</span>
+                              </div>
+                              <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap">
+                                <label style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Company</label>
+                                <select id="employee-company-filter" onchange="updateEmployeeCompanyFilter(this.value)" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);min-width:220px">${companyOptions}</select>
+                                <button class="btn-sm btn-sm-outline" onclick="updateEmployeeCompanyFilter('all')">Reset</button>
+                              </div>
+                            </div>
+                            <div class="card-table-wrap"><table class="tbl"><thead><tr><th>Staff ID</th><th>Name</th><th>Company</th><th>Role / Designation</th><th>Department</th><th>Phone</th><th>Email</th><th>Salary (₦)</th><th>Status</th><th>Joined</th><th>Guarantor Forms</th><th>Actions</th></tr></thead>
                             <tbody>${
-                              employees.length > 0
-                                ? employees
+                              filteredEmployees.length > 0
+                                ? filteredEmployees
                                     .map((e) => {
                                       const eid = e._id || e.id;
-                                      return `<tr><td><strong style="color:var(--brand-mid)">${e.staffId || e.employeeId || "N/A"}</strong></td><td><div style="display:flex;align-items:center;gap:10px"><div class="mini-avatar" style="background:#dbeafe;color:#1e40af;width:32px;height:32px;font-size:12px">${(
+                                      return `<tr><td><strong style="color:var(--brand-mid)">${safeText(e.staffId || e.employeeId || "N/A")}</strong></td><td><div style="display:flex;align-items:center;gap:10px"><div class="mini-avatar" style="background:#dbeafe;color:#1e40af;width:32px;height:32px;font-size:12px">${(
                                         e.name || "?"
                                       )
                                         .split(" ")
                                         .map((w) => w[0])
                                         .join("")
                                         .slice(0, 2)
-                                        .toUpperCase()}</div><span style="font-weight:500">${e.name || "-"}</span></div></td><td>${e.role || e.designation || "-"}</td><td><span class="pill pill-gray">${e.department || "Unassigned"}</span></td><td>${e.phone || "-"}</td><td>${e.email || "-"}</td><td style="font-weight:600">${fmt.currency(parseFloat(e.salary) || 0)}</td><td><span class="pill ${e.status === "Active" || !e.status ? "pill-green" : e.status === "On Leave" ? "pill-yellow" : "pill-red"}">${e.status || "Active"}</span></td><td>${fmt.date(e.dateJoined || e.joinedDate)}</td><td>${employeeGuarantorLinks(e)}</td><td style="display:flex;gap:4px"><button class="btn-sm btn-sm-outline" onclick="openModal('edit-employee','${eid}')">Edit</button><button class="btn-sm btn-sm-danger" onclick="deleteEmployee('${eid}')">Delete</button></td></tr>`;
+                                        .toUpperCase()}</div><span style="font-weight:500">${safeText(e.name || "-")}</span></div></td><td><span class="pill pill-blue">${safeText(employeeCompanyName(e))}</span></td><td>${safeText(e.role || e.designation || "-")}</td><td><span class="pill pill-gray">${safeText(e.department || "Unassigned")}</span></td><td>${safeText(e.phone || "-")}</td><td>${safeText(e.email || "-")}</td><td style="font-weight:600">${fmt.currency(parseFloat(e.salary) || 0)}</td><td><span class="pill ${e.status === "Active" || !e.status ? "pill-green" : e.status === "On Leave" ? "pill-yellow" : "pill-red"}">${safeText(e.status || "Active")}</span></td><td>${fmt.date(e.dateJoined || e.joinedDate)}</td><td>${employeeGuarantorLinks(e)}</td><td style="display:flex;gap:4px"><button class="btn-sm btn-sm-outline" onclick="openModal('edit-employee','${safeAttr(eid)}')">Edit</button><button class="btn-sm btn-sm-danger" onclick="deleteEmployee('${safeAttr(eid)}')">Delete</button></td></tr>`;
                                     })
                                     .join("")
-                                : '<tr><td colspan="11" style="text-align:center;color:var(--muted)">No employees registered</td></tr>'
+                                : '<tr><td colspan="12" style="text-align:center;color:var(--muted);padding:28px">No employees found for this company filter</td></tr>'
                             }</tbody></table></div>
                           </div>`;
+        },
+
+        async "hr-roster"() {
+          if (!canManageRoster()) {
+            return `<div class="card"><div class="card-body"><div class="empty-state"><i data-lucide="lock"></i><span>Staff roster is available to Admin and HR only.</span></div></div></div>`;
+          }
+          await loadAllData();
+          loadRosterData();
+          const employees = DB.employees || [];
+          const selectedRosterWeekStart = getWeekStart(
+            document.getElementById("hr-roster-week-picker")?.value ||
+              new Date(),
+          );
+          return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+                    <div>
+                      <h2 style="font-family:'Playfair Display',serif;font-size:22px;color:var(--text);margin-bottom:4px">Staff Roster</h2>
+                      <p style="font-size:13px;color:var(--muted)">Plan weekly shifts, duty posts, and staff attendance from one HR page.</p>
+                    </div>
+                    <div style="display:flex;gap:10px">
+                      <button class="btn-sm btn-sm-print" onclick="printRoster()"><i data-lucide="printer" style="width:14px;height:14px"></i> Print Roster</button>
+                      <button class="btn-primary" onclick="openModal('new-roster')"><i data-lucide="plus" style="width:14px;height:14px"></i> Add Shift</button>
+                    </div>
+                  </div>
+                  ${hrRosterSectionHtml(employees, selectedRosterWeekStart)}`;
         },
       };
 
@@ -3725,6 +4864,12 @@
           action: "Add Employee",
           modal: "new-employee",
         },
+        "hr-roster": {
+          label: "Human Resources",
+          title: "Staff Roster",
+          action: "Add Shift",
+          modal: "new-roster",
+        },
       };
 
       async function navigate(page) {
@@ -3770,6 +4915,9 @@
             showBtn = true;
           if (m.modal === "new-invoice" && hasPermission("canCreateInvoice"))
             showBtn = true;
+          if (m.modal === "new-employee" && canAccessPage("hr-management"))
+            showBtn = true;
+          if (m.modal === "new-roster" && canManageRoster()) showBtn = true;
         }
         btn.style.display = showBtn ? "flex" : "none";
         const c = document.getElementById("content");
@@ -3892,6 +5040,7 @@
           return;
         if (modal === "new-invoice" && !hasPermission("canCreateInvoice"))
           return;
+        if (modal === "new-roster" && !canManageRoster()) return;
         openModal(modal);
       };
 
@@ -5080,8 +6229,23 @@
           .catch((err) => alert("Failed: " + err.message));
       };
 
+      window.updateEmployeeCompanyFilter = (companyId) => {
+        employeeCompanyFilter = companyId || "all";
+        navigate("hr-management");
+      };
+
       window.printEmployeeReport = () => {
-        const employees = DB.employees || [];
+        const allEmployees = DB.employees || [];
+        const employees = allEmployees.filter((employee) =>
+          employeeMatchesCompanyFilter(
+            employee,
+            employeeCompanyFilter || "all",
+          ),
+        );
+        const selectedCompanyName =
+          !employeeCompanyFilter || employeeCompanyFilter === "all"
+            ? "All Companies"
+            : companyNameById(employeeCompanyFilter);
         const activeCount = employees.filter(
           (e) => e.status === "Active" || !e.status,
         ).length;
@@ -5094,14 +6258,14 @@
         );
         const rows = employees
           .map((e, idx) => {
-            return `<tr><td>${idx + 1}</td><td><strong>${e.staffId || e.employeeId || "N/A"}</strong></td><td>${e.name || "-"}</td><td>${e.role || e.designation || "-"}</td><td>${e.department || "Unassigned"}</td><td>${e.phone || "-"}</td><td>${e.email || "-"}</td><td style="text-align:right">₦${(parseFloat(e.salary) || 0).toLocaleString()}</td><td>${e.status || "Active"}</td><td>${fmt.date(e.dateJoined || e.joinedDate)}</td><td>${employeeGuarantorForms(e).length}/2</td></tr>`;
+            return `<tr><td>${idx + 1}</td><td><strong>${safeText(e.staffId || e.employeeId || "N/A")}</strong></td><td>${safeText(e.name || "-")}</td><td>${safeText(employeeCompanyName(e))}</td><td>${safeText(e.role || e.designation || "-")}</td><td>${safeText(e.department || "Unassigned")}</td><td>${safeText(e.phone || "-")}</td><td>${safeText(e.email || "-")}</td><td style="text-align:right">₦${(parseFloat(e.salary) || 0).toLocaleString()}</td><td>${safeText(e.status || "Active")}</td><td>${fmt.date(e.dateJoined || e.joinedDate)}</td><td>${employeeGuarantorForms(e).length}/2</td></tr>`;
           })
           .join("");
         const printContent = `<!DOCTYPE html><html><head><title>Employee Report</title>
                                 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'DM Sans',sans-serif;padding:20px;color:#111827;background:#fff}.print-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #0a1a3a}.print-logo{display:flex;align-items:center;gap:12px}.print-logo img{width:56px;height:56px;object-fit:contain}.print-logo-text h2{font-size:20px;color:#0a1a3a;margin:0}.print-logo-text p{font-size:10px;color:#6b7280;letter-spacing:.5px;text-transform:uppercase}.print-meta{text-align:right}.print-meta h3{font-size:18px;font-weight:700;color:#0a1a3a;margin:0 0 4px}.print-meta p{font-size:11px;color:#6b7280;margin:0 0 2px}.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}.summary-box{border:1px solid #e5e7eb;border-radius:8px;padding:14px;text-align:center}.summary-box .num{font-size:22px;font-weight:700;color:#0a1a3a}.summary-box .lbl{font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}.print-table{width:100%;border-collapse:collapse;margin:16px 0;font-size:10px}.print-table th{background:#0a1a3a;color:#fff;font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;padding:10px 8px;text-align:left}.print-table td{padding:10px 8px;border-bottom:1px solid #e5e7eb}.print-footer{text-align:center;font-size:10px;color:#6b7280;padding-top:16px;border-top:1px solid #e5e7eb;margin-top:24px}@media print{html,body{width:297mm;min-height:210mm;margin:0;padding:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}body{width:297mm;min-height:210mm;padding:10mm;box-sizing:border-box;display:flex;flex-direction:column}.print-footer{margin-top:auto}}@page{size:A4 landscape;margin:0}</style></head><body>
-                                <div class="print-header"><div class="print-logo"><img src="https://res.cloudinary.com/deoqw88yb/image/upload/v1780134973/October_Libra_Building_Co._Ltd_Logo__1__page-0001-removebg-preview_rpwcmp.png" alt="Logo" /><div class="print-logo-text"><h2>October Libra Building Co. Ltd</h2><p>Construction & Real Estate Development</p></div></div><div class="print-meta"><h3>EMPLOYEE DIRECTORY</h3><p><strong>Generated:</strong> ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p></div></div>
+                                <div class="print-header"><div class="print-logo"><img src="https://res.cloudinary.com/deoqw88yb/image/upload/v1780134973/October_Libra_Building_Co._Ltd_Logo__1__page-0001-removebg-preview_rpwcmp.png" alt="Logo" /><div class="print-logo-text"><h2>October Libra Building Co. Ltd</h2><p>Construction & Real Estate Development</p></div></div><div class="print-meta"><h3>EMPLOYEE DIRECTORY</h3><p><strong>Company:</strong> ${safeText(selectedCompanyName)}</p><p><strong>Generated:</strong> ${new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</p></div></div>
                                 <div class="summary-grid"><div class="summary-box"><div class="num">${employees.length}</div><div class="lbl">Total Staff</div></div><div class="summary-box"><div class="num">${activeCount}</div><div class="lbl">Active</div></div><div class="summary-box"><div class="num">${inactiveCount}</div><div class="lbl">Inactive</div></div><div class="summary-box"><div class="num">₦${totalSalary.toLocaleString()}</div><div class="lbl">Monthly Payroll</div></div></div>
-                                <table class="print-table"><thead><tr><th>#</th><th>Staff ID</th><th>Name</th><th>Role</th><th>Department</th><th>Phone</th><th>Email</th><th style="text-align:right">Salary</th><th>Status</th><th>Joined</th><th>Forms</th></tr></thead><tbody>${rows || '<tr><td colspan="11" style="text-align:center">No employees registered</td></tr>'}</tbody></table>
+                                <table class="print-table"><thead><tr><th>#</th><th>Staff ID</th><th>Name</th><th>Company</th><th>Role</th><th>Department</th><th>Phone</th><th>Email</th><th style="text-align:right">Salary</th><th>Status</th><th>Joined</th><th>Forms</th></tr></thead><tbody>${rows || '<tr><td colspan="12" style="text-align:center">No employees registered</td></tr>'}</tbody></table>
                                 <div class="print-footer"><p>October Libra Building Co. Ltd | RC: 1234567 | info@octoberlibra.com</p><p>Generated from the Libra Building Admin Portal.</p></div></body></html>`;
         const printWindow = window.open("", "_blank");
         if (!printWindow) return alert("Popup blocked! Please allow popups.");
@@ -5120,76 +6284,133 @@
         if (!inv) return alert("Invoice not found");
 
         const invNumber = inv.invoiceNumber || inv._id || "N/A";
-        const projectName =
-          inv.projectName ||
-          (() => {
-            const p = DB.projects.find(
-              (x) => (x._id || x.id) === (inv.project || inv.project_Id),
-            );
-            return p ? p.name : inv.project || "-";
-          })();
-        const itemsHtml = (inv.items || [])
-          .map(
-            (item, idx) => `
+        const safeInvoiceId = String(id).replace(/'/g, "\\'");
+        const propertyName = invoicePropertyName(inv);
+        const totalAmount = invoiceTotalAmount(inv);
+        const displayItems = invoiceDisplayItems(inv);
+        const missingItemAmountNotice = invoiceHasMissingItemAmounts(inv)
+          ? `<div class="invoice-warning-box"><strong>Cost breakdown needs attention</strong>Some old invoice item amounts were not saved on each line. I added the invoice balance below so the printed invoice will no longer show only ₦0. Edit this invoice once to enter the exact amount for each item.</div>`
+          : "";
+        const itemsHtml = displayItems
+          .map((item, idx) => {
+            const isFallback = item._fallbackTotal === true;
+            const missing = item._missingAmount === true;
+            const desc = isFallback
+              ? `<strong>${safeText(item.description || "Invoice amount")}</strong><br><span style="font-size:11px;color:var(--muted)">Fallback from invoice total</span>`
+              : safeText(item.description || "-");
+            const amountText = missing
+              ? `<span style="color:var(--danger);font-weight:700">Not saved</span>`
+              : fmt.currency(item._displayAmount || 0);
+            return `
                 <tr>
-                  <td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px">${idx + 1}</td>
-                  <td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px">${item.description || "-"}</td>
-                  <td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;text-align:center">${item.quantity || 1}</td>
-                  <td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;text-align:right">${fmt.currency(item.unitCost || 0)}</td>
-                  <td style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;text-align:right;font-weight:600">${fmt.currency(item.amount || 0)}</td>
+                  <td style="width:70px">${idx + 1}</td>
+                  <td>${desc}</td>
+                  <td style="text-align:right;font-weight:700">${amountText}</td>
                 </tr>
-              `,
-          )
+              `;
+          })
           .join("");
 
         const bankInfo = inv.bankInformation || inv.bankAccount || {};
-        const bankHtml = bankInfo.bankName
+        const bankName = bankInfo.bankName || bankInfo.name || "";
+        const accountName = bankInfo.accountName || "";
+        const accountNumber = bankInfo.accountNumber || bankInfo.account || "";
+        const branch = bankInfo.branch || "";
+        const hasBankInfo = bankName || accountName || accountNumber || branch;
+        const bankHtml = hasBankInfo
           ? `
-                            <div style="margin-top:14px;padding:12px;background:var(--surface2);border-radius:var(--rad);border:1px solid var(--border)">
-                              <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-weight:600">Bank Account Details</div>
-                              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-                                <div><div style="font-size:11px;color:var(--muted)">Bank Name</div><div style="font-size:13px;font-weight:500">${bankInfo.bankName || bankInfo.name || "-"}</div></div>
-                                <div><div style="font-size:11px;color:var(--muted)">Account Name</div><div style="font-size:13px;font-weight:500">${bankInfo.accountName || "-"}</div></div>
-                                <div><div style="font-size:11px;color:var(--muted)">Account Number</div><div style="font-size:13px;font-weight:500">${bankInfo.accountNumber || bankInfo.account || "-"}</div></div><div><div style="font-size:11px;color:var(--muted)">Branch</div><div style="font-size:13px;font-weight:500">${bankInfo.branch || "-"}</div></div>
-                              </div>
-                            </div>
-                          `
+              <section class="invoice-panel">
+                <div class="invoice-section-title">
+                  <div>
+                    <h4>Bank Account Details</h4>
+                    <p>Payment account attached to this invoice.</p>
+                  </div>
+                </div>
+                <div class="invoice-summary-list">
+                  <div class="invoice-summary-item"><label>Bank Name</label><div>${safeText(bankName || "-")}</div></div>
+                  <div class="invoice-summary-item"><label>Account Name</label><div>${safeText(accountName || "-")}</div></div>
+                  <div class="invoice-summary-item"><label>Account Number</label><div>${safeText(accountNumber || "-")}</div></div>
+                  <div class="invoice-summary-item"><label>Branch</label><div>${safeText(branch || "-")}</div></div>
+                </div>
+              </section>
+            `
           : "";
 
         const body = `
-                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-                              <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Invoice Number</div><div style="font-size:14px;font-weight:600;color:var(--brand-mid)">${invNumber}</div></div>
-                              <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Status</div><div><span class="pill ${fmt.statusClass[inv.status] || "pill-gray"}">${inv.status || "pending"}</span></div></div>
-                              <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Client</div><div style="font-size:13px;font-weight:500">${inv.client || "-"}</div></div>
-                              <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Project</div><div style="font-size:13px;font-weight:500">${projectName}</div></div>
-                              <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Issue Date</div><div style="font-size:13px;font-weight:500">${fmt.date(inv.issueDate)}</div></div>
-                              <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Due Date</div><div style="font-size:13px;font-weight:500">${fmt.date(inv.dueDate)}</div></div>
-                              <div><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Subject</div><div style="font-size:13px;font-weight:500">${inv.subject || "Maintenance"}</div></div>
-                            </div>
-                            <div style="margin-top:14px">
-                              <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-weight:600">Invoice Items</div>
-                              <table style="width:100%;border-collapse:collapse">
-                                <thead>
-                                  <tr style="background:var(--surface2)">
-                                    <th style="padding:8px 12px;font-size:11px;text-align:left;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">#</th>
-                                    <th style="padding:8px 12px;font-size:11px;text-align:left;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Description</th>
-                                    <th style="padding:8px 12px;font-size:11px;text-align:center;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Qty</th>
-                                    <th style="padding:8px 12px;font-size:11px;text-align:right;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Rate</th>
-                                    <th style="padding:8px 12px;font-size:11px;text-align:right;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Amount</th>
-                                  </tr>
-                                </thead>
-                                <tbody>${itemsHtml}</tbody>
-                                <tfoot>
-                                  <tr>
-                                    <td colspan="4" style="padding:10px 12px;text-align:right;font-size:13px;font-weight:600;color:var(--muted)">Total Amount:</td>
-                                    <td style="padding:10px 12px;text-align:right;font-size:15px;font-weight:700;color:var(--brand)">${fmt.currency(inv.totalAmount || 0)}</td>
-                                  </tr>
-                                </tfoot>
-                              </table>
-                            </div>
-                            ${bankHtml}
-                            ${inv.notes ? `<div style="margin-top:14px;padding:12px;background:var(--surface2);border-radius:var(--rad);border:1px solid var(--border)"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-weight:600">Notes</div><p style="font-size:13px;line-height:1.5">${inv.notes}</p></div>` : ""}
-                          `;
+          <div class="invoice-detail-shell">
+            <div class="invoice-hero">
+              <div>
+                <h2>Invoice ${safeText(invNumber)}</h2>
+                <p>${safeText(inv.subject || "Maintenance")} invoice for ${safeText(inv.client || "-")}.</p>
+                <div class="invoice-action-row" style="justify-content:flex-start">
+                  <button class="btn-sm btn-sm-print" onclick="printInvoice('${safeInvoiceId}')"><i data-lucide="printer" style="width:12px;height:12px"></i> Print Invoice</button>
+                  <button class="btn-sm btn-sm-success" onclick="printInvoiceReceipt('${safeInvoiceId}')"><i data-lucide="receipt" style="width:12px;height:12px"></i> Print Receipt</button>
+                </div>
+              </div>
+              <div class="invoice-hero-total">
+                <span>Total Amount</span>
+                <strong>${fmt.currency(totalAmount)}</strong>
+                <div><span class="pill ${fmt.statusClass[inv.status] || "pill-gray"}">${safeText(inv.status || "pending")}</span></div>
+              </div>
+            </div>
+
+            <div class="invoice-detail-grid">
+              <div class="invoice-form-main">
+                <section class="invoice-panel">
+                  <div class="invoice-section-title">
+                    <div>
+                      <h4>Invoice Items</h4>
+                      <p>Quantity has been removed. Each row is calculated by amount only.</p>
+                    </div>
+                  </div>
+                  ${missingItemAmountNotice}
+                  <div class="invoice-detail-table-wrap">
+                    <table class="invoice-detail-table">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Description</th>
+                          <th style="text-align:right">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>${itemsHtml || '<tr><td colspan="3" style="text-align:center;color:var(--muted)">No items added</td></tr>'}</tbody>
+                      <tfoot>
+                        <tr>
+                          <td colspan="2" style="text-align:right">Total Amount</td>
+                          <td style="text-align:right;color:var(--brand)">${fmt.currency(totalAmount)}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </section>
+
+                ${inv.notes ? `<section class="invoice-panel"><div class="invoice-section-title"><div><h4>Notes</h4><p>Additional information on this invoice.</p></div></div><div class="invoice-notes-box"><p>${safeText(inv.notes)}</p></div></section>` : ""}
+              </div>
+
+              <aside class="invoice-form-side">
+                <section class="invoice-panel">
+                  <div class="invoice-section-title">
+                    <div>
+                      <h4>Invoice Summary</h4>
+                      <p>Client, property and due date information.</p>
+                    </div>
+                  </div>
+                  <div class="invoice-summary-list">
+                    <div class="invoice-summary-item"><label>Invoice Number</label><div>${safeText(invNumber)}</div></div>
+                    <div class="invoice-summary-item"><label>Status</label><div><span class="pill ${fmt.statusClass[inv.status] || "pill-gray"}">${safeText(inv.status || "pending")}</span></div></div>
+                    <div class="invoice-summary-item"><label>Client</label><div>${safeText(inv.client || "-")}</div></div>
+                    <div class="invoice-summary-item"><label>Property</label><div>${safeText(propertyName || "-")}</div></div>
+                    <div class="invoice-summary-item"><label>Subject</label><div>${safeText(inv.subject || "Maintenance")}</div></div>
+                    <div class="invoice-summary-item"><label>Issue Date</label><div>${fmt.date(inv.issueDate)}</div></div>
+                    <div class="invoice-summary-item"><label>Due Date</label><div>${fmt.date(inv.dueDate)}</div></div>
+                    <div class="invoice-summary-item"><label>Total</label><div>${fmt.currency(totalAmount)}</div></div>
+                  </div>
+                </section>
+                ${bankHtml}
+              </aside>
+            </div>
+          </div>
+        `;
 
         openModal("invoice-detail", body, `Invoice ${invNumber}`);
       };
@@ -5207,19 +6428,28 @@
             );
             return p ? p.name : inv.project || "-";
           })();
-        const itemsHtml = (inv.items || [])
-          .map(
-            (item, idx) => `
+        const displayItems = invoiceDisplayItems(inv);
+        const hasMissingLineAmounts = invoiceHasMissingItemAmounts(inv);
+        const itemsHtml = displayItems
+          .map((item, idx) => {
+            const description = item._fallbackTotal
+              ? `${safeText(item.description || "Invoice amount")} <span style="color:#6b7280;font-size:9px">(from invoice total)</span>`
+              : safeText(item.description || "-");
+            const amountText = item._missingAmount
+              ? "Not saved"
+              : "₦" + invoiceMoneyValue(item._displayAmount).toLocaleString();
+            return `
                     <tr>
                       <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:11px">${idx + 1}</td>
-                      <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:11px">${item.description || "-"}</td>
-                      <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:center">${item.quantity || 1}</td>
-                      <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:right">₦${(item.unitCost || 0).toLocaleString()}</td>
-                      <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:right;font-weight:600">₦${(item.amount || 0).toLocaleString()}</td>
+                      <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:11px">${description}</td>
+                      <td style="padding:8px 10px;border-bottom:1px solid #e5e7eb;font-size:11px;text-align:right;font-weight:600">${amountText}</td>
                     </tr>
-                  `,
-          )
+                  `;
+          })
           .join("");
+        const missingLineNotice = hasMissingLineAmounts
+          ? `<div style="margin:10px 0;padding:8px 10px;border:1px solid #f59e0b;background:#fef3c7;border-radius:6px;font-size:10px;color:#92400e">Some old invoice items do not have saved line amounts. The invoice total is shown as a fallback balance. Edit the invoice once to enter exact item-by-item costs.</div>`
+          : "";
         const bankInfo = inv.bankInformation || inv.bankAccount || {};
         const bankHtml = bankInfo.bankName
           ? `
@@ -5284,21 +6514,20 @@
                             <div class="info-item"><label>Subject</label><value>${inv.subject || "Maintenance"}</value></div>
                             <div class="info-item"><label>PROPERTY</label><value>${projectName}</value></div>
                           </div>
+                          ${missingLineNotice}
                           <table class="items-table">
                             <thead>
                               <tr>
                                 <th style="width:40px">#</th>
                                 <th>Description</th>
-                                <th style="width:60px;text-align:center">Qty</th>
-                                <th style="width:120px;text-align:right">Rate</th>
                                 <th style="width:120px;text-align:right">Amount</th>
                               </tr>
                             </thead>
                             <tbody>${itemsHtml}</tbody>
                             <tfoot>
                               <tr>
-                                <td colspan="4" style="text-align:right;font-size:12px">Total Amount:</td>
-                                <td style="text-align:right;font-size:14px;color:#0a1a3a">₦${(inv.totalAmount || 0).toLocaleString()}</td>
+                                <td colspan="2" style="text-align:right;font-size:12px">Total Amount:</td>
+                                <td style="text-align:right;font-size:14px;color:#0a1a3a">₦${invoiceTotalAmount(inv).toLocaleString()}</td>
                               </tr>
                             </tfoot>
                           </table>
@@ -5341,7 +6570,7 @@
           </style></head><body>
           <div class="header"><div class="brand"><h2>October Libra Building Co. Ltd</h2><p>Construction & Real Estate Development</p></div><div class="meta"><h1>RECEIPT</h1><div class="badge">${(inv.status || "paid").toUpperCase()}</div><p><strong>Receipt Ref:</strong> R-${invNumber}</p><p><strong>Invoice Ref:</strong> ${invNumber}</p></div></div>
           <div class="grid"><div class="box"><label>Received From</label><div>${safeText(inv.client || "-")}</div></div><div class="box"><label>Property</label><div>${safeText(propertyName)}</div></div><div class="box"><label>Subject</label><div>${safeText(inv.subject || "Maintenance")}</div></div><div class="box"><label>Date</label><div>${new Date(paidDate).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</div></div><div class="box"><label>Payment Status</label><div>${safeText(inv.status || "paid")}</div></div><div class="box"><label>Notes</label><div>${safeText(inv.notes || "Payment received for invoice")}</div></div></div>
-          <div class="total"><span>Amount Received</span><span>₦${(inv.totalAmount || 0).toLocaleString()}</span></div>
+          <div class="total"><span>Amount Received</span><span>₦${invoiceTotalAmount(inv).toLocaleString()}</span></div>
           <div class="footer"><p>Generated from Libra Construction Admin Portal.</p><p>Thank you for your business.</p></div>
           </body></html>`;
         const printWindow = window.open("", "_blank");
@@ -5373,7 +6602,7 @@
         const rows = filtered
           .map(
             (inv, idx) =>
-              `<tr><td>${idx + 1}</td><td>${safeText(inv.invoiceNumber || inv._id || "N/A")}</td><td>${safeText(invoicePropertyName(inv))}</td><td>${safeText(inv.client || "-")}</td><td>${safeText(inv.subject || "-")}</td><td>${safeText(inv.status || "pending")}</td><td style="text-align:right">₦${(inv.totalAmount || 0).toLocaleString()}</td></tr>`,
+              `<tr><td>${idx + 1}</td><td>${safeText(inv.invoiceNumber || inv._id || "N/A")}</td><td>${safeText(invoicePropertyName(inv))}</td><td>${safeText(inv.client || "-")}</td><td>${safeText(inv.subject || "-")}</td><td>${safeText(inv.status || "pending")}</td><td style="text-align:right">₦${invoiceTotalAmount(inv).toLocaleString()}</td></tr>`,
           )
           .join("");
         const printContent = `<!DOCTYPE html><html><head><title>Property Invoice Receipt - ${label}</title>
@@ -5399,6 +6628,7 @@
           body: () => `<div class="form-grid">
                     <div class="form-group"><label>Staff ID *</label><input id="emp-id" placeholder="e.g. LIB-001" /></div>
                     <div class="form-group"><label>Full Name *</label><input id="emp-name" placeholder="First and Last name" /></div>
+                    <div class="form-group"><label>Company *</label><select id="emp-company">${companyOptionItems("", false)}</select></div>
                     <div class="form-group"><label>Email</label><input id="emp-email" type="email" placeholder="email@company.com" /></div>
                     <div class="form-group"><label>Phone</label><input id="emp-phone" placeholder="Phone number" /></div>
                     <div class="form-group"><label>Department</label><select id="emp-dept"><option>Engineering</option><option>Operations</option><option>Accounting</option><option>Human Resources</option><option>Sales</option><option>Procurement</option><option>Admin</option><option>Other</option></select></div>
@@ -5421,8 +6651,17 @@
             const name = document.getElementById("emp-name").value.trim();
 
             // 1. Validation
+            const selectedCompany = selectedCompanyFromForm("emp-company");
+
             if (!staffId || !name) {
               alert("Staff ID and Full Name are required");
+              return;
+            }
+
+            if (!selectedCompany.companyId) {
+              alert(
+                "Please select the company this staff belongs to. Register a company first if none is available.",
+              );
               return;
             }
 
@@ -5430,6 +6669,8 @@
             const data = {
               staffId: staffId,
               name: name,
+              companyId: selectedCompany.companyId,
+              companyName: selectedCompany.companyName,
               email: document.getElementById("emp-email").value.trim(),
               phone: document.getElementById("emp-phone").value.trim(),
               department: document.getElementById("emp-dept").value,
@@ -5478,6 +6719,7 @@
             return `<div class="form-grid">
                             <div class="form-group"><label>Staff ID</label><input id="edit-emp-id" value="${(e.staffId || "").replace(/"/g, "&quot;")}" /></div>
                             <div class="form-group"><label>Full Name</label><input id="edit-emp-name" value="${(e.name || "").replace(/"/g, "&quot;")}" /></div>
+                            <div class="form-group"><label>Company</label><select id="edit-emp-company">${companyOptionItems(employeeCompanyId(e), false)}</select></div>
                             <div class="form-group"><label>Email</label><input id="edit-emp-email" type="email" value="${(e.email || "").replace(/"/g, "&quot;")}" /></div>
                             <div class="form-group"><label>Phone</label><input id="edit-emp-phone" value="${(e.phone || "").replace(/"/g, "&quot;")}" /></div>
                             <div class="form-group"><label>Department</label><select id="edit-emp-dept">
@@ -5514,9 +6756,16 @@
           },
           save: "Save Changes",
           action: (employeeId) => {
+            const selectedCompany = selectedCompanyFromForm("edit-emp-company");
+            if (!selectedCompany.companyId) {
+              alert("Please select the company this staff belongs to.");
+              return;
+            }
             const data = {
               staffId: document.getElementById("edit-emp-id").value,
               name: document.getElementById("edit-emp-name").value,
+              companyId: selectedCompany.companyId,
+              companyName: selectedCompany.companyName,
               email: document.getElementById("edit-emp-email").value,
               phone: document.getElementById("edit-emp-phone").value,
               department: document.getElementById("edit-emp-dept").value,
@@ -5546,6 +6795,123 @@
                 loadAllData().then(() => navigate("hr-management"));
               })
               .catch((err) => alert("Failed: " + err.message));
+          },
+        },
+
+        "new-roster": {
+          title: "Add Roster Shift",
+          body: (defaultDate = null) => {
+            const selectedDate =
+              defaultDate ||
+              document.getElementById("hr-roster-week-picker")?.value ||
+              dateToInputValue(new Date());
+            return `<div class="form-grid">
+                    ${(DB.employees || []).length ? "" : '<div class="roster-form-note">Add employees first before creating roster shifts.</div>'}
+                    <div class="form-group form-full"><label>Employee *</label><select id="roster-employee">${employeeOptionsHtml()}</select></div>
+                    <div class="form-group"><label>Date *</label><input id="roster-date" type="date" value="${safeAttr(selectedDate)}" /></div>
+                    <div class="form-group"><label>Shift Type</label><select id="roster-shift"><option>Morning</option><option>Afternoon</option><option>Night</option><option>Full Day</option><option>Off Duty</option><option>On Leave</option></select></div>
+                    <div class="form-group"><label>Start Time *</label><input id="roster-start" type="time" value="08:00" /></div>
+                    <div class="form-group"><label>End Time *</label><input id="roster-end" type="time" value="17:00" /></div>
+                    <div class="form-group"><label>Duty Post / Location</label><input id="roster-duty-post" placeholder="e.g. Site Office, Front Desk, Lekki Project" /></div>
+                    <div class="form-group"><label>Status</label><select id="roster-status"><option>Scheduled</option><option>Completed</option><option>Absent</option><option>On Leave</option><option>Cancelled</option></select></div>
+                    <div class="form-group form-full"><label>Notes</label><textarea id="roster-notes" rows="2" placeholder="Optional handover note or duty instruction"></textarea></div>
+                  </div>`;
+          },
+          save: "Save Shift",
+          action: () => {
+            const employeeId = document.getElementById("roster-employee").value;
+            const employee = findEmployeeById(employeeId);
+            const date = document.getElementById("roster-date").value;
+            const startTime = document.getElementById("roster-start").value;
+            const endTime = document.getElementById("roster-end").value;
+            if (!employeeId || !date || !startTime || !endTime) {
+              alert("Employee, date, start time, and end time are required.");
+              return;
+            }
+            saveRosterEntry({
+              id: rosterId(),
+              employeeId,
+              employeeName: employee?.name || "",
+              department: employee?.department || "",
+              date,
+              shift: document.getElementById("roster-shift").value,
+              startTime,
+              endTime,
+              dutyPost: document
+                .getElementById("roster-duty-post")
+                .value.trim(),
+              status: document.getElementById("roster-status").value,
+              notes: document.getElementById("roster-notes").value.trim(),
+              createdBy: CURRENT_USER.name,
+            });
+            closeModal();
+            updateRosterWeek(getWeekStart(date));
+          },
+        },
+        "edit-roster": {
+          title: "Edit Roster Shift",
+          body: (rosterEntryId) => {
+            loadRosterData();
+            const entry = (DB.rosters || []).find(
+              (item) => item.id === rosterEntryId,
+            );
+            if (!entry)
+              return '<p style="color:var(--muted)">Roster entry not found.</p>';
+            return `<div class="form-grid">
+                    <div class="form-group form-full"><label>Employee *</label><select id="edit-roster-employee">${employeeOptionsHtml(entry.employeeId)}</select></div>
+                    <div class="form-group"><label>Date *</label><input id="edit-roster-date" type="date" value="${safeAttr(entry.date)}" /></div>
+                    <div class="form-group"><label>Shift Type</label><select id="edit-roster-shift">
+                      <option ${entry.shift === "Morning" ? "selected" : ""}>Morning</option>
+                      <option ${entry.shift === "Afternoon" ? "selected" : ""}>Afternoon</option>
+                      <option ${entry.shift === "Night" ? "selected" : ""}>Night</option>
+                      <option ${entry.shift === "Full Day" ? "selected" : ""}>Full Day</option>
+                      <option ${entry.shift === "Off Duty" ? "selected" : ""}>Off Duty</option>
+                      <option ${entry.shift === "On Leave" ? "selected" : ""}>On Leave</option>
+                    </select></div>
+                    <div class="form-group"><label>Start Time *</label><input id="edit-roster-start" type="time" value="${safeAttr(entry.startTime || "08:00")}" /></div>
+                    <div class="form-group"><label>End Time *</label><input id="edit-roster-end" type="time" value="${safeAttr(entry.endTime || "17:00")}" /></div>
+                    <div class="form-group"><label>Duty Post / Location</label><input id="edit-roster-duty-post" value="${safeAttr(entry.dutyPost || "")}" /></div>
+                    <div class="form-group"><label>Status</label><select id="edit-roster-status">
+                      <option ${entry.status === "Scheduled" || !entry.status ? "selected" : ""}>Scheduled</option>
+                      <option ${entry.status === "Completed" ? "selected" : ""}>Completed</option>
+                      <option ${entry.status === "Absent" ? "selected" : ""}>Absent</option>
+                      <option ${entry.status === "On Leave" ? "selected" : ""}>On Leave</option>
+                      <option ${entry.status === "Cancelled" ? "selected" : ""}>Cancelled</option>
+                    </select></div>
+                    <div class="form-group form-full"><label>Notes</label><textarea id="edit-roster-notes" rows="2">${safeText(entry.notes || "")}</textarea></div>
+                  </div>`;
+          },
+          save: "Save Changes",
+          action: (rosterEntryId) => {
+            const employeeId = document.getElementById(
+              "edit-roster-employee",
+            ).value;
+            const employee = findEmployeeById(employeeId);
+            const date = document.getElementById("edit-roster-date").value;
+            const startTime =
+              document.getElementById("edit-roster-start").value;
+            const endTime = document.getElementById("edit-roster-end").value;
+            if (!employeeId || !date || !startTime || !endTime) {
+              alert("Employee, date, start time, and end time are required.");
+              return;
+            }
+            saveRosterEntry({
+              id: rosterEntryId,
+              employeeId,
+              employeeName: employee?.name || "",
+              department: employee?.department || "",
+              date,
+              shift: document.getElementById("edit-roster-shift").value,
+              startTime,
+              endTime,
+              dutyPost: document
+                .getElementById("edit-roster-duty-post")
+                .value.trim(),
+              status: document.getElementById("edit-roster-status").value,
+              notes: document.getElementById("edit-roster-notes").value.trim(),
+            });
+            closeModal();
+            updateRosterWeek(getWeekStart(date));
           },
         },
 
@@ -5990,43 +7356,103 @@ Submit anyway?`,
                     )
                     .join("")
                 : '<option value="">No bank accounts</option>';
-            return `<div class="form-grid">
-              <div class="form-group"><label>Subject *</label><select id="inv-subject"><option value="Maintenance">Maintenance</option><option value="On-going Construction">On-going Construction</option></select></div>
-              <div class="form-group"><label>PROPERTY</label><select id="inv-project">${projectOptions}</select></div>
-              <div class="form-group"><label>Client</label><input id="inv-client" placeholder="Client name" /></div>
-              <div class="form-group"><label>Due Date</label><input id="inv-due" type="date" /></div>
-              <div class="form-group form-full"><label>Saved Bank Account</label><select id="inv-bank">${bankOptions}</select></div>
-              <div class="form-group"><label>Bank Name</label><input id="inv-bank-name" placeholder="e.g. First Bank" /></div>
-              <div class="form-group"><label>Account Name</label><input id="inv-account-name" placeholder="Account name" /></div>
-              <div class="form-group"><label>Account Number</label><input id="inv-account-number" placeholder="Account number" /></div>
-              <div class="form-group"><label>Branch</label><input id="inv-bank-branch" placeholder="Optional" /></div>
-              <div class="form-group form-full"><label>Invoice Items</label><div id="invoice-items-container"><div class="invoice-item-row"><input placeholder="Description" /><input type="number" placeholder="Qty" value="1" /><input type="number" placeholder="Rate (₦)" /><input type="number" placeholder="Amount" readonly /><button class="btn-remove-item" onclick="removeInvoiceItem(this)" title="Remove">-</button></div></div><button class="btn-sm btn-sm-outline" onclick="addInvoiceItem()" style="margin-top:8px"><i data-lucide="plus" style="width:12px;height:12px"></i> Add Item</button></div>
-              <div class="form-group form-full"><label>Notes</label><textarea id="inv-notes" rows="2" placeholder="Payment terms, references..."></textarea></div>
-            </div><div class="invoice-item-total"><span>Total:</span> <span id="invoice-total-display">₦0.00</span></div>`;
+            return `<div class="invoice-modal-shell">
+              <div class="invoice-form-intro">
+                <div>
+                  <h2>Create a New Invoice</h2>
+                  <p>Enter the client, property, payment account and service items. Quantity has been removed, so each line uses description and amount only.</p>
+                </div>
+                <span class="invoice-badge-soft"><i data-lucide="file-text" style="width:14px;height:14px"></i> Full-screen invoice form</span>
+              </div>
+
+              <div class="invoice-form-layout">
+                <div class="invoice-form-main">
+                  <section class="invoice-panel">
+                    <div class="invoice-section-title">
+                      <div>
+                        <h4>Invoice Details</h4>
+                        <p>Basic information for the invoice register and printed document.</p>
+                      </div>
+                    </div>
+                    <div class="form-grid invoice-form-grid">
+                      <div class="form-group"><label>Subject *</label><select id="inv-subject"><option value="Maintenance">Maintenance</option><option value="On-going Construction">On-going Construction</option></select></div>
+                      <div class="form-group"><label>Property</label><select id="inv-project">${projectOptions}</select></div>
+                      <div class="form-group"><label>Client</label><input id="inv-client" placeholder="Client name" /></div>
+                      <div class="form-group"><label>Due Date</label><input id="inv-due" type="date" /></div>
+                    </div>
+                  </section>
+
+                  <section class="invoice-panel invoice-items-panel">
+                    <div class="invoice-section-title">
+                      <div>
+                        <h4>Invoice Items</h4>
+                        <p>Add each service/work item with a direct amount.</p>
+                      </div>
+                      <button class="btn-sm btn-sm-outline" onclick="addInvoiceItem()"><i data-lucide="plus" style="width:12px;height:12px"></i> Add Item</button>
+                    </div>
+                    <div class="invoice-items-header"><span>Description</span><span>Amount</span><span></span></div>
+                    <div id="invoice-items-container">
+                      <div class="invoice-item-row"><input placeholder="Description" /><input type="number" placeholder="Amount (₦)" min="0" step="0.01" /><button class="btn-remove-item" onclick="removeInvoiceItem(this)" title="Remove">-</button></div>
+                    </div>
+                  </section>
+
+                  <section class="invoice-panel">
+                    <div class="invoice-section-title">
+                      <div>
+                        <h4>Notes</h4>
+                        <p>Optional payment terms, references, or special instructions.</p>
+                      </div>
+                    </div>
+                    <div class="form-group"><textarea id="inv-notes" rows="4" placeholder="Payment terms, references..."></textarea></div>
+                  </section>
+                </div>
+
+                <aside class="invoice-form-side">
+                  <section class="invoice-panel">
+                    <div class="invoice-section-title">
+                      <div>
+                        <h4>Payment Details</h4>
+                        <p>Select a saved account or enter custom bank details.</p>
+                      </div>
+                    </div>
+                    <div class="form-grid invoice-form-grid">
+                      <div class="form-group form-full"><label>Saved Bank Account</label><select id="inv-bank" onchange="fillInvoiceBankFields()">${bankOptions}</select></div>
+                      <div class="form-group"><label>Bank Name</label><input id="inv-bank-name" placeholder="e.g. First Bank" /></div>
+                      <div class="form-group"><label>Account Name</label><input id="inv-account-name" placeholder="Account name" /></div>
+                      <div class="form-group"><label>Account Number</label><input id="inv-account-number" placeholder="Account number" /></div>
+                      <div class="form-group"><label>Branch</label><input id="inv-bank-branch" placeholder="Optional" /></div>
+                    </div>
+                  </section>
+
+                  <section class="invoice-total-card">
+                    <div class="invoice-section-title">
+                      <div>
+                        <h4>Invoice Total</h4>
+                        <p>This updates automatically as item amounts change.</p>
+                      </div>
+                    </div>
+                    <div class="invoice-item-total"><span>Total</span> <span id="invoice-total-display">₦0.00</span></div>
+                    <div class="invoice-total-help">Use the <strong>Issue Invoice</strong> button below to save this invoice. Empty item rows will be ignored.</div>
+                  </section>
+                </aside>
+              </div>
+            </div>`;
           },
           save: "Issue Invoice",
           action: () => {
-            const rows = document.querySelectorAll(".invoice-item-row");
+            const rows = document.querySelectorAll(
+              "#invoice-items-container .invoice-item-row",
+            );
             const items = [];
             let total = 0;
 
             rows.forEach((row) => {
               const inputs = row.querySelectorAll("input");
+              const description = inputs[0].value.trim();
+              const amount = parseFloat(inputs[1].value) || 0;
 
-              const description = inputs[0].value;
-              const quantity = parseFloat(inputs[1].value) || 0;
-              const unitCost = parseFloat(inputs[2].value) || 0;
-
-              const amount = quantity * unitCost;
-
-              if (description) {
-                items.push({
-                  description,
-                  quantity,
-                  unitCost,
-                  amount,
-                });
-
+              if (description && amount > 0) {
+                items.push(makeInvoiceItem(description, amount));
                 total += amount;
               }
             });
@@ -6127,18 +7553,20 @@ Submit anyway?`,
                     .join("")
                 : '<option value="">No bank accounts</option>';
 
+            const editMissingNotice = invoiceHasMissingItemAmounts(inv)
+              ? `<div class="invoice-warning-box"><strong>Enter item costs again</strong>This old invoice has missing line amounts. Add the correct amount beside each item, then save changes.</div>`
+              : "";
             const itemsHtml = (inv.items || [])
-              .map(
-                (item, idx) => `
+              .map((item, idx) => {
+                const amount = invoiceItemAmount(item);
+                return `
                         <div class="invoice-item-row" id="edit-inv-item-${idx}">
                           <input placeholder="Description" value="${(item.description || "").replace(/"/g, "&quot;")}" />
-                          <input type="number" placeholder="Qty" value="${item.quantity || 1}" />
-                          <input type="number" placeholder="Rate (₦)" value="${item.unitCost || 0}" />
-                          <input type="number" placeholder="Amount" readonly value="${item.amount || 0}" />
+                          <input type="number" placeholder="Amount (₦)" min="0" step="0.01" value="${amount > 0 ? amount : ""}" />
                           <button class="btn-remove-item" onclick="removeEditInvoiceItem(${idx})" title="Remove">-</button>
                         </div>
-                      `,
-              )
+                      `;
+              })
               .join("");
             return `<div class="form-grid">
                               <div class="form-group"><label>Status *</label>
@@ -6159,12 +7587,13 @@ Submit anyway?`,
                               <div class="form-group"><label>Account Number</label><input id="edit-inv-account-number" value="${((inv.bankInformation || inv.bankAccount || {}).accountNumber || (inv.bankAccount || {}).account || "").replace(/"/g, "&quot;")}" placeholder="Account number" /></div>
                               <div class="form-group"><label>Branch</label><input id="edit-inv-bank-branch" value="${((inv.bankInformation || inv.bankAccount || {}).branch || "").replace(/"/g, "&quot;")}" placeholder="Optional" /></div>
                               <div class="form-group form-full"><label>Invoice Items</label>
+                                ${editMissingNotice}
                                 <div id="edit-invoice-items-container">${itemsHtml}</div>
                                 <button class="btn-sm btn-sm-outline" onclick="addEditInvoiceItem()" style="margin-top:8px"><i data-lucide="plus" style="width:12px;height:12px"></i> Add Item</button>
                               </div>
                               <div class="form-group form-full"><label>Notes</label><textarea id="edit-inv-notes" rows="2" placeholder="Payment terms, references...">${inv.notes || ""}</textarea></div>
                             </div>
-                            <div class="invoice-item-total"><span>Total:</span> <span id="edit-invoice-total-display">${fmt.currency(inv.totalAmount || 0)}</span></div>`;
+                            <div class="invoice-item-total"><span>Total:</span> <span id="edit-invoice-total-display">${fmt.currency(invoiceTotalAmount(inv))}</span></div>`;
           },
           save: "Save Changes",
           action: (invoiceId) => {
@@ -6181,13 +7610,11 @@ Submit anyway?`,
 
             rows.forEach((row) => {
               const inputs = row.querySelectorAll("input");
-              const description = inputs[0].value;
-              const quantity = parseFloat(inputs[1].value) || 0;
-              const unitCost = parseFloat(inputs[2].value) || 0;
-              const amount = quantity * unitCost;
+              const description = inputs[0].value.trim();
+              const amount = parseFloat(inputs[1].value) || 0;
 
-              if (description) {
-                items.push({ description, quantity, unitCost, amount });
+              if (description && amount > 0) {
+                items.push(makeInvoiceItem(description, amount));
                 total += amount;
               }
             });
@@ -6294,12 +7721,34 @@ Submit anyway?`,
         }
       };
 
+      window.fillInvoiceBankFields = () => {
+        const select = document.getElementById("inv-bank");
+        if (!select) return;
+
+        const idx = parseInt(select.value, 10);
+        if (Number.isNaN(idx)) return;
+
+        const savedBank = DB.bankAccounts[idx] || {};
+        const setValue = (id, value) => {
+          const el = document.getElementById(id);
+          if (el) el.value = value || "";
+        };
+
+        setValue("inv-bank-name", savedBank.bankName || savedBank.name || "");
+        setValue("inv-account-name", savedBank.accountName || "");
+        setValue(
+          "inv-account-number",
+          savedBank.accountNumber || savedBank.account || "",
+        );
+        setValue("inv-bank-branch", savedBank.branch || "");
+      };
+
       window.addInvoiceItem = () => {
         const container = document.getElementById("invoice-items-container");
         if (!container) return;
         const row = document.createElement("div");
         row.className = "invoice-item-row";
-        row.innerHTML = `<input placeholder="Description" /><input type="number" placeholder="Qty" value="1" /><input type="number" placeholder="Rate (₦)" /><input type="number" placeholder="Amount" readonly /><button class="btn-remove-item" onclick="removeInvoiceItem(this)" title="Remove">-</button>`;
+        row.innerHTML = `<input placeholder="Description" /><input type="number" placeholder="Amount (₦)" min="0" step="0.01" /><button class="btn-remove-item" onclick="removeInvoiceItem(this)" title="Remove">-</button>`;
         container.appendChild(row);
         invoiceItemCount++;
         row
@@ -6311,24 +7760,35 @@ Submit anyway?`,
       };
 
       window.removeInvoiceItem = (btn) => {
-        if (invoiceItemCount > 1) {
+        const container = document.getElementById("invoice-items-container");
+        const rows = container?.querySelectorAll(".invoice-item-row") || [];
+
+        if (rows.length > 1) {
           btn.closest(".invoice-item-row").remove();
-          invoiceItemCount--;
+          invoiceItemCount = rows.length - 1;
           calculateInvoiceTotal();
+        } else {
+          const row = rows[0];
+          if (row) {
+            row.querySelectorAll("input")[0].value = "";
+            row.querySelectorAll("input")[1].value = "";
+            calculateInvoiceTotal();
+          }
         }
       };
 
       window.calculateInvoiceTotal = () => {
-        const rows = document.querySelectorAll(".invoice-item-row");
+        const rows = document.querySelectorAll(
+          "#invoice-items-container .invoice-item-row",
+        );
         let total = 0;
+
         rows.forEach((row) => {
           const inputs = row.querySelectorAll("input");
-          const qty = parseFloat(inputs[1].value) || 0;
-          const rate = parseFloat(inputs[2].value) || 0;
-          const amount = qty * rate;
-          inputs[3].value = amount > 0 ? amount.toLocaleString() : "";
+          const amount = parseFloat(inputs[1].value) || 0;
           total += amount;
         });
+
         const display = document.getElementById("invoice-total-display");
         if (display) display.textContent = "₦" + total.toLocaleString();
       };
@@ -6363,11 +7823,10 @@ Submit anyway?`,
         if (!container) return;
         const row = document.createElement("div");
         row.className = "invoice-item-row";
-        row.innerHTML = `<input placeholder="Description" /><input type="number" placeholder="Qty" value="1" /><input type="number" placeholder="Rate (₦)" /><input type="number" placeholder="Amount" readonly /><button class="btn-remove-item" onclick="this.closest('.invoice-item-row').remove();calculateEditInvoiceTotal()" title="Remove">-</button>`;
+        row.innerHTML = `<input placeholder="Description" /><input type="number" placeholder="Amount (₦)" min="0" step="0.01" /><button class="btn-remove-item" onclick="this.closest('.invoice-item-row').remove();calculateEditInvoiceTotal()" title="Remove">-</button>`;
         container.appendChild(row);
-        row.querySelectorAll("input").forEach((input, idx) => {
-          if (idx < 3)
-            input.addEventListener("input", calculateEditInvoiceTotal);
+        row.querySelectorAll("input").forEach((input) => {
+          input.addEventListener("input", calculateEditInvoiceTotal);
         });
         lucide.createIcons();
       };
@@ -6377,14 +7836,13 @@ Submit anyway?`,
           "#edit-invoice-items-container .invoice-item-row",
         );
         let total = 0;
+
         rows.forEach((row) => {
           const inputs = row.querySelectorAll("input");
-          const qty = parseFloat(inputs[1].value) || 0;
-          const rate = parseFloat(inputs[2].value) || 0;
-          const amount = qty * rate;
-          inputs[3].value = amount > 0 ? amount.toLocaleString() : "";
+          const amount = parseFloat(inputs[1].value) || 0;
           total += amount;
         });
+
         const display = document.getElementById("edit-invoice-total-display");
         if (display) display.textContent = "₦" + total.toLocaleString();
       };
@@ -6401,9 +7859,7 @@ Submit anyway?`,
           const row = rows[0];
           if (row) {
             row.querySelectorAll("input")[0].value = "";
-            row.querySelectorAll("input")[1].value = "1";
-            row.querySelectorAll("input")[2].value = "";
-            row.querySelectorAll("input")[3].value = "";
+            row.querySelectorAll("input")[1].value = "";
             calculateEditInvoiceTotal();
           }
         }
@@ -6430,6 +7886,11 @@ Submit anyway?`,
 
       // ==================== MODAL SYSTEM ====================
       function openModal(type, param1 = null, param2 = null, param3 = null) {
+        if (
+          (type === "new-roster" || type === "edit-roster") &&
+          !requireRosterAccess()
+        )
+          return;
         const def = modalDefs[type];
         let title = def ? def.title : param2 || "Details";
         let body = "";
@@ -6448,6 +7909,9 @@ Submit anyway?`,
             else if (
               type === "edit-project" ||
               type === "edit-invoice" ||
+              type === "edit-employee" ||
+              type === "new-roster" ||
+              type === "edit-roster" ||
               type === "add-project-budget" ||
               type === "add-project-income"
             )
@@ -6459,30 +7923,44 @@ Submit anyway?`,
         } else {
           body = param1;
         }
+        const fullscreenTypes = ["new-invoice", "invoice-detail"];
+        const isFullscreen = fullscreenTypes.includes(type);
+        const overlayClass = isFullscreen
+          ? "modal-overlay modal-fullscreen-overlay"
+          : "modal-overlay";
+        const modalClass = isFullscreen ? "modal modal-fullscreen" : "modal";
+        const titleHtml = isFullscreen
+          ? `<div class="modal-title-block"><span class="modal-kicker">Invoice Workspace</span><h3>${title}</h3></div>`
+          : `<h3>${title}</h3>`;
+        const cancelText = isFullscreen && !saveBtn ? "Close" : "Cancel";
+
         document.getElementById("modal-root").innerHTML = `
-                                  <div class="modal-overlay" onclick="handleOverlayClick(event)">
-                                    <div class="modal">
-                                      <div class="modal-head"><h3>${title}</h3><button class="modal-close" onclick="closeModal()"><i data-lucide="x" style="width:14px;height:14px"></i></button></div>
+                                  <div class="${overlayClass}" onclick="handleOverlayClick(event)">
+                                    <div class="${modalClass}" data-modal-type="${type}">
+                                      <div class="modal-head">${titleHtml}<button class="modal-close" onclick="closeModal()"><i data-lucide="x" style="width:14px;height:14px"></i></button></div>
                                       <div class="modal-body">${body}</div>
-                                      <div class="modal-foot"><button class="btn-cancel" onclick="closeModal()">Cancel</button>${saveBtn}</div>
+                                      <div class="modal-foot"><button class="btn-cancel" onclick="closeModal()">${cancelText}</button>${saveBtn}</div>
                                     </div>
                                   </div>`;
         lucide.createIcons();
-        if (type === "new-invoice")
+        if (type === "new-invoice") {
           document
-            .querySelectorAll(".invoice-item-row input")
+            .querySelectorAll(
+              "#invoice-items-container .invoice-item-row input",
+            )
             .forEach((input) =>
               input.addEventListener("input", calculateInvoiceTotal),
             );
+          fillInvoiceBankFields();
+        }
         if (type === "new-procurement") updateProcurementBudgetPreview();
         if (type === "edit-invoice")
           document
             .querySelectorAll(
               "#edit-invoice-items-container .invoice-item-row input",
             )
-            .forEach((input, idx) => {
-              if (idx % 4 < 3)
-                input.addEventListener("input", calculateEditInvoiceTotal);
+            .forEach((input) => {
+              input.addEventListener("input", calculateEditInvoiceTotal);
             });
       }
 
@@ -6979,6 +8457,11 @@ Submit anyway?`,
           "hr-management": {
             icon: "users",
             label: "Employee Management",
+            section: "Human Resources",
+          },
+          "hr-roster": {
+            icon: "calendar-clock",
+            label: "Staff Roster",
             section: "Human Resources",
           },
         };

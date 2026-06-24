@@ -64,6 +64,17 @@ const employeeSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    companyId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Company",
+      required: true,
+      index: true,
+    },
+    companyName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     guarantorForms: [
       {
         publicId: { type: String, default: "" },
