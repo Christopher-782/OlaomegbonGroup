@@ -2204,7 +2204,7 @@
         const token =
           localStorage.getItem("token") || sessionStorage.getItem("token");
 
-        // Check: no token, or token is literally the string "null"/"undefined", or too short to be a real JWT
+        // Check: no token, invalid token, or too short
         if (
           !token ||
           token === "null" ||
@@ -2217,17 +2217,16 @@
           return;
         }
 
-        // Optional: verify token isn't expired (JWT decode)
+        // JWT expiry check
         try {
           const payload = JSON.parse(atob(token.split(".")[1]));
           if (payload.exp && payload.exp * 1000 < Date.now()) {
             localStorage.clear();
             sessionStorage.clear();
-            window.location.replace("index.html?logout=1"); // ?logout=1 prevents auto-redirect loop
+            window.location.replace("index.html?logout=1");
             return;
           }
         } catch (e) {
-          // Invalid token format
           localStorage.clear();
           sessionStorage.clear();
           window.location.replace("index.html");
@@ -2235,6 +2234,35 @@
         }
       })();
 
+      // ==================== AUTO LOGOUT AFTER 10 MIN INACTIVITY ====================
+      (function () {
+        const LIMIT = 10 * 60 * 1000;
+        let timer;
+
+        function logout() {
+          localStorage.clear();
+          sessionStorage.clear();
+          window.location.replace("index.html?session_expired=1");
+        }
+
+        function reset() {
+          clearTimeout(timer);
+          timer = setTimeout(logout, LIMIT);
+        }
+
+        const events = [
+          "mousemove",
+          "mousedown",
+          "keydown",
+          "scroll",
+          "touchstart",
+          "click",
+        ];
+
+        events.forEach((e) => window.addEventListener(e, reset, true));
+
+        reset();
+      })();
       // ======= DEFINE CURRENT_USER =======
       let CURRENT_USER = {
         token: localStorage.getItem("token") || sessionStorage.getItem("token"),
@@ -6360,7 +6388,7 @@
                   <div class="invoice-section-title">
                     <div>
                       <h4>Invoice Items</h4>
-                      <p>Quantity has been removed. Each row is calculated by amount only.</p>
+                      
                     </div>
                   </div>
                   ${missingItemAmountNotice}
